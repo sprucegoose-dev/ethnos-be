@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+      "target": "es2017",
+      "module": "commonjs",
+      "lib": [
+        "esnext",
+        "dom"
+      ],
+      "jsx": "react-jsx",
+      "noEmit": false,
+      "strict": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "resolveJsonModule": true,
+      "experimentalDecorators": true,
+      "strictPropertyInitialization": false,
+      "emitDecoratorMetadata": true,
+      "allowJs": true,
+      "strictNullChecks": false,
+      "typeRoots": [
+            "./src/types/index.interface.ts",
+            "node_modules/@types"
+        ],
+    },
+    "exclude": ["node_modules"]
+  }

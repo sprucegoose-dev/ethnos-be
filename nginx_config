@@ -1,0 +1,66 @@
+upstream websocket {
+    server 127.0.0.1:3000;
+}
+
+server {
+        gzip on;
+        gzip_types application/json;
+        gzip_proxied no-cache no-store private expired auth;
+        gzip_min_length 100000;
+
+        root /var/www/antinomy;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name antinomy-online.com www.antinomy-online.com;
+
+        location / {
+            if ( $uri = '/index.html' ) {
+                add_header Cache-Control no-store always;
+            }
+            try_files $uri $uri/ /index.html;
+        }
+
+        location  /socket.io/ {
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header Host $host;
+           proxy_pass    http://localhost:3000/socket.io/;
+
+
+           # enable WebSockets
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "upgrade";
+        }
+
+        location /api {
+           rewrite /api/(.*) /$1  break;
+           proxy_pass    http://localhost:3000;
+           proxy_redirect     off;
+        }
+
+    listen [::]:443 ssl ipv6only=on;
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/antinomy-online.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/antinomy-online.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+server {
+    if ($host = www.antinomy-online.com) {
+        return 301 https://$host$request_uri;
+    }
+
+
+    if ($host = antinomy-online.com) {
+        return 301 https://$host$request_uri;
+    }
+
+
+        listen 80;
+        listen [::]:80;
+
+        server_name antinomy-online.com www.antinomy-online.com;
+    return 404;
+
+}

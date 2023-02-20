@@ -1,0 +1,1 @@
+0 * * * * /home/ubuntu/.nvm/versions/node/v14.21.3/bin/npm run clean --prefix /var/www/antinomy-be
