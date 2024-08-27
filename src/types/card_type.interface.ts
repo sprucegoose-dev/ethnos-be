@@ -1,20 +1,29 @@
-export enum Suit {
-    FEATHER = 'feather',
-    KEY = 'key',
-    RING = 'ring',
-    SKULL = 'skull',
+export enum Tribe {
+    CENTAUR = 'Centaur',
+    DWARF = 'Dwarf',
+    ELF = 'Elf',
+    GIANT = 'Giant',
+    HALFING = 'Halfing',
+    MERFOLK = 'Merfolk',
+    MINOTAUR = 'Minotaur',
+    ORC = 'Orc',
+    SKELETON = 'Skeleton',
+    TROLL = 'Troll',
+    WINGFOLK = 'Wingfolk',
+    WIZARD = 'Wizard',
 }
 
 export enum Color {
-    RED = 'red',
-    PURPLE = 'purple',
-    GREEN = 'green',
     BLUE = 'blue',
+    GRAY = 'gray',
+    GREEN = 'green',
+    ORANGE = 'orange',
+    PURPLE = 'purple',
+    RED = 'red',
 }
 
 export interface ICardType {
     id?: number;
     color: Color;
-    suit: Suit;
     value: number;
 }

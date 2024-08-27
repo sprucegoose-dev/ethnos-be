@@ -7,6 +7,7 @@ import {
 import { CardType } from './card_type.model';
 import { Game } from './game.model';
 import { Player } from './player.model';
+import { CardState } from '../types/card.interface';
 
 @Table({
     tableName: 'cards',
@@ -15,6 +16,19 @@ import { Player } from './player.model';
 export class Card extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
+
+
+    @Column
+    state: CardState;
+
+    @Column({
+        field: 'card_type_id',
+        references: {
+            model: CardType,
+            key: 'id',
+        }
+    })
+    cardTypeId: number;
 
     @Column({
         field: 'game_id',
@@ -33,15 +47,6 @@ export class Card extends Model {
         }
     })
     playerId: number;
-
-    @Column({
-        field: 'card_type_id',
-        references: {
-            model: CardType,
-            key: 'id',
-        }
-    })
-    cardTypeId: number;
 
     @Column
     index: number;

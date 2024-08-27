@@ -33,9 +33,18 @@ module.exports = {
                     key: 'id',
                 },
             },
-            giant_token_value: Sequelize.INTEGER,
-            orc_board_tokens: Sequelize.INTEGER,
-            merfolk_board_score: Sequelize.INTEGER,
+            giant_token_value: {
+                type: Sequelize.INTEGER,
+                defaultValue: 0,
+            },
+            orc_board_tokens: {
+                type: Sequelize.JSON,
+                defaultValue: []
+            },
+            merfolk_board_score: {
+                type: Sequelize.INTEGER,
+                defaultValue: 0,
+            },
             points: {
                 type: Sequelize.INTEGER,
                 defaultValue: 0,

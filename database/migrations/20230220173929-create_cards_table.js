@@ -55,6 +55,11 @@ module.exports = {
                 },
                 allowNull: true,
             },
+            index: {
+                type: Sequelize.INTEGER,
+                defaultValue: null,
+                allowNull: true,
+            },
             leader: {
                 type: Sequelize.BOOLEAN,
                 defaultValue: false,

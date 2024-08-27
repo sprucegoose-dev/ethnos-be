@@ -10,13 +10,6 @@ export enum GameState {
     STARTED = 'started',
 }
 
-export enum GamePhase {
-    DEPLOYMENT = 'deployment',
-    MOVEMENT = 'movement',
-    COMBAT = 'combat',
-    REPLACEMENT = 'replacement',
-}
-
 export interface IGameState extends Game {
     cards: Card[];
     players: Player[];

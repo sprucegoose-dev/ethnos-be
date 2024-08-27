@@ -4,9 +4,10 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { PlayerOrientation } from '../types/player.interface';
+
 import { Game } from './game.model';
 import { User } from './user.model';
+import { Color } from '../types/card_type.interface';
 
 @Table({
     tableName: 'players',
@@ -34,11 +35,14 @@ export class Player extends Model {
     })
     gameId: number;
 
-    @Column({ defaultValue: null })
-    orientation: PlayerOrientation;
+    @Column({ field: 'giant_token_value' })
+    giantTokenValue: number;
 
-    @Column({ defaultValue: null })
-    position: number;
+    @Column({ field: 'orc_board_tokens' })
+    orcBoardTokens: Color[];
+
+    @Column({ field: 'merfolk_board_score' })
+    merfolkBoardScore: number;
 
     @Column({ defaultValue: 0 })
     points: number;
