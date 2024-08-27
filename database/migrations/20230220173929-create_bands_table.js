@@ -18,9 +18,9 @@ module.exports = {
             },
         };
 
-        return queryInterface.createTable('card_types', schema);
+        return queryInterface.createTable('bands', schema);
     },
     down: (queryInterface) => {
-        return queryInterface.dropTable('card_types');
+        return queryInterface.dropTable('bands');
     }
 };

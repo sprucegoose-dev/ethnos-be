@@ -9,7 +9,10 @@ module.exports = {
                 autoIncrement: true
             },
             tribe: Sequelize.STRING,
-            color: Sequelize.STRING,
+            color: {
+                type:  Sequelize.STRING,
+                allowNull: true,
+            },
             description: Sequelize.STRING,
         };
 
