@@ -3,7 +3,7 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { Color, Suit } from '../types/card_type.interface';
+import { Tribe } from '../types/card_type.interface';
 
 @Table({
     tableName: 'card_types',
@@ -14,11 +14,11 @@ export class CardType extends Model {
     id: number;
 
     @Column
-    value: number;
+    tribe: Tribe;
+
+    @Column({ allowNull: true })
+    color: string;
 
     @Column
-    suit: Suit;
-
-    @Column
-    color: Color;
+    description: string;
 }

@@ -1,6 +1,7 @@
 export enum Tribe {
     CENTAUR = 'Centaur',
     DWARF = 'Dwarf',
+    DRAGON = 'Dragon',
     ELF = 'Elf',
     GIANT = 'Giant',
     HALFING = 'Halfing',

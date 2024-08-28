@@ -8,6 +8,7 @@ export enum CardState {
 export interface ICard {
     gameId?: number;
     index?: number;
+    state: CardState;
     playerId?: number;
     cardTypeId: number;
 }

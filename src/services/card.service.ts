@@ -8,15 +8,17 @@ class CardService {
 
     static async create({
         cardTypeId,
-        playerId = null,
         gameId = null,
         index = null,
+        playerId = null,
+        state = null,
     }: ICard): Promise<Card> {
         const card = await Card.create({
-            playerId,
+            cardTypeId,
             gameId,
             index,
-            cardTypeId,
+            playerId,
+            state,
         });
 
         return await Card.findOne({

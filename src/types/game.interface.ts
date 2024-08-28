@@ -1,6 +1,7 @@
 import { Card } from '../models/card.model';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
+import { Tribe } from './card_type.interface';
 
 export enum GameState {
     CANCELLED = 'cancelled',
@@ -21,4 +22,8 @@ export interface ICombatData {
     opponent: Player;
     playerCards: Card[];
     opponentCards: Card[];
+}
+
+export interface IGameSettings {
+   tribes: Tribe[];
 }

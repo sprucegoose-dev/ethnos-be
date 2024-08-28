@@ -5,8 +5,8 @@ import { Card } from '../models/card.model';
 import { CardType } from '../models/card_type.model';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
-import { Color } from '../types/card_type.interface';
-import { GamePhase, GameState, IGameState } from '../types/game.interface';
+import { Color, Tribe } from '../types/card_type.interface';
+import { GamePhase, GameState, IGameSettings, IGameState } from '../types/game.interface';
 import CardService from './card.service';
 import { PlayerOrientation } from '../types/player.interface';
 import {
@@ -18,6 +18,7 @@ import PlayerService from './player.service';
 import EventService from './event.service';
 import { User } from '../models/user.model';
 import { EVENT_ACTIVE_GAMES_UPDATE, EVENT_GAME_UPDATE } from '../types/event.interface';
+import { CardState } from '../types/card.interface';
 
 class GameService {
 
@@ -201,7 +202,7 @@ class GameService {
         });
     }
 
-    static async start(userId: number, gameId: number): Promise<void> {
+    static async start(userId: number, gameId: number, settings: IGameSettings): Promise<void> {
         const game = await Game.findOne({
             where: {
                 id: gameId,
@@ -220,74 +221,67 @@ class GameService {
 
         const players = game.players;
 
-        if (players.length !== 2) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'The game must have two players');
+        if (players.length < 2) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'The game must have at least two players');
         }
 
-        const cardTypes = shuffle(await CardType.findAll());
-
-        let codexColor: Color;
-
-        for (let i = 0; i < cardTypes.length; i++) {
-            let cardType = cardTypes[i];
-
-            if (i < 9) {
-                // deal continuum cards
-                await CardService.create({
-                    cardTypeId: cardType.id,
-                    gameId,
-                    index: i,
-                });
-
-                if (i === 8) {
-                    // assign starting codex based on last card in continuum
-                    codexColor = cardType.color;
+        const cardTypes = shuffle(await CardType.findAll({
+            where: {
+                tribe: {
+                    [Op.in]: [...settings.tribes, Tribe.DRAGON]
                 }
-            } else if (i < cardTypes.length - 1) {
-                // deal cards to players
-                await CardService.create({
-                    cardTypeId: cardType.id,
-                    playerId: players[i < 12 ? 0 : 1].id,
-                    gameId,
-                });
-            } else {
-                // leave the last card to be the codex
-                await CardService.create({
-                    cardTypeId: cardType.id,
-                    gameId,
-                });
             }
+        }));
+
+        const validCardTypes = cardTypes.filter(type => type.tribe !== Tribe.DRAGON);
+        const dragonCardTypes = cardTypes.filter(type => type.tribe === Tribe.DRAGON);
+
+        const playerCards = validCardTypes.splice(0, players.length);
+
+        const marketCards = validCardTypes.splice(0, players.length * 2);
+
+        for (let i = 0; i < players.length; i++) {
+            await CardService.create({
+                cardTypeId: playerCards[0].id,
+                state: CardState.IN_HAND,
+                index: 0,
+                playerId: players[0].id,
+                gameId,
+            });
+        }
+
+        for (let i = 0; i < marketCards.length; i++) {
+            await CardService.create({
+                cardTypeId: marketCards[0].id,
+                state: CardState.IN_MARKET,
+                index: i,
+                playerId: null,
+                gameId,
+            });
+        }
+
+        let bottomHalfOfDeck = validCardTypes.splice(-Math.ceil(validCardTypes.length / 2));
+
+        bottomHalfOfDeck = shuffle([...bottomHalfOfDeck, ...dragonCardTypes]);
+
+        const deckCardTypes = [...validCardTypes, ...bottomHalfOfDeck];
+
+        for (let i = 0; i < deckCardTypes.length; i++) {
+            await CardService.create({
+                cardTypeId: deckCardTypes[0].id,
+                state: CardState.IN_DECK,
+                index: i,
+                playerId: null,
+                gameId,
+            });
         }
 
         const startingPlayerId = shuffle(players)[0].id;
 
-
-        await Player.update({
-            orientation: PlayerOrientation.INVERSE,
-        }, {
-            where: {
-                gameId,
-                id: startingPlayerId,
-            }
-        });
-
-        await Player.update({
-            orientation: PlayerOrientation.DEFAULT,
-        }, {
-            where: {
-                gameId,
-                id: {
-                    [Op.not]: startingPlayerId
-                },
-            }
-        });
-
         await Game.update(
             {
                 activePlayerId: startingPlayerId,
-                codexColor,
-                state: GameState.SETUP,
-                phase: GamePhase.DEPLOYMENT,
+                state: GameState.STARTED,
             },
             {
                 where: {
