@@ -6,6 +6,7 @@ import CommandService from '../services/command.service';
 import GameService from '../services/game.service';
 import { IActionRequest } from '../types/action.interface';
 import { AuthRequest } from '../types/index.interface';
+import { IGameSettings } from '../types/game.interface';
 
 @exceptionHandler()
 class GamesController {
@@ -58,7 +59,8 @@ class GamesController {
     async start(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
-        await GameService.start(userId, parseInt(gameId, 10));
+        const settings = req.body as IGameSettings;
+        await GameService.start(userId, parseInt(gameId, 10), settings);
         res.send();
     }
 }

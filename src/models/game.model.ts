@@ -8,7 +8,7 @@ import {
     UpdatedAt,
 } from 'sequelize-typescript';
 import { Color } from '../types/card_type.interface';
-import { GamePhase, GameState } from '../types/game.interface';
+import { GameState } from '../types/game.interface';
 import { Card } from './card.model';
 import { Player } from './player.model';
 import { User } from './user.model';
@@ -53,12 +53,6 @@ export class Game extends Model {
 
     @Column
     state: GameState;
-
-    @Column
-    phase: GamePhase;
-
-    @Column
-    codexColor: Color;
 
     @CreatedAt
     @Column({ field: 'created_at' })

@@ -5,10 +5,9 @@ import { Card } from '../models/card.model';
 import { CardType } from '../models/card_type.model';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
-import { Color, Tribe } from '../types/card_type.interface';
-import { GamePhase, GameState, IGameSettings, IGameState } from '../types/game.interface';
+import { Tribe } from '../types/card_type.interface';
+import { GameState, IGameSettings, IGameState } from '../types/game.interface';
 import CardService from './card.service';
-import { PlayerOrientation } from '../types/player.interface';
 import {
     CustomException,
     ERROR_BAD_REQUEST,
@@ -235,9 +234,7 @@ class GameService {
 
         const validCardTypes = cardTypes.filter(type => type.tribe !== Tribe.DRAGON);
         const dragonCardTypes = cardTypes.filter(type => type.tribe === Tribe.DRAGON);
-
         const playerCards = validCardTypes.splice(0, players.length);
-
         const marketCards = validCardTypes.splice(0, players.length * 2);
 
         for (let i = 0; i < players.length; i++) {
@@ -260,11 +257,11 @@ class GameService {
             });
         }
 
-        let bottomHalfOfDeck = validCardTypes.splice(-Math.ceil(validCardTypes.length / 2));
+        const bottomHalfOfDeck = validCardTypes.splice(-Math.ceil(validCardTypes.length / 2));
 
-        bottomHalfOfDeck = shuffle([...bottomHalfOfDeck, ...dragonCardTypes]);
+        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonCardTypes]);
 
-        const deckCardTypes = [...validCardTypes, ...bottomHalfOfDeck];
+        const deckCardTypes = [...validCardTypes, ...bottomHalfWithlDragons];
 
         for (let i = 0; i < deckCardTypes.length; i++) {
             await CardService.create({
@@ -297,7 +294,6 @@ class GameService {
             payload: activeGames
         });
     }
-
 }
 
 export default GameService;

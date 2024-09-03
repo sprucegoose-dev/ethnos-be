@@ -2,6 +2,13 @@
 
 module.exports = {
     up: (queryInterface, Sequelize) => {
+        const foreignKey = {
+            type: Sequelize.INTEGER,
+            onUpdate: 'cascade',
+            onDelete: 'cascade',
+            allowNull: false,
+        };
+
         const schema = {
             id: {
                 type: Sequelize.INTEGER,

@@ -33,6 +33,19 @@ module.exports = {
                 },
                 allowNull: true,
             },
+            state: {
+                type: Sequelize.ENUM,
+                values: [
+                    'cancelled',
+                    'created',
+                    'ended',
+                    'setup',
+                    'started',
+                ],
+            },
+            password: {
+                type: Sequelize.STRING,
+            },
             created_at: Sequelize.DATE,
             updated_at: Sequelize.DATE,
         };

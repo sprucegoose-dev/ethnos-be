@@ -38,9 +38,9 @@ module.exports = {
             updated_at: Sequelize.DATE,
         };
 
-        return queryInterface.createTable('cards', schema);
+        return queryInterface.createTable('regions', schema);
     },
     down: (queryInterface) => {
-        return queryInterface.dropTable('cards');
+        return queryInterface.dropTable('regions');
     }
 };
