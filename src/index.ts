@@ -42,7 +42,7 @@ app.post('/game/:id/join', GamesController.join);
 app.post('/game/:id/action', GamesController.handleAction);
 app.post('/game/:id/leave', GamesController.leave);
 app.get('/game/:id', GamesController.getState);
-app.post('/game', GamesController.create);
+app.post('/game/create', GamesController.create);
 
 export const gameSocket = socket;
 

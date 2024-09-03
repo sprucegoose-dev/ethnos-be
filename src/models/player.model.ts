@@ -39,13 +39,10 @@ export class Player extends Model {
     @Column({ field: 'giant_token_value' })
     giantTokenValue: number;
 
-    // @Column({ field: 'orc_board_tokens' })
-    // orcBoardTokens: Color[];
-
     @Column({
+        defaultValue: [],
         field: 'orc_board_tokens',
-        type: DataType.ARRAY(DataType.ENUM(...Object.values(Color))), // Specify the type as an array of ENUMs
-        allowNull: false // Adjust according to your requirements
+        type: DataType.ARRAY(DataType.ENUM(...Object.values(Color))),
       })
       orcBoardTokens: Color[];
 
