@@ -34,6 +34,9 @@ module.exports = {
                     'orange'
                 ],
             },
+            values: {
+                type: Sequelize.JSON,
+            },
             created_at: Sequelize.DATE,
             updated_at: Sequelize.DATE,
         };

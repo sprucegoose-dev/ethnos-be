@@ -27,3 +27,12 @@ export interface ICombatData {
 export interface IGameSettings {
    tribes: Tribe[];
 }
+
+export const REGION_VALUES = [
+    0, 0,
+    2, 2,
+    4, 4, 4, 4,
+    6, 6, 6, 6, 6,
+    8, 8, 8,
+    10, 10
+];
