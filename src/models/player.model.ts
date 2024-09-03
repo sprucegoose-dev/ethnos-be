@@ -1,6 +1,7 @@
 import {
     BelongsTo,
     Column,
+    DataType,
     Model,
     Table,
 } from 'sequelize-typescript';
@@ -38,8 +39,15 @@ export class Player extends Model {
     @Column({ field: 'giant_token_value' })
     giantTokenValue: number;
 
-    @Column({ field: 'orc_board_tokens' })
-    orcBoardTokens: Color[];
+    // @Column({ field: 'orc_board_tokens' })
+    // orcBoardTokens: Color[];
+
+    @Column({
+        field: 'orc_board_tokens',
+        type: DataType.ARRAY(DataType.ENUM(...Object.values(Color))), // Specify the type as an array of ENUMs
+        allowNull: false // Adjust according to your requirements
+      })
+      orcBoardTokens: Color[];
 
     @Column({ field: 'merfolk_board_score' })
     merfolkBoardScore: number;

@@ -7,7 +7,6 @@ import {
     Table,
     UpdatedAt,
 } from 'sequelize-typescript';
-import { Color } from '../types/card_type.interface';
 import { GameState } from '../types/game.interface';
 import { Card } from './card.model';
 import { Player } from './player.model';
