@@ -1,3 +1,5 @@
+import { Color } from './game.interface';
+
 export enum CardState {
     IN_MARKET = 'in_market',
     IN_DECK = 'in_deck',
@@ -6,14 +8,15 @@ export enum CardState {
 }
 
 export interface ICard {
-    gameId?: number;
+    bandId?: number;
+    color: Color;
     index?: number;
-    state: CardState;
+    gameId?: number;
     playerId?: number;
-    cardTypeId: number;
+    state: CardState;
+    tribeId: number;
 }
 
 export interface ICardFilters {
-    continuum?: boolean;
     playerIds?: number[];
 }

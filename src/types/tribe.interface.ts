@@ -1,4 +1,4 @@
-export enum Tribe {
+export enum TribeName {
     CENTAUR = 'Centaur',
     DWARF = 'Dwarf',
     DRAGON = 'Dragon',
@@ -14,17 +14,8 @@ export enum Tribe {
     WIZARD = 'Wizard',
 }
 
-export enum Color {
-    BLUE = 'blue',
-    GRAY = 'gray',
-    GREEN = 'green',
-    ORANGE = 'orange',
-    PURPLE = 'purple',
-    RED = 'red',
-}
-
-export interface ICardType {
+export interface ITribe {
     id?: number;
-    color: Color;
-    value: number;
+    name: TribeName;
+    description: string;
 }

@@ -4,10 +4,12 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { CardType } from './card_type.model';
+import { Band } from './band.model';
+import { Tribe } from './tribe.model';
 import { Game } from './game.model';
 import { Player } from './player.model';
 import { CardState } from '../types/card.interface';
+import { Color } from '../types/game.interface';
 
 @Table({
     tableName: 'cards',
@@ -22,13 +24,27 @@ export class Card extends Model {
     state: CardState;
 
     @Column({
-        field: 'card_type_id',
+        defaultValue: null,
+    })
+    color: Color;
+
+    @Column({
+        field: 'tribe_id',
         references: {
-            model: CardType,
+            model: Tribe,
             key: 'id',
         }
     })
-    cardTypeId: number;
+    tribeId: number;
+
+    @Column({
+        field: 'band_id',
+        references: {
+            model: Band,
+            key: 'id',
+        }
+    })
+    bandId: number;
 
     @Column({
         field: 'game_id',
@@ -51,12 +67,15 @@ export class Card extends Model {
     @Column
     index: number;
 
-    @BelongsTo(() => CardType, 'cardTypeId')
-    type: CardType
+    @BelongsTo(() => Band, 'bandId')
+    band: Band;
+
+    @BelongsTo(() => Tribe, 'tribeId')
+    tribe: Tribe;
 
     @BelongsTo(() => Player, 'playerId')
-    player: Player
+    player: Player;
 
     @BelongsTo(() => Game, 'gameId')
-    game: Game
+    game: Game;
 }

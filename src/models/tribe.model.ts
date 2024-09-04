@@ -3,21 +3,18 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { Tribe } from '../types/card_type.interface';
+import { TribeName } from '../types/tribe.interface';
 
 @Table({
-    tableName: 'card_types',
+    tableName: 'tribes',
     timestamps: false,
 })
-export class CardType extends Model {
+export class Tribe extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
 
     @Column
-    tribe: Tribe;
-
-    @Column({ allowNull: true })
-    color: string;
+    name: TribeName;
 
     @Column
     description: string;

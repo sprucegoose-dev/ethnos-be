@@ -1,12 +1,11 @@
 
-function generateCardTypes() {
-    const cardTypes = [];
-    const tribes = [
+function generateTribeSeeds() {
+    const tribes = [];
+    const tribeNames = [
         'Centaur',
         'Dwarf',
         'Elf',
         'Giant',
-        'Halfling',
         'Halfling',
         'Merfolk',
         'Minotaur',
@@ -31,53 +30,22 @@ function generateCardTypes() {
         'You can place your marker on any kingdom of the board.',
         'Draw X cards from the deck',
     ];
-    const colors = [
-        'blue',
-        'gray',
-        'green',
-        'orange',
-        'purple',
-        'red',
-    ];
 
-    let startingNumber = 1;
-    let value;
-
-    for (let i = 0; i < tribes.length; i++) {
-        for (let j = 0; j < 2; j++) {
-            for (let k = 0; k < colors.length; k++) {
-                cardTypes.push(generateCardType({
-                    tribe: tribes[i],
-                    color: tribes[i] == 'Skeleton' ? null : colors[k],
-                    description: descriptions[i],
-                }));
-            }
-        }
+    for (let i = 0; i < tribeNames.length; i++) {
+        tribes.push({
+            name: tribeNames[i],
+            description: descriptions[i],
+        });
     }
 
-    for (let i = 0; i < 3; i++) {
-        cardTypes.push(generateCardType({
-            tribe: 'Dragon',
-            color: null,
-            description: '',
-        }));
-    }
+    tribes.push(({
+        name: 'Dragon',
+        description: '',
+    }));
 
-    return cardTypes.sort((a, b) => a.value - b.value);
-}
-
-function generateCardType({
-    tribe,
-    color,
-    description,
-}) {
-    return {
-        tribe,
-        color,
-        description,
-    };
+    return tribes;
 }
 
 module.exports = {
-    generateCardTypes,
+    generateTribeSeeds,
 };

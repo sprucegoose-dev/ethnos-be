@@ -8,17 +8,13 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true
             },
-            tribe: Sequelize.STRING,
-            color: {
-                type:  Sequelize.STRING,
-                allowNull: true,
-            },
+            name: Sequelize.STRING,
             description: Sequelize.STRING,
         };
 
-        return queryInterface.createTable('card_types', schema);
+        return queryInterface.createTable('tribes', schema);
     },
     down: (queryInterface) => {
-        return queryInterface.dropTable('card_types');
+        return queryInterface.dropTable('tribes');
     }
 };

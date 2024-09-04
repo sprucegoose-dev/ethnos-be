@@ -8,7 +8,7 @@ import {
 
 import { Game } from './game.model';
 import { User } from './user.model';
-import { Color } from '../types/card_type.interface';
+import { Color } from '../types/game.interface';
 
 @Table({
     tableName: 'players',

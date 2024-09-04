@@ -1,7 +1,31 @@
 import { Card } from '../models/card.model';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
-import { Tribe } from './card_type.interface';
+import { TribeName } from './tribe.interface';
+
+export const TRIBES = [
+    'Centaur',
+    'Dwarf',
+    'Elf',
+    'Giant',
+    'Halfling',
+    'Merfolk',
+    'Minotaur',
+    'Orc',
+    'Skeleton',
+    'Troll',
+    'Wingfolk',
+    'Wizard',
+];
+
+export enum Color {
+    BLUE = 'blue',
+    GRAY = 'gray',
+    GREEN = 'green',
+    ORANGE = 'orange',
+    PURPLE = 'purple',
+    RED = 'red',
+}
 
 export enum GameState {
     CANCELLED = 'cancelled',
@@ -16,16 +40,14 @@ export interface IGameState extends Game {
     players: Player[];
 }
 
-export interface ICombatData {
-    game: Game;
-    player: Player;
-    opponent: Player;
-    playerCards: Card[];
-    opponentCards: Card[];
+export interface IGameSettings {
+   tribes: TribeName[];
 }
 
-export interface IGameSettings {
-   tribes: Tribe[];
+export interface ITribeCard {
+    color: Color;
+    name: TribeName;
+    tribeId: number;
 }
 
 export const REGION_VALUES = [

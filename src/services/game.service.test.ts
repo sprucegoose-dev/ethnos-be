@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
 import { Card } from '../models/card.model';
-import { CardType } from '../models/card_type.model';
+import { CardType } from '../models/tribe.model';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
 import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';

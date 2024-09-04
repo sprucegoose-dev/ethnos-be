@@ -1,9 +1,11 @@
 import { Dialect } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { Band } from '../src/models/band.model';
 import { Card } from '../src/models/card.model';
-import { CardType } from '../src/models/card_type.model';
+import { Tribe } from '../src/models/tribe.model';
 import { Game } from '../src/models/game.model';
 import { Player } from '../src/models/player.model';
+import { Region } from '../src/models/region.model';
 import { User } from '../src/models/user.model';
 
 interface IDatabaseEnvVars {
@@ -37,10 +39,12 @@ const options = {
     },
     models: [
         User,
-        Player,
         Game,
-        CardType,
+        Player,
+        Tribe,
+        Band,
         Card,
+        Region,
     ],
 };
 
@@ -49,10 +53,12 @@ const sequelize = NODE_ENV === 'test' ?
         logging: false,
         models: [
             User,
-            Player,
             Game,
-            CardType,
+            Player,
+            Tribe,
+            Band,
             Card,
+            Region,
         ],
     }) :
     new Sequelize(DB_NAME, DB_USER, DB_PASS, options);

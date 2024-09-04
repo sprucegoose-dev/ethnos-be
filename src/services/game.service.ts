@@ -2,11 +2,18 @@ import { Op } from 'sequelize';
 import shuffle from 'lodash.shuffle';
 
 import { Card } from '../models/card.model';
-import { CardType } from '../models/card_type.model';
+import { Tribe } from '../models/tribe.model';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
-import { Tribe } from '../types/card_type.interface';
-import { GameState, IGameSettings, IGameState } from '../types/game.interface';
+import { TribeName } from '../types/tribe.interface';
+import {
+    Color,
+    GameState,
+    IGameSettings,
+    IGameState,
+    ITribeCard,
+    TRIBES,
+} from '../types/game.interface';
 import CardService from './card.service';
 import {
     CustomException,
@@ -16,7 +23,10 @@ import {
 import PlayerService from './player.service';
 import EventService from './event.service';
 import { User } from '../models/user.model';
-import { EVENT_ACTIVE_GAMES_UPDATE, EVENT_GAME_UPDATE } from '../types/event.interface';
+import {
+    EVENT_ACTIVE_GAMES_UPDATE,
+    EVENT_GAME_UPDATE,
+} from '../types/event.interface';
 import { CardState } from '../types/card.interface';
 
 class GameService {
@@ -93,7 +103,7 @@ class GameService {
                 {
                     model: Card,
                     include: [
-                        CardType,
+                        Tribe,
                     ],
                 }
             ]
@@ -128,7 +138,7 @@ class GameService {
 
         const game = await this.getState(gameId);
 
-        if (game.players.length >= 2) {
+        if (game.players.length >= 6) {
             throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
         }
 
@@ -201,6 +211,45 @@ class GameService {
         });
     }
 
+    static generateTribeCards(tribes: Tribe[]): ITribeCard[] {
+        const tribeCards = [];
+
+        const colors = [
+            Color.BLUE,
+            Color.GRAY,
+            Color.GREEN,
+            Color.ORANGE,
+            Color.PURPLE,
+            Color.RED
+        ];
+
+        for (let i = 0; i < tribes.length; i++) {
+            if (tribes[i].name === TribeName.DRAGON) {
+                for (let j = 0; j < 3; i++) {
+                    tribeCards.push(({
+                        color: null,
+                        name: tribes[i].name,
+                        tribeId: tribes[i].id,
+                    }));
+                }
+            } else {
+                const quantityInEachColor = tribes[i].name === TribeName.HALFING ? 4 : 2;
+
+                for (let j = 0; j < quantityInEachColor; j++) {
+                    for (let k = 0; k < colors.length; k++) {
+                        tribeCards.push({
+                            color: tribes[i].name == TribeName.SKELETON ? null : colors[k],
+                            name: tribes[i].name,
+                            tribeId: tribes[i].id,
+                        });
+                    }
+                }
+            }
+        }
+
+        return tribeCards;
+    }
+
     static async start(userId: number, gameId: number, settings: IGameSettings): Promise<void> {
         const game = await Game.findOne({
             where: {
@@ -224,48 +273,60 @@ class GameService {
             throw new CustomException(ERROR_BAD_REQUEST, 'The game must have at least two players');
         }
 
-        const cardTypes = shuffle(await CardType.findAll({
+        if (!settings ||
+            !settings.tribes ||
+            !Array.isArray(settings.tribes) ||
+            settings.tribes.filter((tribe) => !TRIBES.includes(tribe)).length
+        ) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid game settings');
+        }
+
+        const tribes = shuffle(await Tribe.findAll({
             where: {
                 tribe: {
-                    [Op.in]: [...settings.tribes, Tribe.DRAGON]
+                    [Op.in]: [...settings.tribes, TribeName.DRAGON]
                 }
             }
         }));
 
-        const validCardTypes = cardTypes.filter(type => type.tribe !== Tribe.DRAGON);
-        const dragonCardTypes = cardTypes.filter(type => type.tribe === Tribe.DRAGON);
-        const playerCards = validCardTypes.splice(0, players.length);
-        const marketCards = validCardTypes.splice(0, players.length * 2);
+        const tribeCards = GameService.generateTribeCards(tribes);
+        const cards = tribeCards.filter(tribe => tribe.name !== TribeName.DRAGON);
+        const dragonsCards = tribeCards.filter(tribe => tribe.name === TribeName.DRAGON);
+        const playerCards = cards.splice(0, players.length);
+        const marketCards = cards.splice(0, players.length * 2);
 
         for (let i = 0; i < players.length; i++) {
             await CardService.create({
-                cardTypeId: playerCards[0].id,
+                tribeId: playerCards[i].tribeId,
+                color: marketCards[i].color,
                 state: CardState.IN_HAND,
                 index: 0,
-                playerId: players[0].id,
+                playerId: players[i].id,
                 gameId,
             });
         }
 
         for (let i = 0; i < marketCards.length; i++) {
             await CardService.create({
-                cardTypeId: marketCards[0].id,
+                tribeId: marketCards[i].tribeId,
                 state: CardState.IN_MARKET,
+                color: marketCards[i].color,
                 index: i,
                 playerId: null,
                 gameId,
             });
         }
 
-        const bottomHalfOfDeck = validCardTypes.splice(-Math.ceil(validCardTypes.length / 2));
+        const bottomHalfOfDeck = cards.splice(-Math.ceil(cards.length / 2));
 
-        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonCardTypes]);
+        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonsCards]);
 
-        const deckCardTypes = [...validCardTypes, ...bottomHalfWithlDragons];
+        const deck = [...cards, ...bottomHalfWithlDragons];
 
-        for (let i = 0; i < deckCardTypes.length; i++) {
+        for (let i = 0; i < deck.length; i++) {
             await CardService.create({
-                cardTypeId: deckCardTypes[0].id,
+                tribeId: deck[i].tribeId,
+                color: deck[i].color,
                 state: CardState.IN_DECK,
                 index: i,
                 playerId: null,

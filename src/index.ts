@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(AuthMiddleware.isAuthenticated);
 
-app.post('/user/signUp', UsersController.create);
+app.post('/user/create', UsersController.create);
 app.post('/user/login', UsersController.login);
 app.get('/user', UsersController.getDetails);
 app.patch('/user', UsersController.update);

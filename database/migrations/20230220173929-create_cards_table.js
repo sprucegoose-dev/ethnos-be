@@ -24,6 +24,17 @@ module.exports = {
                     'in_band',
                 ],
             },
+            color: {
+                type:  Sequelize.STRING,
+                allowNull: true,
+            },
+            tribe_id: {
+                ...foreignKey,
+                references: {
+                    model: 'tribes',
+                    key: 'id',
+                },
+            },
             band_id: {
                 ...foreignKey,
                 references: {
@@ -31,13 +42,6 @@ module.exports = {
                     key: 'id',
                 },
                 allowNull: true,
-            },
-            card_type_id: {
-                ...foreignKey,
-                references: {
-                    model: 'card_types',
-                    key: 'id',
-                },
             },
             game_id: {
                 ...foreignKey,

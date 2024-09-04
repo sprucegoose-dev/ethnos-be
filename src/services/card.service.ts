@@ -1,22 +1,24 @@
 
 import { Op } from 'sequelize';
 import { Card } from '../models/card.model';
-import { CardType } from '../models/card_type.model';
+import { Tribe } from '../models/tribe.model';
 import { ICard, ICardFilters } from '../types/card.interface';
 
 class CardService {
 
     static async create({
-        cardTypeId,
-        gameId = null,
+        color = null,
         index = null,
+        tribeId,
+        gameId = null,
         playerId = null,
         state = null,
     }: ICard): Promise<Card> {
         const card = await Card.create({
-            cardTypeId,
-            gameId,
+            color,
             index,
+            tribeId,
+            gameId,
             playerId,
             state,
         });
@@ -26,7 +28,7 @@ class CardService {
                 id: card.id,
             },
             include: [
-                CardType,
+                Tribe,
             ]
         });
     }
@@ -35,15 +37,6 @@ class CardService {
         let where: any = {
             gameId: gameId,
         };
-
-        if (filters.continuum) {
-            where = {
-                ...where,
-                index: {
-                    [Op.not]: null,
-                }
-            }
-        }
 
         if (filters.playerIds) {
             where = {
@@ -57,7 +50,7 @@ class CardService {
         return await Card.findAll({
             where,
             include: [
-                CardType,
+                Tribe,
             ],
         });
     }
