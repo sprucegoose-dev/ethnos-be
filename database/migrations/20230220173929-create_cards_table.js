@@ -69,8 +69,6 @@ module.exports = {
                 defaultValue: null,
                 allowNull: true,
             },
-            created_at: Sequelize.DATE,
-            updated_at: Sequelize.DATE,
         };
 
         return queryInterface.createTable('cards', schema);

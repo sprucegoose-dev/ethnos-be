@@ -37,8 +37,6 @@ module.exports = {
             values: {
                 type: Sequelize.JSON,
             },
-            created_at: Sequelize.DATE,
-            updated_at: Sequelize.DATE,
         };
 
         return queryInterface.createTable('regions', schema);

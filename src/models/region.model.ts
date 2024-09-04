@@ -10,7 +10,7 @@ import { Color } from '../types/game.interface';
 
 @Table({
     tableName: 'regions',
-    timestamps: true,
+    timestamps: false,
 })
 export class Region extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
