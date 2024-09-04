@@ -31,7 +31,6 @@ export enum GameState {
     CANCELLED = 'cancelled',
     CREATED = 'created',
     ENDED = 'ended',
-    SETUP = 'setup',
     STARTED = 'started',
 }
 

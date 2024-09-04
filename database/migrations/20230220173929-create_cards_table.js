@@ -64,9 +64,10 @@ module.exports = {
                 defaultValue: null,
                 allowNull: true,
             },
-            leader: {
+            is_leader: {
                 type: Sequelize.BOOLEAN,
-                defaultValue: false,
+                defaultValue: null,
+                allowNull: true,
             },
             created_at: Sequelize.DATE,
             updated_at: Sequelize.DATE,

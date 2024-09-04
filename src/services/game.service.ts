@@ -19,6 +19,7 @@ import {
     CustomException,
     ERROR_BAD_REQUEST,
     ERROR_FORBIDDEN,
+    ERROR_NOT_FOUND,
 } from '../helpers/exception_handler';
 import PlayerService from './player.service';
 import EventService from './event.service';
@@ -138,6 +139,10 @@ class GameService {
 
         const game = await this.getState(gameId);
 
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
         if (game.players.length >= 6) {
             throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
         }
@@ -223,24 +228,25 @@ class GameService {
             Color.RED
         ];
 
-        for (let i = 0; i < tribes.length; i++) {
-            if (tribes[i].name === TribeName.DRAGON) {
-                for (let j = 0; j < 3; i++) {
+        for (const tribe of tribes) {
+            if (tribe.name === TribeName.DRAGON) {
+                for (let i = 0; i < 3; i++) {
                     tribeCards.push(({
                         color: null,
-                        name: tribes[i].name,
-                        tribeId: tribes[i].id,
+                        name: tribe.name,
+                        tribeId: tribe.id,
                     }));
+
                 }
             } else {
-                const quantityInEachColor = tribes[i].name === TribeName.HALFING ? 4 : 2;
+                const quantityInEachColor = tribe.name === TribeName.HALFING ? 4 : 2;
 
-                for (let j = 0; j < quantityInEachColor; j++) {
-                    for (let k = 0; k < colors.length; k++) {
+                for (let i = 0; i < quantityInEachColor; i++) {
+                    for (let j = 0; j < colors.length; j++) {
                         tribeCards.push({
-                            color: tribes[i].name == TribeName.SKELETON ? null : colors[k],
-                            name: tribes[i].name,
-                            tribeId: tribes[i].id,
+                            color: tribe.name === TribeName.SKELETON ? null : colors[j],
+                            name: tribe.name,
+                            tribeId: tribe.id,
                         });
                     }
                 }
@@ -263,8 +269,16 @@ class GameService {
             ]
         });
 
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
         if (game.creatorId !== userId) {
             throw new CustomException(ERROR_FORBIDDEN, 'Only the game creator can start the game');
+        }
+
+        if (game.state !== GameState.CREATED) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Game has already started');
         }
 
         const players = game.players;
@@ -283,14 +297,14 @@ class GameService {
 
         const tribes = shuffle(await Tribe.findAll({
             where: {
-                tribe: {
+                name: {
                     [Op.in]: [...settings.tribes, TribeName.DRAGON]
                 }
             }
         }));
 
         const tribeCards = GameService.generateTribeCards(tribes);
-        const cards = tribeCards.filter(tribe => tribe.name !== TribeName.DRAGON);
+        const cards = shuffle(tribeCards.filter(tribe => tribe.name !== TribeName.DRAGON));
         const dragonsCards = tribeCards.filter(tribe => tribe.name === TribeName.DRAGON);
         const playerCards = cards.splice(0, players.length);
         const marketCards = cards.splice(0, players.length * 2);

@@ -21,7 +21,6 @@ function generateTribeSeeds() {
         'You may keep up to X cards in your hand.',
         'If you play the biggest band with a Giant leader, take control of the Giant Token and score 2 glory.',
         "Don't place a marker on the board.",
-        "Don't place a marker on the board.",
         'Advance X spaces on the Merfolk track.',
         'This band counts as X+1 for placing a marker on the board.',
         'Place a marker on the matching space of the Orc Board.',

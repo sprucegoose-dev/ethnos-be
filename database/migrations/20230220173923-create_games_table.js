@@ -39,7 +39,6 @@ module.exports = {
                     'cancelled',
                     'created',
                     'ended',
-                    'setup',
                     'started',
                 ],
             },

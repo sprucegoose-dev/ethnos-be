@@ -12,7 +12,6 @@ import { Card } from './card.model';
 import { Player } from './player.model';
 import { User } from './user.model';
 
-
 @Table({
     tableName: 'games',
     timestamps: true,

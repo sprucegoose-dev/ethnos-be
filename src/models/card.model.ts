@@ -67,6 +67,13 @@ export class Card extends Model {
     @Column
     index: number;
 
+    @Column({
+        field: 'is_leader',
+        defaultValue: null,
+        allowNull: true
+    })
+    isLeader: number;
+
     @BelongsTo(() => Band, 'bandId')
     band: Band;
 
