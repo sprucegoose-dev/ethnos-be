@@ -29,6 +29,7 @@ import {
     EVENT_GAME_UPDATE,
 } from '../types/event.interface';
 import { CardState } from '../types/card.interface';
+import { Region } from '../models/region.model';
 
 class GameService {
 
@@ -216,6 +217,50 @@ class GameService {
         });
     }
 
+    static async generateRegions(gameId: number) {
+        const colors = [
+            Color.BLUE,
+            Color.GRAY,
+            Color.GREEN,
+            Color.ORANGE,
+            Color.PURPLE,
+            Color.RED
+        ];
+
+        const values = shuffle([
+            0, 0,
+            2, 2,
+            4, 4, 4, 4,
+            6, 6, 6, 6, 6,
+            8, 8, 8,
+            10, 10
+        ]);
+
+        const valueSets = [];
+
+        let setCount = 0;
+        let set = [];
+
+        for (const value of values) {
+            set.push(value);
+            setCount++;
+
+            if (setCount === 3) {
+                valueSets.push(set.sort((a, b) => a - b));
+                set = [];
+                setCount = 0;
+            }
+        }
+
+        for (let i = 0; i < colors.length; i++) {
+            await Region.create({
+                gameId,
+                color: colors[i],
+                values: valueSets[i],
+            });
+        }
+    }
+
     static generateTribeCards(tribes: Tribe[]): ITribeCard[] {
         const tribeCards = [];
 
@@ -349,6 +394,8 @@ class GameService {
         }
 
         const startingPlayerId = shuffle(players)[0].id;
+
+        await GameService.generateRegions(gameId);
 
         await Game.update(
             {

@@ -25,7 +25,15 @@ module.exports = {
                 ],
             },
             color: {
-                type:  Sequelize.STRING,
+                type: Sequelize.ENUM,
+                values: [
+                    'blue',
+                    'gray',
+                    'green',
+                    'orange',
+                    'purple',
+                    'red'
+                ],
                 allowNull: true,
             },
             tribe_id: {
