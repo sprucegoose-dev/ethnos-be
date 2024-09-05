@@ -5,6 +5,7 @@ export enum CardState {
     IN_DECK = 'in_deck',
     IN_HAND = 'in_hand',
     IN_BAND = 'in_band',
+    REVEALED = 'revealed',
 }
 
 export interface ICard {

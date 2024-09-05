@@ -22,6 +22,7 @@ module.exports = {
                     'in_deck',
                     'in_hand',
                     'in_band',
+                    'revealed',
                 ],
             },
             color: {
