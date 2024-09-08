@@ -13,6 +13,7 @@ import { ActionType } from '../types/action.interface';
 import { CardState } from '../types/card.interface';
 import { Color } from '../types/game.interface';
 import { Card } from '../models/card.model';
+import { Player } from '../models/player.model';
 
 const arrayEquals = (arrayA: any[], arrayB: any[]) => {
     return arrayA.every((value, index) => value === arrayB[index])
@@ -89,6 +90,50 @@ describe('ActionService', () => {
             expect(activePlayer.cards.length).toBe(1);
             expect(updatedGame.cards.filter(card => card.state === CardState.IN_MARKET).length).toBe(8);
             expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeDefined();
+        });
+
+        it("should only return a 'play band' action if a player already has 10 cards in their hand", async () => {
+            const updatedGame = await GameService.getState(game.id);
+
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
+
+            const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            for (let i = 0; i < 9; i++) {
+                await Card.update(
+                    {
+                        playerId: activePlayer.id,
+                        state: CardState.IN_HAND,
+                    },
+                    {
+                        where: {
+                            id: cardsInDeck[i].id
+                        }
+                    }
+                );
+            }
+
+            const updatedActivePlayer = await Player.findOne({
+                where: {
+                    id: activePlayer.id
+                },
+                include: {
+                    model: Card,
+                    where: {
+                        state: CardState.IN_HAND
+                    }
+                }
+            });
+
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
+
+            expect(updatedActivePlayer.cards.length).toBe(10);
+            expect(actions.find(action => action.type === ActionType.DRAW_CARD)).toBeUndefined();
+            expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeUndefined();
+            expect(actions.filter(action => action.type === ActionType.PLAY_BAND).length).toBeGreaterThan(1);
         });
     });
 
