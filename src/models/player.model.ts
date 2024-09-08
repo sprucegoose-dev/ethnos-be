@@ -2,6 +2,7 @@ import {
     BelongsTo,
     Column,
     DataType,
+    HasMany,
     Model,
     Table,
 } from 'sequelize-typescript';
@@ -9,6 +10,7 @@ import {
 import { Game } from './game.model';
 import { User } from './user.model';
 import { Color } from '../types/game.interface';
+import { Card } from './card.model';
 
 @Table({
     tableName: 'players',
@@ -42,7 +44,7 @@ export class Player extends Model {
     @Column({
         defaultValue: [],
         field: 'orc_board_tokens',
-        type: DataType.ARRAY(DataType.ENUM(...Object.values(Color))),
+        type: DataType.JSON,
       })
       orcBoardTokens: Color[];
 
@@ -57,4 +59,7 @@ export class Player extends Model {
 
     @BelongsTo(() => User, 'userId')
     user: User;
+
+    @HasMany(() => Card, 'playerId')
+    cards: Card[];
 }

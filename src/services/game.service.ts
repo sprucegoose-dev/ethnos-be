@@ -99,7 +99,10 @@ class GameService {
                                 'id',
                                 'username',
                             ],
-                        }
+                        },
+                        {
+                            model: Card,
+                        },
                     ],
                 },
                 {

@@ -23,6 +23,10 @@ Runs the app in development mode. This will start a server on [http://localhost:
 
 Runs al the tests.
 
+## `npm run test -t [filename].test.ts
+
+Runs a single test file
+
 ### `npm run migrate`
 
 Runs all migrations to create tables in the database.

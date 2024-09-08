@@ -217,19 +217,17 @@ describe('UserService', () => {
         });
 
         it(`should throw an error if the provided username is more than ${USERNAME_MAX_CHARS} characters`, async () => {
-                const payload = {
-                    username: 'very-long-username',
-                    email: 'valid-email@gmail.com',
-                    password: 'valid.password',
-                };
-                try {
-                    UserService.validateUserRequest(payload);
-                } catch (error: any) {
-                    expect(error.message).toBe(`Username cannot be more than ${USERNAME_MAX_CHARS} characters`);
-                }
-            });
-
-
+            const payload = {
+                username: 'very-long-username',
+                email: 'valid-email@gmail.com',
+                password: 'valid.password',
+            };
+            try {
+                UserService.validateUserRequest(payload);
+            } catch (error: any) {
+                expect(error.message).toBe(`Username cannot be more than ${USERNAME_MAX_CHARS} characters`);
+            }
+        });
     });
 
 });

@@ -11,7 +11,6 @@ import moment from 'moment';
 
 const {
     CREATED,
-    SETUP,
     STARTED,
 } = GameState;
 
@@ -56,12 +55,12 @@ describe('StaleGamesCleaner', () => {
             expect(cancelledGame.state).toBe(GameState.CANCELLED);
         });
 
-        it(`should cancel a game in a '${SETUP}' state if ${PENDING_GAMES_TIMEOUT_HRS} hours have elapsed`, async () => {
+        it(`should cancel a game in a '${CREATED}' state if ${PENDING_GAMES_TIMEOUT_HRS} hours have elapsed`, async () => {
             const newGame = await GameService.create(userA.id);
 
             await Game.update({
                 createdAt: moment().subtract(PENDING_GAMES_TIMEOUT_HRS + 1, 'hours').format('YYYY-MM-DD HH:mm:ss'),
-                state: SETUP,
+                state: CREATED,
             }, {
                 where: {
                     id: newGame.id

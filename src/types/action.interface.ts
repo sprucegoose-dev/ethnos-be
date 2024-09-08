@@ -1,14 +1,13 @@
 import { AuthRequest } from './index.interface';
 
 export enum ActionType {
-    MOVE = 'move',
-    DEPLOY = 'deploy',
-    REPLACE = 'replace',
+    DRAW_CARD = 'draw_card',
+    PICK_UP_CARD = 'pick_up_card',
+    PLAY_BAND = 'play_band',
 }
 
 export interface IActionPayload {
-    sourceCardId?: number;
-    targetIndex: number;
+    cardIds?: number[];
     type: ActionType;
 }
 
