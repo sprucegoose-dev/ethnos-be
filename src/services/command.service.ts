@@ -40,7 +40,7 @@ class CommandService {
                 // await this.handleDeploy(game, activePlayer, payload);
                 break;
             case ActionType.PICK_UP_CARD:
-                // await this.handleReplace(game, activePlayer, payload);
+                nextAction = await CommandService.handlePickUpCard(game, activePlayer, payload);
                 break;
         }
 
@@ -60,6 +60,32 @@ class CommandService {
 
     static async handlePlayBand(_game: Game, _activePlayer: Player, _payload: IActionPayload): Promise<boolean> {
         return;
+    }
+
+    static async handlePickUpCard(game: Game, activePlayer: Player, payload: IActionPayload): Promise<void> {
+        const cardsInHand = activePlayer.cards.filter(card => card.state === CardState.IN_HAND);
+
+        if (cardsInHand.length === 10) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Cannot exceed hand limit of 10 cards');
+        }
+
+        if (payload.cardIds.length !== 1) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Must pick up exactly one card');
+        }
+
+        const cardId = payload.cardIds[0];
+
+        const card = game.cards.find(card => card.state === CardState.IN_MARKET && card.id === cardId);
+
+        if (!card) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid card');
+        }
+
+        await card.update({
+            state: CardState.IN_BAND,
+            playerId: activePlayer.id,
+            index: null,
+        });
     }
 
     static async handleDrawCard(game: Game, activePlayer: Player): Promise<void> {
@@ -94,7 +120,7 @@ class CommandService {
             await nextCard.update({
                 state: CardState.IN_HAND,
                 playerId: activePlayer.id,
-                index: 0,
+                index: null,
             });
         }
     }

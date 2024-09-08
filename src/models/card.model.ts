@@ -64,7 +64,9 @@ export class Card extends Model {
     })
     playerId: number;
 
-    @Column
+    @Column({
+        defaultValue: null,
+    })
     index: number;
 
     @Column({
