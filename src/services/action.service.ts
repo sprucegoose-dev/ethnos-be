@@ -1,4 +1,4 @@
-import { Player } from '../models/player.model';
+import { Card } from '../models/card.model';
 import { ActionType, IActionPayload } from '../types/action.interface';
 import { CardState } from '../types/card.interface';
 import { GameState } from '../types/game.interface';
@@ -36,7 +36,7 @@ export class ActionService {
             }
         }
 
-        const playBandActions = ActionService.getPlayBandActions(activePlayer);
+        const playBandActions = ActionService.getPlayBandActions(cardsInHand);
 
         if (playBandActions.length) {
             actions = [...actions, ...playBandActions];
@@ -45,9 +45,7 @@ export class ActionService {
         return actions;
     }
 
-    static getPlayBandActions(player: Player): IActionPayload[] {
-        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-
+    static getPlayBandActions(cardsInHand: Card[]): IActionPayload[] {
         const leaders = cardsInHand.filter(card => card.tribe.name !== TribeName.SKELETON);
 
         const playBandActions = [];

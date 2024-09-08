@@ -1,13 +1,5 @@
-// import { Op } from 'sequelize';
-// import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
-// import { Card } from '../models/card.model';
 import { Game } from '../models/game.model';
-// import { Player } from '../models/player.model';
-// import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';
-// import { IUserResponse } from '../types/user.interface';
-// import EventService from './event.service';
 import GameService from './game.service';
-// import PlayerService from './player.service';
 import {
     userA,
     userB,
@@ -19,6 +11,12 @@ import { TribeName } from '../types/tribe.interface';
 import { ActionService } from './action.service';
 import { ActionType } from '../types/action.interface';
 import { CardState } from '../types/card.interface';
+import { Color } from '../types/game.interface';
+import { Card } from '../models/card.model';
+
+const arrayEquals = (arrayA: any[], arrayB: any[]) => {
+    return arrayA.every((value, index) => value === arrayB[index])
+}
 
 describe('ActionService', () => {
 
@@ -91,6 +89,80 @@ describe('ActionService', () => {
             expect(activePlayer.cards.length).toBe(1);
             expect(updatedGame.cards.filter(card => card.state === CardState.IN_MARKET).length).toBe(8);
             expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeDefined();
+        });
+    });
+
+    describe('getPlayBandActions', () => {
+
+        it("should return all the valid 'play band' actions", () => {
+            const cardsInHand = [
+                {
+                    id: 1,
+                    tribe: {
+                        name: TribeName.CENTAUR,
+                    },
+                    color: Color.BLUE,
+                },
+                {
+                    id: 2,
+                    tribe: {
+                        name: TribeName.CENTAUR,
+                    },
+                    color: Color.GRAY,
+                },
+                {
+                    id: 3,
+                    tribe: {
+                        name: TribeName.ELF,
+                    },
+                    color: Color.ORANGE,
+                },
+                {
+                    id: 4,
+                    tribe: {
+                        name: TribeName.TROLL,
+                    },
+                    color: Color.BLUE,
+                },
+                {
+                    id: 5,
+                    tribe: {
+                        name: TribeName.TROLL,
+                    },
+                    color: Color.GREEN,
+                },
+                {
+                    id: 6,
+                    tribe: {
+                        name: TribeName.TROLL,
+                    },
+                    color: Color.ORANGE,
+                },
+                {
+                    id: 7,
+                    tribe: {
+                        name: TribeName.SKELETON,
+                    },
+                    color: null,
+                }
+            ] as unknown as Card[];
+
+            const actions = ActionService.getPlayBandActions(cardsInHand);
+
+            // Centaur (Blue) + Troll (Blue) + Skeleton
+            expect(actions.find(action => arrayEquals(action.cardIds, [1, 4, 7]))).toBeDefined();
+
+            // Centaur (Blue) + Centaur (Gray) + Skeleton
+            expect(actions.find(action => arrayEquals(action.cardIds, [1, 2, 7]))).toBeDefined();
+
+            // Elf (Orange) + Troll (Orange) + Skeleton
+            expect(actions.find(action => arrayEquals(action.cardIds, [3, 6, 7]))).toBeDefined();
+
+            // Troll (Blue) + Troll (Green) + Troll (Orange) + Skeleton
+            expect(actions.find(action => arrayEquals(action.cardIds, [4, 5, 6, 7]))).toBeDefined();
+
+            // (INVALID) Elf (Orange) + Troll (Blue)
+            expect(actions.find(action => arrayEquals(action.cardIds, [3, 4]))).not.toBeDefined();
         });
     });
 });
