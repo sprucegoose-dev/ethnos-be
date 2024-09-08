@@ -42,6 +42,10 @@ module.exports = {
                     'started',
                 ],
             },
+            max_players: {
+                type: Sequelize.INTEGER,
+                defaultValue: 6,
+            },
             password: {
                 type: Sequelize.STRING,
             },

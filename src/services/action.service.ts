@@ -7,19 +7,7 @@ import GameService from './game.service';
 
 export class ActionService {
 
-    static getDrawAction(player: Player): IActionPayload {
-        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-
-        if (cardsInHand.length < 10) {
-            return {
-                type: ActionType.DRAW_CARD
-            };
-        }
-
-        return;
-    }
-
-    static async getActions(userId: number, gameId: number): Promise<IActionPayload[]> {
+    static async getActions(gameId: number, userId: number): Promise<IActionPayload[]> {
         const game = await GameService.getState(gameId);
         let actions: IActionPayload[] = [];
 

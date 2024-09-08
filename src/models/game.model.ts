@@ -53,6 +53,15 @@ export class Game extends Model {
     @Column
     state: GameState;
 
+    @Column({
+        field: 'max_players',
+        defaultValue: 6,
+    })
+    maxPlayers: number;
+
+    @Column
+    password: String;
+
     @CreatedAt
     @Column({ field: 'created_at' })
     // @ts-ignore

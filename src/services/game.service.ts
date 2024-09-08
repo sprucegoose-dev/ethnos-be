@@ -103,6 +103,9 @@ class GameService {
                         {
                             model: Card,
                             required: false,
+                            include: [
+                                Tribe,
+                            ],
                         },
                     ],
                 },
@@ -123,24 +126,28 @@ class GameService {
     }
 
     static async hasActiveGames(userId: number) {
-        const activeGames = await Game.findAll({
-            where: {
-                state: {
-                    [Op.notIn]: [GameState.ENDED, GameState.CANCELLED]
-                },
-            }
-        });
+        try {
+            const activeGames = await Game.findAll({
+                where: {
+                    state: {
+                        [Op.notIn]: [GameState.ENDED, GameState.CANCELLED]
+                    },
+                }
+            });
 
-        const activePlayers = await Player.findAll({
-            where: {
-                userId,
-                gameId: {
-                    [Op.in]: activeGames.map(g => g.id),
-                },
-            }
-        });
+            const activePlayers = await Player.findAll({
+                where: {
+                    userId,
+                    gameId: {
+                        [Op.in]: activeGames.map(g => g.id),
+                    },
+                }
+            });
 
-        return activePlayers.length;
+            return activePlayers.length;
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     static async join(userId: number, gameId: number): Promise<void> {

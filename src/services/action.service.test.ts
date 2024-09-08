@@ -3,75 +3,94 @@
 // import { Card } from '../models/card.model';
 import { Game } from '../models/game.model';
 // import { Player } from '../models/player.model';
-import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';
-import { GameState } from '../types/game.interface';
-import { IUserResponse } from '../types/user.interface';
-import EventService from './event.service';
+// import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';
+// import { IUserResponse } from '../types/user.interface';
+// import EventService from './event.service';
 import GameService from './game.service';
 // import PlayerService from './player.service';
-import UserService from './user.service';
+import {
+    userA,
+    userB,
+    userC,
+    userD,
+} from '../../jest.setup';
+import PlayerService from './player.service';
+import { TribeName } from '../types/tribe.interface';
+import { ActionService } from './action.service';
+import { ActionType } from '../types/action.interface';
+import { CardState } from '../types/card.interface';
 
-describe('GameService', () => {
-    const userDataA = {
-        username: 'SpruceGoose',
-        email: 'spruce.goose@gmail.com',
-        password: 'alrighty.then',
-    };
-    // const userDataB = {
-    //     username: 'VioleTide',
-    //     email: 'violet.tide@gmail.com',
-    //     password: 'animaniacs',
-    // };
-    // const userDataC = {
-    //     username: 'Milky',
-    //     email: 'milky.fury@yahoo.com',
-    //     password: 'smoothie',
-    // };
-    let userA: IUserResponse;
-    // let userB: IUserResponse;
-    // let userC: IUserResponse;
+describe('ActionService', () => {
 
-    beforeAll(async () => {
-        userA = await UserService.create(userDataA);
-        // userB = await UserService.create(userDataB);
-        // userC = await UserService.create(userDataC);
-    });
-
-    describe('create', () => {
+    describe('getActions', () => {
+        let game: Game;
 
         beforeEach(async () => {
+            game = await GameService.create(userA.id);
+            await PlayerService.create(userA.id, game.id);
+            await PlayerService.create(userB.id, game.id);
+            await PlayerService.create(userC.id, game.id);
+            await PlayerService.create(userD.id, game.id);
+
+            const settings = {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                ]
+            };
+
+            await GameService.start(userA.id, game.id, settings);
+        });
+
+        afterEach(async () => {
             await Game.truncate();
         });
 
-        it('should create a new game', async () => {
-            const newGame = await GameService.create(userA.id);
+        it("should return a 'play band' action if a player has at least one card in their hand", async () => {
+            const updatedGame = await GameService.getState(game.id);
 
-            const existingGame = await Game.findOne({
-                where: {
-                    id: newGame.id,
-                }
-            });
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
 
-            expect(existingGame.creatorId).toBe(userA.id);
-            expect(existingGame.state).toBe(GameState.CREATED);
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
+
+            expect(activePlayer.cards.length).toBe(1);
+            expect(actions.find(action => action.type === ActionType.PLAY_BAND)).toBeDefined();
         });
 
-        it('should emit an \'update active games\' websocket event', async () => {
-            await GameService.create(userA.id);
+        it("should return a 'draw card' action if a player has fewer than 10 cards in their hand", async () => {
+            const updatedGame = await GameService.getState(game.id);
 
-            const activeGames = await GameService.getActiveGames();
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
 
-            const emitEventSpy = jest.spyOn(EventService, 'emitEvent');
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
 
-            expect(emitEventSpy).toHaveBeenCalledWith({
-                type: EVENT_ACTIVE_GAMES_UPDATE,
-                payload: activeGames
-            });
+            expect(activePlayer.cards.length).toBe(1);
+            expect(actions.find(action => action.type === ActionType.DRAW_CARD)).toBeDefined();
         });
 
-        afterAll(async () => {
-            await Game.truncate();
-        });
+        it("should return a 'pick up card' action if a player has fewer than 10 cards in their hand and there are cards in the market", async () => {
+            const updatedGame = await GameService.getState(game.id);
 
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
+
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
+
+            expect(activePlayer.cards.length).toBe(1);
+            expect(updatedGame.cards.filter(card => card.state === CardState.IN_MARKET).length).toBe(8);
+            expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeDefined();
+        });
     });
 });

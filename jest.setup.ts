@@ -1,8 +1,36 @@
 import { DataTypes } from 'sequelize';
 import sequelize from './database/connection';
+import { IUserResponse } from './src/types/user.interface';
+import UserService from './src/services/user.service';
 
 const glob = require('glob');
 const path = require('path');
+
+const userDataA = {
+    username: 'SpruceGoose',
+    email: 'spruce.goose@gmail.com',
+    password: 'alrighty.then',
+};
+const userDataB = {
+    username: 'VioleTide',
+    email: 'violet.tide@gmail.com',
+    password: 'animaniacs',
+};
+const userDataC = {
+    username: 'Milky',
+    email: 'milky.fury@yahoo.com',
+    password: 'smoothie',
+};
+const userDataD = {
+    username: 'Bismo',
+    email: 'bismo.skint@gmail.com',
+    password: 'sling3021',
+};
+
+let userA: IUserResponse;
+let userB: IUserResponse;
+let userC: IUserResponse;
+let userD: IUserResponse;
 
 beforeAll(async () => {
     const migrations = glob.sync('database/migrations/*.js');
@@ -19,8 +47,17 @@ beforeAll(async () => {
     }
 });
 
+beforeAll(async () => {
+    userA = await UserService.create(userDataA);
+    userB = await UserService.create(userDataB);
+    userC = await UserService.create(userDataC);
+    userD = await UserService.create(userDataD);
+});
+
 jest.mock('./src/services/event.service.ts', () => {
     return {
         emitEvent: jest.fn(),
     }
 });
+
+export { userA, userB, userC, userD };

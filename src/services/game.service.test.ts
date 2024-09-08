@@ -1,60 +1,24 @@
 import { Card } from '../models/card.model';
 import { Game } from '../models/game.model';
-import { IUserResponse } from '../types/user.interface';
 import EventService from './event.service';
 import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';
 import GameService from './game.service';
-import UserService from './user.service';
-import { User } from '../models/user.model';
 import PlayerService from './player.service';
 import { GameState, IGameSettings } from '../types/game.interface';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
 import { Player } from '../models/player.model';
 import { TribeName } from '../types/tribe.interface';
 import { CardState } from '../types/card.interface';
+import {
+    userA,
+    userB,
+    userC,
+    userD,
+} from '../../jest.setup';
 
 describe('GameService', () => {
-    const userDataA = {
-        username: 'SpruceGoose',
-        email: 'spruce.goose@gmail.com',
-        password: 'alrighty.then',
-    };
-    const userDataB = {
-        username: 'VioleTide',
-        email: 'violet.tide@gmail.com',
-        password: 'animaniacs',
-    };
-    const userDataC = {
-        username: 'Milky',
-        email: 'milky.fury@yahoo.com',
-        password: 'smoothie',
-    };
-    const userDataD = {
-        username: 'Bismo',
-        email: 'bismo.skint@gmail.com',
-        password: 'sling3021',
-    };
-    let userA: IUserResponse;
-    let userB: IUserResponse;
-    let userC: IUserResponse;
-    let userD: IUserResponse;
-
-    beforeAll(async () => {
-        userA = await UserService.create(userDataA);
-        userB = await UserService.create(userDataB);
-        userC = await UserService.create(userDataC);
-        userD = await UserService.create(userDataD);
-    });
-
-    afterAll(async () => {
-        await User.truncate();
-    });
 
     describe('create', () => {
-
-        afterEach(async () => {
-            await Game.truncate();
-        });
 
         afterEach(async () => {
             await Game.truncate();
