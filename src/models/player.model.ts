@@ -43,13 +43,20 @@ export class Player extends Model {
 
     @Column({
         defaultValue: [],
-        field: 'orc_board_tokens',
+        field: 'orc_tokens',
         type: DataType.JSON,
       })
-      orcBoardTokens: Color[];
+      orcTokens: Color[];
 
-    @Column({ field: 'merfolk_board_score' })
-    merfolkBoardScore: number;
+      @Column({
+        defaultValue: [],
+        field: 'troll_tokens',
+        type: DataType.JSON,
+      })
+      trollTokens: number[];
+
+    @Column({ field: 'merfolk_track_score' })
+    merfolkTrackScore: number;
 
     @Column({ defaultValue: 0 })
     points: number;

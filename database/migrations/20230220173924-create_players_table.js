@@ -37,11 +37,15 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 defaultValue: 0,
             },
-            orc_board_tokens: {
+            orc_tokens: {
                 type: Sequelize.JSON,
                 defaultValue: []
             },
-            merfolk_board_score: {
+            troll_tokens: {
+                type: Sequelize.JSON,
+                defaultValue: []
+            },
+            merfolk_track_score: {
                 type: Sequelize.INTEGER,
                 defaultValue: 0,
             },
