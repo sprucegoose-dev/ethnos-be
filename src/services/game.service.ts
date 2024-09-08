@@ -102,14 +102,21 @@ class GameService {
                         },
                         {
                             model: Card,
+                            required: false,
                         },
                     ],
+                },
+                {
+                    model: Region,
+                    as: 'regions',
+                    required: false,
                 },
                 {
                     model: Card,
                     include: [
                         Tribe,
                     ],
+                    required: false,
                 }
             ]
         });
@@ -353,6 +360,7 @@ class GameService {
 
         const tribeCards = GameService.generateTribeCards(tribes);
         const cards = shuffle(tribeCards.filter(tribe => tribe.name !== TribeName.DRAGON));
+
         const dragonsCards = tribeCards.filter(tribe => tribe.name === TribeName.DRAGON);
         const playerCards = cards.splice(0, players.length);
         const marketCards = cards.splice(0, players.length * 2);

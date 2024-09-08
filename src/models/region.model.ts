@@ -31,7 +31,7 @@ export class Region extends Model {
     color: Color;
 
     @Column({ type: DataType.JSON })
-    values: string[];
+    values: number[];
 
     @BelongsTo(() => Game, 'gameId')
     game: Game;

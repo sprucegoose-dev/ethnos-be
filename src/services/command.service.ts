@@ -1,8 +1,8 @@
 // import { Op } from 'sequelize';
 
-import { Game } from '../models/game.model';
-import { Player } from '../models/player.model';
-import { ActionType, IActionPayload } from '../types/action.interface';
+// import { Game } from '../models/game.model';
+// import { Player } from '../models/player.model';
+import { IActionPayload } from '../types/action.interface';
 // import { GameState, } from '../types/game.interface';
 import {
     CustomException,
@@ -15,21 +15,7 @@ import { EVENT_GAME_UPDATE } from '../types/event.interface';
 
 class CommandService {
 
-    static async handleDeploy(game: Game, player: Player, payload: IActionPayload): Promise<void> {
-        await Player.update({
-            position: payload.targetIndex,
-        }, {
-            where: {
-                id: player.id,
-            }
-        });
-
-        game.activePlayerId = game.players.find(p => p.id !== player.id).id;
-
-        await game.save();
-    }
-
-    static async handleAction(userId: number, gameId: number, payload: IActionPayload): Promise<void> {
+    static async handleAction(userId: number, gameId: number, _payload: IActionPayload): Promise<void> {
         // TODO: validate action
         const game = await GameService.getState(gameId);
 
@@ -45,17 +31,17 @@ class CommandService {
             throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
         }
 
-        switch (payload.type) {
-            case ActionType.MOVE:
-                // await this.handleMove(game, activePlayer, payload);
-                break;
-            case ActionType.DEPLOY:
-                // await this.handleDeploy(game, activePlayer, payload);
-                break;
-            case ActionType.REPLACE:
-                // await this.handleReplace(game, activePlayer, payload);
-                break;
-        }
+        // switch (payload.type) {
+        //     case ActionType.MOVE:
+        //         // await this.handleMove(game, activePlayer, payload);
+        //         break;
+        //     case ActionType.DEPLOY:
+        //         // await this.handleDeploy(game, activePlayer, payload);
+        //         break;
+        //     case ActionType.REPLACE:
+        //         // await this.handleReplace(game, activePlayer, payload);
+        //         break;
+        // }
 
         const updatedGameState = await GameService.getState(gameId);
 

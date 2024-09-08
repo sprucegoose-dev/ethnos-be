@@ -11,6 +11,7 @@ import { GameState } from '../types/game.interface';
 import { Card } from './card.model';
 import { Player } from './player.model';
 import { User } from './user.model';
+import { Region } from './region.model';
 
 @Table({
     tableName: 'games',
@@ -63,17 +64,20 @@ export class Game extends Model {
     updatedAt: Date;
 
     @BelongsTo(() => User, 'creatorId')
-    creator: User
+    creator: User;
 
     @BelongsTo(() => Player, 'activePlayerId')
-    activePlayer: Player
+    activePlayer: Player;
 
     @BelongsTo(() => User, 'winnerId')
-    winner: User
+    winner: User;
 
     @HasMany(() => Card, 'gameId')
-    cards: Card[]
+    cards: Card[];
 
     @HasMany(() => Player, 'gameId')
-    players: Player[]
+    players: Player[];
+
+    @HasMany(() => Region, 'gameId')
+    regions: Region[];
 }

@@ -1,8 +1,5 @@
-// import { Op } from 'sequelize';
 import { Card } from '../models/card.model';
 import { Game } from '../models/game.model';
-// import { Player } from '../models/player.model';
-// import { GameState } from '../types/game.interface';
 import { IUserResponse } from '../types/user.interface';
 import EventService from './event.service';
 import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';
@@ -14,6 +11,7 @@ import { GameState, IGameSettings } from '../types/game.interface';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
 import { Player } from '../models/player.model';
 import { TribeName } from '../types/tribe.interface';
+import { CardState } from '../types/card.interface';
 
 describe('GameService', () => {
     const userDataA = {
@@ -270,9 +268,7 @@ describe('GameService', () => {
 
         afterEach(async () => {
             await Card.truncate();
-        });
-
-        afterEach(async () => {
+            await Player.truncate();
             await Game.truncate();
         });
 
@@ -289,7 +285,7 @@ describe('GameService', () => {
 
             const updatedGame = await GameService.getState(game.id);
 
-            const playerCards = updatedGame.cards.filter(card => card.playerId);
+            const playerCards = updatedGame.cards.filter(card => card.state === CardState.IN_HAND);
 
             expect(playerCards.length).toBe(4);
 
@@ -299,109 +295,43 @@ describe('GameService', () => {
             expect(playerCards.filter(card => card.playerId === playerD.id).length).toBe(1);
         });
 
-        // it('should deal 1 card to each player', async () => {
-        //     const updatedGame = await GameService.getState(game.id);
+        it('should deal twice as many cards to the market as there are players', async () => {
+            await GameService.start(userA.id, game.id, settings);
 
-        //     const playerCards = updatedGame.cards.filter(card => card.playerId);
+            const updatedGame = await GameService.getState(game.id);
 
-        //     expect(playerCards.length).toBe(4);
+            const marketCards = updatedGame.cards.filter(card => card.state == CardState.IN_MARKET);
 
-        //     expect(playerCards.filter(card => card.playerId === playerA.id).length).toBe(1);
-        //     expect(playerCards.filter(card => card.playerId === playerB.id).length).toBe(1);
-        //     expect(playerCards.filter(card => card.playerId === playerC.id).length).toBe(1);
-        //     expect(playerCards.filter(card => card.playerId === playerD.id).length).toBe(1);
-        // });
+            expect(marketCards.length).toBe(8);
+        });
 
-        // it('should deal 3 cards to each player', async () => {
-        //     await GameService.start(userA.id, game.id);
+        it('should create a draw pile from the remaining cards plus three dragon cards', async () => {
+            await GameService.start(userA.id, game.id, settings);
 
-        //     const playerACards = await Card.findAll({
-        //         where: {
-        //             gameId: game.id,
-        //             playerId: playerA.id,
-        //         }
-        //     });
+            const updatedGame = await GameService.getState(game.id);
 
-        //     const playerBCards = await Card.findAll({
-        //         where: {
-        //             gameId: game.id,
-        //             playerId: playerB.id,
-        //         }
-        //     });
+            const deckCards = updatedGame.cards.filter(card => card.state == CardState.IN_DECK);
 
-        //     expect(playerACards.length).toBe(3);
-        //     expect(playerBCards.length).toBe(3);
-        // });
+            const marketCards = updatedGame.cards.filter(card => card.state == CardState.IN_MARKET);
 
-        // it('should deal one Codex card', async () => {
-        //     await GameService.start(userA.id, game.id);
+            const totalCardsInclDragons = 75;
 
-        //     const codexCard = await Card.findOne({
-        //         where: {
-        //             gameId: game.id,
-        //             playerId: null,
-        //             index: null,
-        //         }
-        //     });
+            expect(deckCards.length).toBe(totalCardsInclDragons - updatedGame.players.length - marketCards.length);
+            expect(deckCards.filter(card => card.tribe.name === TribeName.DRAGON).length).toBe(3);
+        });
 
-        //     expect(codexCard).toBeDefined();
-        // });
+        it('should create 6 regions with 3 ascending values each', async () => {
+            await GameService.start(userA.id, game.id, settings);
 
-        // it('should set the starting Codex color to the color of the last card in the continuum', async () => {
-        //     await GameService.start(userA.id, game.id);
+            const updatedGame = await GameService.getState(game.id);
 
-        //     const updatedGame = await Game.findOne({
-        //         where: {
-        //             id: game.id,
-        //         }
-        //     });
+            expect(updatedGame.regions.length).toBe(6);
 
-        //     const lastCard = await Card.findOne({
-        //         where: {
-        //             gameId: game.id,
-        //             playerId: null,
-        //             index: {
-        //                 [Op.not]: null,
-        //             },
-        //         },
-        //         order: [['id', 'DESC']],
-        //         include: [
-        //             CardType,
-        //         ]
-        //     });
-
-        //     expect(updatedGame.codexColor).toBe(lastCard.type.color);
-        // });
-
-        // it('should set the starting game phase to \'deployment\'', async () => {
-        //     await GameService.start(userA.id, game.id);
-
-        //     const updatedGame = await Game.findOne({
-        //         where: {
-        //             id: game.id,
-        //         }
-        //     });
-
-        //     expect(updatedGame.phase).toBe(GamePhase.DEPLOYMENT);
-        // });
-
-        // it('should emit an \'update active games\' websocket event', async () => {
-        //     await GameService.start(userA.id, game.id);
-
-        //     const activeGames = await GameService.getActiveGames();
-
-        //     const emitEventSpy = jest.spyOn(EventService, 'emitEvent');
-
-        //     expect(emitEventSpy).toHaveBeenCalledWith({
-        //         type: EVENT_ACTIVE_GAMES_UPDATE,
-        //         payload: activeGames
-        //     });
-        // });
-
-        // afterAll(async () => {
-        //     await Game.truncate();
-        // });
-
+            for (const region of updatedGame.regions) {
+                expect(region.values.length).toBe(3);
+                expect(region.values[0]).toBeLessThanOrEqual(region.values[1]);
+                expect(region.values[1]).toBeLessThanOrEqual(region.values[2]);
+            }
+        });
     });
-
 });
