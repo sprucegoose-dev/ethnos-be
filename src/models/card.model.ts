@@ -1,10 +1,10 @@
 import {
     BelongsTo,
     Column,
+    HasMany,
     Model,
     Table,
 } from 'sequelize-typescript';
-import { Band } from './band.model';
 import { Tribe } from './tribe.model';
 import { Game } from './game.model';
 import { Player } from './player.model';
@@ -38,13 +38,14 @@ export class Card extends Model {
     tribeId: number;
 
     @Column({
-        field: 'band_id',
+        field: 'leader_id',
         references: {
-            model: Band,
+            model: Card,
             key: 'id',
-        }
+        },
+        defaultValue: null,
     })
-    bandId: number;
+    leaderId: number;
 
     @Column({
         field: 'game_id',
@@ -69,16 +70,6 @@ export class Card extends Model {
     })
     index: number;
 
-    @Column({
-        field: 'is_leader',
-        defaultValue: null,
-        allowNull: true
-    })
-    isLeader: number;
-
-    @BelongsTo(() => Band, 'bandId')
-    band: Band;
-
     @BelongsTo(() => Tribe, 'tribeId')
     tribe: Tribe;
 
@@ -87,4 +78,7 @@ export class Card extends Model {
 
     @BelongsTo(() => Game, 'gameId')
     game: Game;
+
+    @HasMany(() => Card, 'leaderId')
+    bandUnits: Card[];
 }

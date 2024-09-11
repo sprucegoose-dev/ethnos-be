@@ -44,13 +44,14 @@ module.exports = {
                     key: 'id',
                 },
             },
-            band_id: {
+            leader_id: {
                 ...foreignKey,
-                references: {
-                    model: 'bands',
-                    key: 'id',
-                },
-                allowNull: true,
+                ...{
+                    references: {
+                        model: 'cards',
+                        key: 'id',
+                    }
+                }
             },
             game_id: {
                 ...foreignKey,
@@ -70,11 +71,6 @@ module.exports = {
             },
             index: {
                 type: Sequelize.INTEGER,
-                defaultValue: null,
-                allowNull: true,
-            },
-            is_leader: {
-                type: Sequelize.BOOLEAN,
                 defaultValue: null,
                 allowNull: true,
             },

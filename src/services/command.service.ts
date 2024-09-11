@@ -1,4 +1,4 @@
-import { ActionType, IActionPayload } from '../types/action.interface';
+import { ActionType, IActionPayload, IPlayBandPayload } from '../types/action.interface';
 import {
     CustomException,
     ERROR_BAD_REQUEST,
@@ -11,6 +11,11 @@ import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
 import { CardState } from '../types/card.interface';
 import { TribeName } from '../types/tribe.interface';
+import { Card } from '../models/card.model';
+import { Op } from 'sequelize';
+import { Tribe } from '../models/tribe.model';
+import { Region } from '../models/region.model';
+import PlayerRegion from '../models/player_region.model';
 
 class CommandService {
 
@@ -58,7 +63,96 @@ class CommandService {
         });
     }
 
-    static async handlePlayBand(_game: Game, _activePlayer: Player, _payload: IActionPayload): Promise<boolean> {
+    static async handlePlayBand(game: Game, activePlayer: Player, payload: IPlayBandPayload): Promise<boolean> {
+        let nextAction;
+
+        const bandCards = activePlayer.cards.filter(card => payload.cardIds.includes(card.id));
+
+        const remainingCards = activePlayer.cards.filter(card => !payload.cardIds.includes(card.id));
+
+        const leader = bandCards.find(card => card.id === payload.leaderId);
+
+        let bandSize = bandCards.length;
+
+        if (leader.tribe.name === TribeName.MINOTAUR) {
+            bandSize++;
+        }
+
+        if (leader.tribe.name === TribeName.SKELETON) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
+        }
+
+        await Card.update({
+            state: CardState.IN_BAND,
+            playerId: activePlayer.id,
+            leaderId: payload.leaderId,
+            index: null,
+        }, {
+            where: {
+                id: {
+                    [Op.in]: payload.cardIds,
+                }
+            }
+        });
+
+        const region = await Region.findOne({
+            where: {
+                gameId: game.id,
+                color: leader.color,
+            }
+        });
+
+        const playerRegion = await PlayerRegion.findOne({
+            where: {
+                regionId: region.id,
+                playerId: activePlayer.id
+            }
+        });
+
+        if (bandSize > playerRegion.tokens) {
+            await playerRegion.update({
+                tokens: playerRegion.tokens + 1,
+            });
+        }
+
+        if (leader.tribe.name  === TribeName.CENTAUR) {
+            // If leader is a centuar AND a token was added to a region
+            nextAction = ActionType.PLAY_BAND;
+        }
+
+        if (leader.tribe.name === TribeName.ORC) {
+            // Add token to player orc board
+        }
+
+        if (leader.tribe.name === TribeName.GIANT) {
+            // If largest giant band, give to VP
+        }
+
+        if (leader.tribe.name === TribeName.MERFOLK) {
+            // Advance on Merfolk board
+            // If checkpoint crossed, give an ADD_TOKEN action
+        }
+
+        if (remainingCards.length) {
+            // unless a Centaur was played and a token added to the board
+            // unless an Elf was the leader, in which case the player must choose cards to discard
+            await Card.update({
+                state: CardState.IN_MARKET,
+                playerId: activePlayer.id,
+                leaderId: payload.leaderId,
+                index: null,
+            }, {
+                where: {
+                    playerId: activePlayer.id,
+                    id: {
+                        [Op.notIn]: payload.cardIds,
+                    }
+                }
+            });
+        }
+
+        // TODO: discard remaining cards
+
         return;
     }
 
@@ -82,7 +176,7 @@ class CommandService {
         }
 
         await card.update({
-            state: CardState.IN_BAND,
+            state: CardState.IN_HAND,
             playerId: activePlayer.id,
             index: null,
         });
