@@ -1,6 +1,7 @@
 import {
     ActionType,
     IActionPayload,
+    INextActionPayload,
     IPlayBandPayload
 } from '../types/action.interface';
 import {
@@ -82,7 +83,7 @@ class CommandService {
         });
     }
 
-    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<boolean> {
+    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload> {
         let nextAction;
 
         const bandCards = player.cards.filter(card => payload.cardIds.includes(card.id));
@@ -171,16 +172,57 @@ class CommandService {
         }
 
         if (tribe === MERFOLK) {
-            // Advance on Merfolk board
-            // If checkpoint crossed, give an ADD_TOKEN action
+            let freeTokens = 0;
+
+            const merfolkTrackCheckpoints =  [
+                3, 7, 12, 18
+            ];
+
+            for (let i = 1; i <= bandSize; i++) {
+                if (merfolkTrackCheckpoints.includes(player.merfolkTrackScore + i)) {
+                    freeTokens++
+                    // TODO: add 'FREE_TOKEN' next action for each free token
+                }
+            }
+
+            await player.update({
+                merfolkTrackScore: player.merfolkTrackScore + bandSize,
+            });
         }
 
         if (tribe === WIZARD) {
-            // Draw cards equal to band size
+            const cardsInMarket = game.cards.filter(card => card.state === CardState.IN_MARKET);
+            const maxDrawSize = bandSize > cardsInMarket.length ? cardsInMarket.length : bandSize;
+            for (let i = 0; i < maxDrawSize; i++) {
+                await CommandService.handleDrawCard(game, player);
+            }
         }
 
         if (tribe === TROLL) {
-            // gain troll token if available
+
+            let claimedTokens: number[] = [];
+
+            game.players.map(player => {
+                claimedTokens = [...claimedTokens, ...player.trollTokens];
+            });
+
+            let trollTokens = [6,5,4,3,2,1].filter((token) =>
+                !claimedTokens.includes(token)
+            );
+
+            if (trollTokens.includes(bandSize)) {
+                await player.update({
+                    trollTokens: [...player.trollTokens, bandSize]
+                });
+            } else {
+               const smallerToken = trollTokens.find(token => token < bandSize);
+
+               if (smallerToken) {
+                    await player.update({
+                        trollTokens: [...player.trollTokens, smallerToken]
+                    });
+               }
+            }
         }
 
         if (tribe === ELF) {
@@ -203,8 +245,7 @@ class CommandService {
             });
         }
 
-
-        return;
+        return nextAction;
     }
 
     static async handlePickUpCard(game: Game, activePlayer: Player, payload: IActionPayload): Promise<void> {
