@@ -1,4 +1,8 @@
-import { ActionType, IActionPayload, IPlayBandPayload } from '../types/action.interface';
+import {
+    ActionType,
+    IActionPayload,
+    IPlayBandPayload
+} from '../types/action.interface';
 import {
     CustomException,
     ERROR_BAD_REQUEST,
@@ -13,9 +17,24 @@ import { CardState } from '../types/card.interface';
 import { TribeName } from '../types/tribe.interface';
 import { Card } from '../models/card.model';
 import { Op } from 'sequelize';
-import { Tribe } from '../models/tribe.model';
 import { Region } from '../models/region.model';
 import PlayerRegion from '../models/player_region.model';
+
+const {
+    CENTAUR,
+    DRAGON,
+    DWARF,
+    ELF,
+    GIANT,
+    HALFING,
+    MERFOLK,
+    MINOTAUR,
+    ORC,
+    SKELETON,
+    TROLL,
+    WINGFOLK,
+    WIZARD,
+} = TribeName;
 
 class CommandService {
 
@@ -63,28 +82,34 @@ class CommandService {
         });
     }
 
-    static async handlePlayBand(game: Game, activePlayer: Player, payload: IPlayBandPayload): Promise<boolean> {
+    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<boolean> {
         let nextAction;
 
-        const bandCards = activePlayer.cards.filter(card => payload.cardIds.includes(card.id));
+        const bandCards = player.cards.filter(card => payload.cardIds.includes(card.id));
 
-        const remainingCards = activePlayer.cards.filter(card => !payload.cardIds.includes(card.id));
+        const remainingCards = player.cards.filter(card => !payload.cardIds.includes(card.id));
 
         const leader = bandCards.find(card => card.id === payload.leaderId);
+        const tribe = leader.tribe.name;
+        let color = leader.color;
 
         let bandSize = bandCards.length;
 
-        if (leader.tribe.name === TribeName.MINOTAUR) {
+        if (tribe === MINOTAUR) {
             bandSize++;
         }
 
-        if (leader.tribe.name === TribeName.SKELETON) {
+        if (tribe === SKELETON) {
             throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
+        }
+
+        if (tribe === WINGFOLK) {
+            color = payload.regionColor;
         }
 
         await Card.update({
             state: CardState.IN_BAND,
-            playerId: activePlayer.id,
+            playerId: player.id,
             leaderId: payload.leaderId,
             index: null,
         }, {
@@ -98,14 +123,14 @@ class CommandService {
         const region = await Region.findOne({
             where: {
                 gameId: game.id,
-                color: leader.color,
+                color,
             }
         });
 
         const playerRegion = await PlayerRegion.findOne({
             where: {
                 regionId: region.id,
-                playerId: activePlayer.id
+                playerId: player.id
             }
         });
 
@@ -113,37 +138,60 @@ class CommandService {
             await playerRegion.update({
                 tokens: playerRegion.tokens + 1,
             });
+
+            if (tribe  === CENTAUR && remainingCards.length) {
+                nextAction = ActionType.PLAY_BAND;
+            }
         }
 
-        if (leader.tribe.name  === TribeName.CENTAUR) {
-            // If leader is a centuar AND a token was added to a region
-            nextAction = ActionType.PLAY_BAND;
+        if (tribe === ORC && !player.orcTokens.includes(color)) {
+            await player.update({
+                orcTokens: [...player.orcTokens, color]
+            });
         }
 
-        if (leader.tribe.name === TribeName.ORC) {
-            // Add token to player orc board
+        if (tribe === GIANT) {
+            const largestGiantBand = await Player.findOne({
+                where: {
+                    gameId: game.id,
+                    giantTokenValue: {
+                        [Op.gte]: bandSize,
+                    }
+                }
+            });
+
+            if (!largestGiantBand) {
+                await player.update({
+                    giantTokenValue: bandSize,
+                    points: player.points + 2,
+                });
+            }
         }
 
-        if (leader.tribe.name === TribeName.GIANT) {
-            // If largest giant band, give to VP
-        }
-
-        if (leader.tribe.name === TribeName.MERFOLK) {
+        if (tribe === MERFOLK) {
             // Advance on Merfolk board
             // If checkpoint crossed, give an ADD_TOKEN action
         }
 
-        if (remainingCards.length) {
+        if (tribe === WIZARD) {
+            // Draw cards equal to band size
+        }
+
+        if (tribe === TROLL) {
+            // gain troll token if available
+        }
+
+        if (remainingCards.length && nextAction !== ActionType.PLAY_BAND) {
             // unless a Centaur was played and a token added to the board
             // unless an Elf was the leader, in which case the player must choose cards to discard
             await Card.update({
                 state: CardState.IN_MARKET,
-                playerId: activePlayer.id,
+                playerId: player.id,
                 leaderId: payload.leaderId,
                 index: null,
             }, {
                 where: {
-                    playerId: activePlayer.id,
+                    playerId: player.id,
                     id: {
                         [Op.notIn]: payload.cardIds,
                     }
@@ -193,13 +241,13 @@ class CommandService {
             .filter(card => card.state === CardState.IN_DECK)
             .sort((cardA, cardB) => cardA.index - cardB.index);
 
-        let dragonsRemaining = cardsInDeck.filter(card => card.tribe.name === TribeName.DRAGON).length;
+        let dragonsRemaining = cardsInDeck.filter(card => card.tribe.name === DRAGON).length;
 
         let nextCardIndex = 0;
 
         let nextCard = cardsInDeck[nextCardIndex];
 
-        while (nextCard.tribe.name === TribeName.DRAGON && dragonsRemaining > 1) {
+        while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1) {
             await nextCard.update({
                 state: CardState.REVEALED,
             });
