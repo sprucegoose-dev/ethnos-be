@@ -17,6 +17,11 @@ export interface IActionPayload {
 export interface IPlayBandPayload extends IActionPayload {
     leaderId: number;
     regionColor?: Color;
+    cardIdsToKeep?: number[];
+}
+
+export interface INextActionPayload {
+    type: ActionType;
 }
 
 export interface IActionRequest extends AuthRequest {

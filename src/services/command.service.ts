@@ -87,7 +87,7 @@ class CommandService {
 
         const bandCards = player.cards.filter(card => payload.cardIds.includes(card.id));
 
-        const remainingCards = player.cards.filter(card => !payload.cardIds.includes(card.id));
+        let remainingCards = player.cards.filter(card => !payload.cardIds.includes(card.id));
 
         const leader = bandCards.find(card => card.id === payload.leaderId);
         const tribe = leader.tribe.name;
@@ -140,7 +140,9 @@ class CommandService {
             });
 
             if (tribe  === CENTAUR && remainingCards.length) {
-                nextAction = ActionType.PLAY_BAND;
+                nextAction = {
+                    type: ActionType.PLAY_BAND
+                };
             }
         }
 
@@ -181,9 +183,11 @@ class CommandService {
             // gain troll token if available
         }
 
-        if (remainingCards.length && nextAction !== ActionType.PLAY_BAND) {
-            // unless a Centaur was played and a token added to the board
-            // unless an Elf was the leader, in which case the player must choose cards to discard
+        if (tribe === ELF) {
+            remainingCards = remainingCards.filter(card => !payload.cardIdsToKeep.includes(card.id));
+        }
+
+        if (remainingCards.length && !nextAction) {
             await Card.update({
                 state: CardState.IN_MARKET,
                 playerId: player.id,
@@ -193,13 +197,12 @@ class CommandService {
                 where: {
                     playerId: player.id,
                     id: {
-                        [Op.notIn]: payload.cardIds,
+                        [Op.in]: remainingCards.map(card => card.id)
                     }
                 }
             });
         }
 
-        // TODO: discard remaining cards
 
         return;
     }
