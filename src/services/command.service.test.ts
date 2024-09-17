@@ -10,11 +10,10 @@ import PlayerService from './player.service';
 import { TribeName } from '../types/tribe.interface';
 import { CommandService } from './command.service';
 import { CardState } from '../types/card.interface';
-import { IGameState } from '../types/game.interface';
+import { GameState, IGameState } from '../types/game.interface';
 import { Card } from '../models/card.model';
 import { Player } from '../models/player.model';
 import { Op } from 'sequelize';
-import { Tribe } from '../models/tribe.model';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
 
 function getCardsFromDeck(cards: Card[], quantity: number): number[] {
@@ -78,20 +77,7 @@ describe('CommandService', () => {
                 },
             });
 
-            const player = await Player.findOne({
-                where: {
-                    id: playerA.id,
-                },
-                include: [
-                    {
-                        model: Card,
-                        required: false,
-                        include: [
-                            Tribe,
-                        ],
-                    },
-                ]
-            });
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
 
             const cardToPickUp = await Card.findOne({
                 where: {
@@ -112,20 +98,7 @@ describe('CommandService', () => {
         });
 
         it('should throw an error if the target card being picked up is not in the market', async () => {
-            const player = await Player.findOne({
-                where: {
-                    id: playerA.id,
-                },
-                include: [
-                    {
-                        model: Card,
-                        required: false,
-                        include: [
-                            Tribe,
-                        ],
-                    },
-                ]
-            });
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
 
             const cardToPickUp = await Card.findOne({
                 where: {
@@ -146,20 +119,7 @@ describe('CommandService', () => {
         });
 
         it('should assign the target card to the player if the card is in the market', async () => {
-            let player = await Player.findOne({
-                where: {
-                    id: playerA.id,
-                },
-                include: [
-                    {
-                        model: Card,
-                        required: false,
-                        include: [
-                            Tribe,
-                        ],
-                    },
-                ]
-            });
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
 
             expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(1);
 
@@ -174,22 +134,168 @@ describe('CommandService', () => {
 
             await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
 
-            player = await Player.findOne({
-                where: {
-                    id: playerA.id,
-                },
-                include: [
-                    {
-                        model: Card,
-                        required: false,
-                        include: [
-                            Tribe,
-                        ],
-                    },
-                ]
-            });
+            player = await PlayerService.getPlayerWithCards(playerA.id);
 
             expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
+        });
+    });
+
+    describe('handleDrawCard', () => {
+        let game: Game;
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            game = await GameService.create(userA.id);
+            playerA = await PlayerService.create(userA.id, game.id);
+            await PlayerService.create(userB.id, game.id);
+            await PlayerService.create(userC.id, game.id);
+            await PlayerService.create(userD.id, game.id);
+
+            const settings = {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                ]
+            };
+
+            await GameService.start(userA.id, game.id, settings);
+
+            gameState = await GameService.getState(game.id);
+        });
+
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it('should throw an error if a player already has 10 cards in hand', async () => {
+            const cardIdsToAssign = getCardsFromDeck(gameState.cards, 9);
+
+            await Card.update({
+                playerId: playerA.id,
+                state: CardState.IN_HAND,
+            }, {
+                where: {
+                    id: {
+                        [Op.in]: cardIdsToAssign
+                    },
+                    index: {
+                        [Op.lte]: 9
+                    }
+                },
+            });
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const updatedGame = await GameService.getState(game.id);
+
+            try {
+                await CommandService.handleDrawCard(updatedGame, player);
+                throw new Error('Expected error not thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Cannot exceed hand limit of 10 cards');
+            }
+        });
+
+        it("should add a card from the deck to the player's hand", async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            let updatedGame = await GameService.getState(game.id);
+
+            const cardsInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(1);
+
+            await CommandService.handleDrawCard(updatedGame, player);
+
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
+
+            updatedGame = await GameService.getState(game.id);
+
+            const updatedCardInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
+
+            expect(updatedCardInDeckCount).toBe(cardsInDeckCount - 1);
+        });
+
+        it("should skip a dragon card and instead draw the next card", async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            let updatedGame = await GameService.getState(game.id);
+
+            const cardsInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
+
+            const dragonCards = updatedGame.cards
+                .filter(card =>
+                    card.state === CardState.IN_DECK &&
+                    card.tribe.name === TribeName.DRAGON
+                );
+
+            const nonDragonCard = updatedGame.cards
+                .find(card => card.state === CardState.IN_DECK &&
+                    card.tribe.name !== TribeName.DRAGON
+                );
+
+            dragonCards[0].index = 0;
+            nonDragonCard.index = 1;
+            dragonCards[1].index = 2
+
+            updatedGame.cards = [dragonCards[0], nonDragonCard, dragonCards[1]];
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(1);
+
+            await CommandService.handleDrawCard(updatedGame, player);
+
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
+
+            updatedGame = await GameService.getState(game.id);
+
+            const updatedCardInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
+
+            expect(updatedCardInDeckCount).toBe(cardsInDeckCount - 2);
+
+            const revealedDragons = updatedGame.cards.filter(card =>
+                card.tribe.name === TribeName.DRAGON &&
+                card.state === CardState.REVEALED
+            );
+
+            expect(revealedDragons.length).toBe(1);
+        });
+
+        it('should end the game if the last dragon is revealed', async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            let updatedGame = await GameService.getState(game.id);
+
+            const dragonCard = updatedGame.cards
+                .find(card =>
+                    card.state === CardState.IN_DECK &&
+                    card.tribe.name === TribeName.DRAGON
+                );
+
+            const nonDragonCard = updatedGame.cards
+                .filter(card => card.state === CardState.IN_DECK)
+                .find(card => card.tribe.name !== TribeName.DRAGON);
+
+            dragonCard.index = 0;
+            nonDragonCard.index = 1;
+
+            updatedGame.cards = [dragonCard, nonDragonCard];
+
+            await CommandService.handleDrawCard(updatedGame, player);
+
+            updatedGame = await GameService.getState(game.id);
+
+            expect(updatedGame.state).toBe(GameState.ENDED);
         });
     });
 

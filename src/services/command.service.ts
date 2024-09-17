@@ -20,7 +20,10 @@ import { Card } from '../models/card.model';
 import { Op } from 'sequelize';
 import { Region } from '../models/region.model';
 import PlayerRegion from '../models/player_region.model';
-import { Color } from '../types/game.interface';
+import {
+    Color,
+    GameState
+} from '../types/game.interface';
 import { IHandleTribeOptions, IRemainingCardsOptions } from '../types/command.interface';
 
 const {
@@ -361,17 +364,32 @@ export class CommandService {
 
         let nextCard = cardsInDeck[nextCardIndex];
 
-        while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1) {
-            await nextCard.update({
-                state: CardState.REVEALED,
-            });
-            dragonsRemaining--;
-            nextCardIndex++;
-            nextCard = cardsInDeck[nextCardIndex];
-        }
+        do {
+            if (nextCard.tribe.name === DRAGON) {
+                await nextCard.update({
+                    state: CardState.REVEALED,
+                    index: null,
+                });
+                dragonsRemaining--;
+                nextCardIndex++;
+                nextCard = cardsInDeck[nextCardIndex];
+            }
+        } while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
+
+        // while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1) {
+        //     await nextCard.update({
+        //         state: CardState.REVEALED,
+        //         index: null,
+        //     });
+        //     dragonsRemaining--;
+        //     nextCardIndex++;
+        //     nextCard = cardsInDeck[nextCardIndex];
+        // }
 
         if (!dragonsRemaining) {
-            // trigger game end
+            await game.update({
+                state: GameState.ENDED
+            });
         } else {
             await nextCard.update({
                 state: CardState.IN_HAND,
