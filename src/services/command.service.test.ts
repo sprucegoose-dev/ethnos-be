@@ -111,7 +111,7 @@ describe('CommandService', () => {
             }
         });
 
-        it('should throw an error if the card being picked up is not in the market', async () => {
+        it('should throw an error if the target card being picked up is not in the market', async () => {
             const player = await Player.findOne({
                 where: {
                     id: playerA.id,
@@ -143,6 +143,53 @@ describe('CommandService', () => {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid card');
             }
+        });
+
+        it('should assign the target card to the player if the card is in the market', async () => {
+            let player = await Player.findOne({
+                where: {
+                    id: playerA.id,
+                },
+                include: [
+                    {
+                        model: Card,
+                        required: false,
+                        include: [
+                            Tribe,
+                        ],
+                    },
+                ]
+            });
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(1);
+
+            const cardToPickUp = await Card.findOne({
+                where: {
+                    gameId: game.id,
+                    state: CardState.IN_MARKET
+                }
+            });
+
+            const updatedGame = await GameService.getState(game.id);
+
+            await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
+
+            player = await Player.findOne({
+                where: {
+                    id: playerA.id,
+                },
+                include: [
+                    {
+                        model: Card,
+                        required: false,
+                        include: [
+                            Tribe,
+                        ],
+                    },
+                ]
+            });
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
         });
     });
 
