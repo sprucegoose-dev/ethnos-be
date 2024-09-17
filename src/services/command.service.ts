@@ -44,6 +44,64 @@ const {
 
 export class CommandService {
 
+    static async assignCardsToBand(player: Player, payload: IPlayBandPayload, bandCards: Card[]) {
+        await Card.update({
+            state: CardState.IN_BAND,
+            playerId: player.id,
+            leaderId: payload.leaderId,
+            index: null,
+        }, {
+            where: {
+                id: { [Op.in]: bandCards.map(card => card.id) }
+            }
+        });
+    }
+
+    static filterElfCards(remainingCards: Card[], payload: IPlayBandPayload) {
+        return remainingCards.filter(card => !payload.cardIdsToKeep.includes(card.id));
+    }
+
+    static getBandCards(player: Player, cardIds: number[]): Card[] {
+        return player.cards.filter(card => cardIds.includes(card.id));
+    }
+
+    static getBandDetails(leader: Card, bandCards: Card[], payload: IPlayBandPayload) {
+        let tribe = leader.tribe.name;
+        let color = leader.color;
+        let bandSize = bandCards.length;
+
+        if (tribe === MINOTAUR) {
+            bandSize++;
+        }
+
+        if (tribe === WINGFOLK) {
+            color = payload.regionColor;
+        }
+
+        return { tribe, color, bandSize };
+    }
+
+    static getLeader(bandCards: Card[], leaderId: number): Card {
+        return bandCards.find(card => card.id === leaderId);
+    }
+
+    static getRemainingCards(player: Player, cardIds: number[]): Card[] {
+        return player.cards.filter(card => !cardIds.includes(card.id));
+    }
+
+    static async getPlayerRegion(region: Region, player: Player) {
+        return PlayerRegion.findOne({
+            where: {
+                regionId: region.id,
+                playerId: player.id
+            }
+        });
+    }
+
+    static async getRegion(game: Game, color: Color) {
+        return Region.findOne({ where: { gameId: game.id, color } });
+    }
+
     static async handleAction(userId: number, gameId: number, payload: IActionPayload): Promise<void> {
         const game = await GameService.getState(gameId);
 
@@ -87,6 +145,66 @@ export class CommandService {
         });
     }
 
+    static async handleDrawCard(game: Game, player: Player): Promise<void> {
+        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+        if (cardsInHand.length === 10) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Cannot exceed hand limit of 10 cards');
+        }
+
+        const cardsInDeck = game.cards
+            .filter(card => card.state === CardState.IN_DECK)
+            .sort((cardA, cardB) => cardA.index - cardB.index);
+
+        let dragonsRemaining = cardsInDeck.filter(card => card.tribe.name === DRAGON).length;
+
+        let nextCardIndex = 0;
+
+        let nextCard = cardsInDeck[nextCardIndex];
+
+        do {
+            if (nextCard.tribe.name === DRAGON) {
+                await nextCard.update({
+                    state: CardState.REVEALED,
+                    index: null,
+                });
+                dragonsRemaining--;
+                nextCardIndex++;
+                nextCard = cardsInDeck[nextCardIndex];
+            }
+        } while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
+
+        if (!dragonsRemaining) {
+            await game.update({
+                state: GameState.ENDED
+            });
+        } else {
+            await nextCard.update({
+                state: CardState.IN_HAND,
+                playerId: player.id,
+                index: null,
+            });
+        }
+    }
+
+    static async handleGiantBand(game: Game, player: Player, bandSize: number) {
+        const largestGiantBand = await Player.findOne({
+            where: {
+                gameId: game.id,
+                giantTokenValue: {
+                    [Op.gte]: bandSize
+                }
+            }
+        });
+
+        if (!largestGiantBand) {
+            await player.update({
+                giantTokenValue: bandSize,
+                points: player.points + 2,
+            });
+        }
+    }
+
     static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload> {
         let nextAction;
 
@@ -121,64 +239,55 @@ export class CommandService {
         return nextAction;
     }
 
-    static getBandCards(player: Player, cardIds: number[]): Card[] {
-        return player.cards.filter(card => cardIds.includes(card.id));
-    }
-
-    static getRemainingCards(player: Player, cardIds: number[]): Card[] {
-        return player.cards.filter(card => !cardIds.includes(card.id));
-    }
-
-    static getLeader(bandCards: Card[], leaderId: number): Card {
-        return bandCards.find(card => card.id === leaderId);
-    }
-
-    static getBandDetails(leader: Card, bandCards: Card[], payload: IPlayBandPayload) {
-        let tribe = leader.tribe.name;
-        let color = leader.color;
-        let bandSize = bandCards.length;
-
-        if (tribe === MINOTAUR) {
-            bandSize++;
-        }
-
-        if (tribe === WINGFOLK) {
-            color = payload.regionColor;
-        }
-
-        return { tribe, color, bandSize };
-    }
-
-    static validateTribe(tribe: TribeName) {
-        if (tribe === SKELETON) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
+    static async handleOrcTokens(player: Player, color: Color) {
+        if (!player.orcTokens.includes(color)) {
+            await player.update({ orcTokens: [...player.orcTokens, color] });
         }
     }
 
-    static async assignCardsToBand(player: Player, payload: IPlayBandPayload, bandCards: Card[]) {
-        await Card.update({
-            state: CardState.IN_BAND,
-            playerId: player.id,
-            leaderId: payload.leaderId,
-            index: null,
-        }, {
-            where: {
-                id: { [Op.in]: bandCards.map(card => card.id) }
+    static async handleMerfolkTrack(player: Player, bandSize: number) {
+        const merfolkTrackCheckpoints = [3, 7, 12, 18];
+        let freeTokens = 0;
+
+        for (let i = 1; i <= bandSize; i++) {
+            if (merfolkTrackCheckpoints.includes(player.merfolkTrackScore + i)) {
+                freeTokens++;
             }
+        }
+
+        for (let i = 0; i < freeTokens; i++) {
+            // TODO: add 'FREE_TOKEN' next action for each free token
+        }
+
+        await player.update({
+            merfolkTrackScore: player.merfolkTrackScore + bandSize,
         });
     }
 
-    static async getRegion(game: Game, color: Color) {
-        return Region.findOne({ where: { gameId: game.id, color } });
-    }
+    static async handleRemainingCards({
+        remainingCards,
+        nextAction,
+        player,
+        payload,
+        tribe,
+    }: IRemainingCardsOptions) {
+        if (tribe === ELF) {
+            remainingCards = this.filterElfCards(remainingCards, payload);
+        }
 
-    static async getPlayerRegion(region: Region, player: Player) {
-        return PlayerRegion.findOne({
-            where: {
-                regionId: region.id,
-                playerId: player.id
-            }
-        });
+        if (remainingCards.length && !nextAction) {
+            await Card.update({
+                state: CardState.IN_MARKET,
+                playerId: player.id,
+                leaderId: payload.leaderId,
+                index: null,
+            }, {
+                where: {
+                    playerId: player.id,
+                    id: { [Op.in]: remainingCards.map(card => card.id) }
+                }
+            });
+        }
     }
 
     static async handleTribeLogic({
@@ -225,58 +334,6 @@ export class CommandService {
         return nextAction;
     }
 
-    static async handleOrcTokens(player: Player, color: Color) {
-        if (!player.orcTokens.includes(color)) {
-            await player.update({ orcTokens: [...player.orcTokens, color] });
-        }
-    }
-
-    static async handleGiantBand(game: Game, player: Player, bandSize: number) {
-        const largestGiantBand = await Player.findOne({
-            where: {
-                gameId: game.id,
-                giantTokenValue: {
-                    [Op.gte]: bandSize
-                }
-            }
-        });
-
-        if (!largestGiantBand) {
-            await player.update({
-                giantTokenValue: bandSize,
-                points: player.points + 2,
-            });
-        }
-    }
-
-    static async handleMerfolkTrack(player: Player, bandSize: number) {
-        const merfolkTrackCheckpoints = [3, 7, 12, 18];
-        let freeTokens = 0;
-
-        for (let i = 1; i <= bandSize; i++) {
-            if (merfolkTrackCheckpoints.includes(player.merfolkTrackScore + i)) {
-                freeTokens++;
-            }
-        }
-
-        for (let i = 0; i < freeTokens; i++) {
-            // TODO: add 'FREE_TOKEN' next action for each free token
-        }
-
-        await player.update({
-            merfolkTrackScore: player.merfolkTrackScore + bandSize,
-        });
-    }
-
-    static async handleWizardDraw(game: Game, player: Player, bandSize: number) {
-        const cardsInMarket = game.cards.filter(card => card.state === CardState.IN_MARKET);
-        const maxDrawSize = Math.min(bandSize, cardsInMarket.length);
-
-        for (let i = 0; i < maxDrawSize; i++) {
-            await CommandService.handleDrawCard(game, player);
-        }
-    }
-
     static async handleTrollTokens(game: Game, player: Player, bandSize: number) {
         let claimedTokens: number[] = [];
 
@@ -297,33 +354,12 @@ export class CommandService {
         }
     }
 
-    static filterElfCards(remainingCards: Card[], payload: IPlayBandPayload) {
-        return remainingCards.filter(card => !payload.cardIdsToKeep.includes(card.id));
-    }
+    static async handleWizardDraw(game: Game, player: Player, bandSize: number) {
+        const cardsInMarket = game.cards.filter(card => card.state === CardState.IN_MARKET);
+        const maxDrawSize = Math.min(bandSize, cardsInMarket.length);
 
-    static async handleRemainingCards({
-        remainingCards,
-        nextAction,
-        player,
-        payload,
-        tribe,
-    }: IRemainingCardsOptions) {
-        if (tribe === ELF) {
-            remainingCards = this.filterElfCards(remainingCards, payload);
-        }
-
-        if (remainingCards.length && !nextAction) {
-            await Card.update({
-                state: CardState.IN_MARKET,
-                playerId: player.id,
-                leaderId: payload.leaderId,
-                index: null,
-            }, {
-                where: {
-                    playerId: player.id,
-                    id: { [Op.in]: remainingCards.map(card => card.id) }
-                }
-            });
+        for (let i = 0; i < maxDrawSize; i++) {
+            await CommandService.handleDrawCard(game, player);
         }
     }
 
@@ -347,55 +383,9 @@ export class CommandService {
         });
     }
 
-    static async handleDrawCard(game: Game, player: Player): Promise<void> {
-        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-
-        if (cardsInHand.length === 10) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'Cannot exceed hand limit of 10 cards');
-        }
-
-        const cardsInDeck = game.cards
-            .filter(card => card.state === CardState.IN_DECK)
-            .sort((cardA, cardB) => cardA.index - cardB.index);
-
-        let dragonsRemaining = cardsInDeck.filter(card => card.tribe.name === DRAGON).length;
-
-        let nextCardIndex = 0;
-
-        let nextCard = cardsInDeck[nextCardIndex];
-
-        do {
-            if (nextCard.tribe.name === DRAGON) {
-                await nextCard.update({
-                    state: CardState.REVEALED,
-                    index: null,
-                });
-                dragonsRemaining--;
-                nextCardIndex++;
-                nextCard = cardsInDeck[nextCardIndex];
-            }
-        } while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
-
-        // while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1) {
-        //     await nextCard.update({
-        //         state: CardState.REVEALED,
-        //         index: null,
-        //     });
-        //     dragonsRemaining--;
-        //     nextCardIndex++;
-        //     nextCard = cardsInDeck[nextCardIndex];
-        // }
-
-        if (!dragonsRemaining) {
-            await game.update({
-                state: GameState.ENDED
-            });
-        } else {
-            await nextCard.update({
-                state: CardState.IN_HAND,
-                playerId: player.id,
-                index: null,
-            });
+    static validateTribe(tribe: TribeName) {
+        if (tribe === SKELETON) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
         }
     }
 }
