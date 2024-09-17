@@ -51,7 +51,8 @@ module.exports = {
                         model: 'cards',
                         key: 'id',
                     }
-                }
+                },
+                allowNull: true,
             },
             game_id: {
                 ...foreignKey,

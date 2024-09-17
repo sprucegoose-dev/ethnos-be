@@ -9,21 +9,34 @@ export enum ActionType {
     ADD_TOKEN = 'add_token'
 }
 
-export interface IActionPayload {
+export interface IActionPayloadBase {
     cardIds?: number[];
-    type: ActionType;
+    type: ActionType.DRAW_CARD |
+        ActionType.KEEP_CARDS |
+        ActionType.ADD_TOKEN;
 }
 
-export interface IPlayBandPayload extends IActionPayload {
+export interface IPickUpCarddPayload {
+    cardId: number;
+    type: ActionType.PICK_UP_CARD;
+}
+
+export interface IPlayBandPayload {
+    cardIds?: number[];
+    type: ActionType.PLAY_BAND;
     leaderId: number;
     regionColor?: Color;
     cardIdsToKeep?: number[];
 }
+
+export type IActionPayload = IActionPayloadBase |
+    IPlayBandPayload |
+    IPickUpCarddPayload;
 
 export interface INextActionPayload {
     type: ActionType;
 }
 
 export interface IActionRequest extends AuthRequest {
-    body: IActionPayload;
+    body: IActionPayloadBase;
 }

@@ -44,6 +44,7 @@ export class Card extends Model {
             key: 'id',
         },
         defaultValue: null,
+        allowNull: true,
     })
     leaderId: number;
 

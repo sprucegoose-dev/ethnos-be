@@ -92,6 +92,7 @@ export default class ExceptionHandler {
                 error.message = this.message;
                 break;
             case ERROR_BAD_REQUEST:
+                console.log('got here');
                 error.code = ERROR_CODE_BAD_REQUEST;
                 error.type = ERROR_BAD_REQUEST;
                 error.message = this.message;

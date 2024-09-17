@@ -39,7 +39,7 @@ const {
     WIZARD,
 } = TribeName;
 
-class CommandService {
+export class CommandService {
 
     static async handleAction(userId: number, gameId: number, payload: IActionPayload): Promise<void> {
         const game = await GameService.getState(gameId);
@@ -56,7 +56,7 @@ class CommandService {
             throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
         }
 
-        let nextAction = false;
+        let nextAction = null;
 
         switch (payload.type) {
             case ActionType.DRAW_CARD:
@@ -64,10 +64,9 @@ class CommandService {
                 break;
             case ActionType.PLAY_BAND:
                 nextAction = await CommandService.handlePlayBand(game, activePlayer, payload);
-                // await this.handleDeploy(game, activePlayer, payload);
                 break;
             case ActionType.PICK_UP_CARD:
-                nextAction = await CommandService.handlePickUpCard(game, activePlayer, payload);
+                nextAction = await CommandService.handlePickUpCard(game, activePlayer, payload.cardId);
                 break;
         }
 
@@ -84,6 +83,7 @@ class CommandService {
             payload: updatedGameState
         });
     }
+
     static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload> {
         let nextAction;
 
@@ -253,8 +253,11 @@ class CommandService {
         for (let i = 1; i <= bandSize; i++) {
             if (merfolkTrackCheckpoints.includes(player.merfolkTrackScore + i)) {
                 freeTokens++;
-                // TODO: add 'FREE_TOKEN' next action for each free token
             }
+        }
+
+        for (let i = 0; i < freeTokens; i++) {
+            // TODO: add 'FREE_TOKEN' next action for each free token
         }
 
         await player.update({
@@ -321,18 +324,12 @@ class CommandService {
         }
     }
 
-    static async handlePickUpCard(game: Game, activePlayer: Player, payload: IActionPayload): Promise<void> {
-        const cardsInHand = activePlayer.cards.filter(card => card.state === CardState.IN_HAND);
+    static async handlePickUpCard(game: Game, player: Player, cardId: number): Promise<void> {
+        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
 
         if (cardsInHand.length === 10) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Cannot exceed hand limit of 10 cards');
         }
-
-        if (payload.cardIds.length !== 1) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'Must pick up exactly one card');
-        }
-
-        const cardId = payload.cardIds[0];
 
         const card = game.cards.find(card => card.state === CardState.IN_MARKET && card.id === cardId);
 
@@ -342,13 +339,13 @@ class CommandService {
 
         await card.update({
             state: CardState.IN_HAND,
-            playerId: activePlayer.id,
+            playerId: player.id,
             index: null,
         });
     }
 
-    static async handleDrawCard(game: Game, activePlayer: Player): Promise<void> {
-        const cardsInHand = activePlayer.cards.filter(card => card.state === CardState.IN_HAND);
+    static async handleDrawCard(game: Game, player: Player): Promise<void> {
+        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
 
         if (cardsInHand.length === 10) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Cannot exceed hand limit of 10 cards');
@@ -378,7 +375,7 @@ class CommandService {
         } else {
             await nextCard.update({
                 state: CardState.IN_HAND,
-                playerId: activePlayer.id,
+                playerId: player.id,
                 index: null,
             });
         }
