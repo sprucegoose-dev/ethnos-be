@@ -1,5 +1,6 @@
 import { Color } from './game.interface';
 import { AuthRequest } from './index.interface';
+import { TribeName } from './tribe.interface';
 
 export enum ActionType {
     DRAW_CARD = 'draw_card',
@@ -23,10 +24,10 @@ export interface IPickUpCarddPayload {
 
 export interface IPlayBandPayload {
     cardIds?: number[];
-    type: ActionType.PLAY_BAND;
+    cardIdsToKeep?: number[];
     leaderId: number;
     regionColor?: Color;
-    cardIdsToKeep?: number[];
+    type: ActionType.PLAY_BAND;
 }
 
 export type IActionPayload = IActionPayloadBase |
@@ -39,4 +40,10 @@ export interface INextActionPayload {
 
 export interface IActionRequest extends AuthRequest {
     body: IActionPayloadBase;
+}
+
+export interface IBandDetails {
+    color: Color;
+    tribe: TribeName;
+    bandSize: number;
 }

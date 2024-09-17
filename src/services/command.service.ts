@@ -1,6 +1,7 @@
 import {
     ActionType,
     IActionPayload,
+    IBandDetails,
     INextActionPayload,
     IPlayBandPayload
 } from '../types/action.interface';
@@ -61,7 +62,7 @@ export class CommandService {
         return player.cards.filter(card => cardIds.includes(card.id));
     }
 
-    static getBandDetails(leader: Card, bandCards: Card[], payload: IPlayBandPayload) {
+    static getBandDetails(leader: Card, bandCards: Card[], payload: IPlayBandPayload): IBandDetails {
         let tribe = leader.tribe.name;
         let color = leader.color;
         let bandSize = bandCards.length;
@@ -224,12 +225,12 @@ export class CommandService {
             playerRegion
         });
 
-        await this.handleRemainingCards({
+        await CommandService.handleRemainingCards({
             remainingCards,
             nextAction,
             player,
             cardIdsToKeep: payload.cardIdsToKeep,
-            tribe: band.tribe
+            band,
         });
 
         return nextAction;
@@ -260,18 +261,40 @@ export class CommandService {
         });
     }
 
+    static filterElfRemainingCards = (remainingCards: Card[], cardIdsToKeep: number[], bandSize: number) => {
+        if (!Array.isArray(cardIdsToKeep)) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'cardIdsToKeep must be an array');
+        }
+
+        const remainingCardIds = remainingCards.map(card => card.id);
+
+        if (!cardIdsToKeep.every(cardId => remainingCardIds.includes(cardId))) {
+            throw new CustomException(ERROR_BAD_REQUEST, "cardIdsToKeep must only include IDs of cards in a player's hand");
+        }
+
+        if (cardIdsToKeep.length > bandSize) {
+            throw new CustomException(ERROR_BAD_REQUEST, "cardIdsToKeep must not exceed the size of the band");
+        }
+
+        return remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
+    }
+
     static async handleRemainingCards({
         remainingCards,
         nextAction,
         player,
         cardIdsToKeep,
-        tribe,
+        band,
     }: IRemainingCardsOptions) {
-        if (tribe === ELF) {
-            remainingCards = remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
+        if (band.tribe === ELF) {
+            remainingCards = CommandService.filterElfRemainingCards(remainingCards, cardIdsToKeep, band.bandSize);
         }
 
-        if (remainingCards.length && !nextAction) {
+        if (band.tribe === CENTAUR && nextAction?.type === ActionType.PLAY_BAND) {
+            return;
+        }
+
+        if (remainingCards.length) {
             await Card.update({
                 state: CardState.IN_MARKET,
                 playerId: player.id,

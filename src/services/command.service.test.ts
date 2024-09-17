@@ -10,11 +10,12 @@ import PlayerService from './player.service';
 import { TribeName } from '../types/tribe.interface';
 import { CommandService } from './command.service';
 import { CardState } from '../types/card.interface';
-import { GameState, IGameState } from '../types/game.interface';
+import { Color, GameState, IGameState } from '../types/game.interface';
 import { Card } from '../models/card.model';
 import { Player } from '../models/player.model';
 import { Op } from 'sequelize';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
+import { ActionType } from '../types/action.interface';
 
 function getCardsFromDeck(cards: Card[], quantity: number): number[] {
     return cards.filter(card =>
@@ -333,7 +334,7 @@ describe('CommandService', () => {
 
             expect(originalCardsInMarket.length).toBe(8);
 
-            const player = await PlayerService.getPlayerWithCards(playerA.id);
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
 
             const remainingCards = player.cards.filter(card => card.state === CardState.IN_HAND);
 
@@ -344,14 +345,104 @@ describe('CommandService', () => {
                 nextAction: null,
                 player,
                 cardIdsToKeep: [],
-                tribe: null
+                band: {
+                    tribe: TribeName.MINOTAUR,
+                    color: Color.BLUE,
+                    bandSize: 3,
+                }
             });
 
             updatedGame = await GameService.getState(game.id);
 
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(0);
+
             const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
             expect(updatedCardsInMarket.length).toBe(originalCardsInMarket.length + remainingCards.length);
+        });
+
+        it("retains some cards in the player's hand if the band leader is an Elf", async () => {
+            const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            let updatedGame = await GameService.getState(game.id);
+
+            const originalCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(originalCardsInMarket.length).toBe(8);
+
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const remainingCards = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const cardIdsToKeep = remainingCards.slice(0, 3).map(card => card.id);
+
+            expect(remainingCards.length).toBe(6);
+
+            await CommandService.handleRemainingCards({
+                remainingCards,
+                nextAction: null,
+                player,
+                cardIdsToKeep,
+                band: {
+                    tribe: TribeName.ELF,
+                    color: Color.ORANGE,
+                    bandSize: 3,
+                }
+            });
+
+            updatedGame = await GameService.getState(game.id);
+
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(3);
+
+            const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(updatedCardsInMarket.length).toBe(
+                originalCardsInMarket.length + remainingCards.length - cardIdsToKeep.length
+            );
+        });
+
+        it("doesn't discard any cards if there's a next action of the type 'play_band'", async () => {
+            const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            let updatedGame = await GameService.getState(game.id);
+
+            const originalCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(originalCardsInMarket.length).toBe(8);
+
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const remainingCards = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            expect(remainingCards.length).toBe(6);
+
+            await CommandService.handleRemainingCards({
+                remainingCards,
+                nextAction: { type: ActionType.PLAY_BAND },
+                player,
+                cardIdsToKeep: [],
+                band: {
+                    tribe: TribeName.CENTAUR,
+                    color: Color.BLUE,
+                    bandSize: 3,
+                }
+            });
+
+            updatedGame = await GameService.getState(game.id);
+
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(6);
+
+            const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(updatedCardsInMarket.length).toBe(originalCardsInMarket.length);
         });
 
     });
