@@ -57,10 +57,6 @@ export class CommandService {
         });
     }
 
-    static filterElfCards(remainingCards: Card[], payload: IPlayBandPayload) {
-        return remainingCards.filter(card => !payload.cardIdsToKeep.includes(card.id));
-    }
-
     static getBandCards(player: Player, cardIds: number[]): Card[] {
         return player.cards.filter(card => cardIds.includes(card.id));
     }
@@ -232,7 +228,7 @@ export class CommandService {
             remainingCards,
             nextAction,
             player,
-            payload,
+            cardIdsToKeep: payload.cardIdsToKeep,
             tribe: band.tribe
         });
 
@@ -268,18 +264,18 @@ export class CommandService {
         remainingCards,
         nextAction,
         player,
-        payload,
+        cardIdsToKeep,
         tribe,
     }: IRemainingCardsOptions) {
         if (tribe === ELF) {
-            remainingCards = this.filterElfCards(remainingCards, payload);
+            remainingCards = remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
         }
 
         if (remainingCards.length && !nextAction) {
             await Card.update({
                 state: CardState.IN_MARKET,
                 playerId: player.id,
-                leaderId: payload.leaderId,
+                leaderId: null,
                 index: null,
             }, {
                 where: {

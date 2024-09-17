@@ -25,6 +25,6 @@ export interface IRemainingCardsOptions {
     remainingCards: Card[];
     nextAction: INextActionPayload;
     player: Player;
-    payload: IPlayBandPayload;
+    cardIdsToKeep: number[];
     tribe: TribeName;
 }
