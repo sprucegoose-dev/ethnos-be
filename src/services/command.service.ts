@@ -26,6 +26,7 @@ import {
     GameState
 } from '../types/game.interface';
 import { IHandleTribeOptions, IRemainingCardsOptions } from '../types/command.interface';
+import { ActionService } from './action.service';
 
 const {
     CENTAUR,
@@ -45,7 +46,7 @@ const {
 
 export class CommandService {
 
-    static async assignCardsToBand(player: Player, bandCards: Card[], leaderId: number) {
+    static async assignCardsToBand(player: Player, bandCardIds: number[], leaderId: number) {
         await Card.update({
             state: CardState.IN_BAND,
             playerId: player.id,
@@ -53,7 +54,9 @@ export class CommandService {
             index: null,
         }, {
             where: {
-                id: { [Op.in]: bandCards.map(card => card.id) }
+                id: {
+                    [Op.in]: bandCardIds
+                }
             }
         });
     }
@@ -76,10 +79,10 @@ export class CommandService {
         return remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
     }
 
-    static getBandDetails(leader: Card, bandCards: Card[], regionColor?: Color): IBandDetails {
+    static getBandDetails(leader: Card, bandCardIds: number[], regionColor?: Color): IBandDetails {
         let tribe = leader.tribe.name;
         let color = leader.color;
-        let bandSize = bandCards.length;
+        let bandSize = bandCardIds.length;
 
         if (tribe === MINOTAUR) {
             bandSize++;
@@ -215,15 +218,15 @@ export class CommandService {
     static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload> {
         let nextAction;
 
-        const bandCards = player.cards.filter(card => payload.cardIds.includes(card.id));
-        const leader = bandCards.find(card => card.id === payload.leaderId);
-        const band = this.getBandDetails(leader, bandCards, payload.regionColor);
+        const leader = player.cards.find(card => card.id === payload.leaderId);
+        const band = this.getBandDetails(leader, payload.cardIds, payload.regionColor);
+        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
         let remainingCards = this.getRemainingCards(player, payload.cardIds);
 
-        // TODO: validate that the tribe is legal
-        this.validateTribe(band.tribe);
 
-        await this.assignCardsToBand(player, bandCards, leader.id);
+        this.validateBand(cardsInHand, payload.cardIds, leader);
+
+        await this.assignCardsToBand(player, payload.cardIds, leader.id);
         const region = await this.getRegion(game, band.color);
         const playerRegion = await this.getPlayerRegion(region, player);
 
@@ -395,10 +398,29 @@ export class CommandService {
         });
     }
 
-    static validateTribe(tribe: TribeName) {
-        if (tribe === SKELETON) {
+    static validateBand(cardsInHand: Card[], bandCardIds: number[], leader: Card): boolean {
+        if (leader.tribe.name === SKELETON) {
             throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
         }
+
+        const validActions = ActionService.getPlayBandActions(cardsInHand);
+
+        let isValid = false;
+
+        for (const action of validActions) {
+            const validCardIds = action.cardIds;
+
+            if (bandCardIds.every(cardId => validCardIds.includes(cardId))) {
+                isValid = true;
+                break;
+            }
+        }
+
+        if (!isValid) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid band');
+        }
+
+        return isValid;
     }
 }
 

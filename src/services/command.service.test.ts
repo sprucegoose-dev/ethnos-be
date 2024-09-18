@@ -67,9 +67,6 @@ async function assignCardsToPlayer(playerId: number, cardIdsToAssign: number[]) 
         where: {
             id: {
                 [Op.in]: cardIdsToAssign
-            },
-            index: {
-                [Op.lte]: cardIdsToAssign.length - 1
             }
         },
     });
@@ -103,7 +100,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handleDrawCard(updatedGame, player);
-                throw new Error('Expected error not thrown');
+                throw new Error('Expected error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Cannot exceed hand limit of 10 cards');
@@ -240,7 +237,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
-                throw new Error('Expected error not thrown');
+                throw new Error('Expected error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Cannot exceed hand limit of 10 cards');
@@ -261,7 +258,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
-                throw new Error('Expected error not thrown');
+                throw new Error('Expected error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid card');
@@ -459,7 +456,7 @@ describe('CommandService', () => {
 
             const player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            await CommandService.assignCardsToBand(player, cardsToAssign, cardsToAssign[0].id);
+            await CommandService.assignCardsToBand(player, cardIdsToAssign, cardsToAssign[0].id);
 
             const cardsInBand = await Card.findAll({
                 where: {
@@ -490,7 +487,7 @@ describe('CommandService', () => {
 
             const leader = bandCards[0];
 
-            const bandDetails = CommandService.getBandDetails(leader, bandCards);
+            const bandDetails = CommandService.getBandDetails(leader, bandCards.map(card => card.id));
 
             expect(bandDetails).toEqual({
                 color: leader.color,
@@ -499,7 +496,7 @@ describe('CommandService', () => {
             });
         });
 
-        it("returns a band size of +1 when the leader is a Minotaur", async () => {
+        it('returns a band size of +1 when the leader is a Minotaur', async () => {
             const {
                 gameState,
             } = await createGame();
@@ -508,7 +505,7 @@ describe('CommandService', () => {
 
             const leader = bandCards[0];
 
-            const bandDetails = CommandService.getBandDetails(leader, bandCards);
+            const bandDetails = CommandService.getBandDetails(leader, bandCards.map(card => card.id));
 
             expect(bandDetails).toEqual({
                 color: leader.color,
@@ -518,7 +515,7 @@ describe('CommandService', () => {
         });
 
 
-        it("returns a band color based on the specified region when the leader is a Wingfolk", async () => {
+        it('returns a band color based on the specified region when the leader is a Wingfolk', async () => {
             const {
                 gameState
             } = await createGame({
@@ -530,14 +527,14 @@ describe('CommandService', () => {
                     TribeName.ELF,
                     TribeName.WINGFOLK,
                 ]
-            })
+            });
 
             const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.WINGFOLK).slice(0, 3);
 
             const leader = bandCards[0];
             leader.color = Color.GRAY;
 
-            const bandDetails = CommandService.getBandDetails(leader, bandCards, Color.PURPLE);
+            const bandDetails = CommandService.getBandDetails(leader, bandCards.map(card => card.id), Color.PURPLE);
 
             expect(bandDetails).toEqual({
                 color: Color.PURPLE,
@@ -548,4 +545,105 @@ describe('CommandService', () => {
 
     });
 
+    describe('validateBand', () => {
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it("returns 'true' if the band is valid", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame();
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const isValid = CommandService.validateBand(cardsInHand, cardIdsToAssign, cardsInHand[0]);
+
+            expect(isValid).toBe(true);
+        });
+
+        it("throws an error if the band is invalid", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame();
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            try {
+                CommandService.validateBand(cardsInHand, [100, 101, 102], cardsInHand[0]);
+                throw new Error('Expected error not to be thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Invalid band');
+            }
+        });
+
+        it("throws an error if the band leader is a skeleton", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.SKELETON,
+                ]
+            });
+
+            const leaderToAssign =  gameState.cards.find(card =>
+                card.tribe.name === TribeName.SKELETON &&
+                !card.playerId
+            );
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 2);
+
+            const cardIdsToAssign = [
+                leaderToAssign.id,
+                ...cardsToAssign.map(card => card.id),
+            ]
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            try {
+                CommandService.validateBand(cardsInHand, cardIdsToAssign, leaderToAssign);
+                throw new Error('Expected error not to be thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('A Skeleton cannot be the leader of a band');
+            }
+        });
+    });
 });
