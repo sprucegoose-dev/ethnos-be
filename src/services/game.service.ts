@@ -106,6 +106,7 @@ class GameService {
                             include: [
                                 Tribe,
                             ],
+                            order: [['index', 'asc']]
                         },
                     ],
                 },

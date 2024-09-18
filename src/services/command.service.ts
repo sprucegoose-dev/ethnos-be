@@ -370,8 +370,9 @@ export class CommandService {
     }
 
     static async handleWizardDraw(game: Game, player: Player, bandSize: number) {
-        const cardsInMarket = game.cards.filter(card => card.state === CardState.IN_MARKET);
-        const maxDrawSize = Math.min(bandSize, cardsInMarket.length);
+        const cardsInDeck = game.cards.filter(card => card.state === CardState.IN_DECK)
+            .sort((cardA, cardB) => cardA.index - cardB.index);
+        const maxDrawSize = Math.min(bandSize, cardsInDeck.length);
 
         for (let i = 0; i < maxDrawSize; i++) {
             await CommandService.handleDrawCard(game, player);
