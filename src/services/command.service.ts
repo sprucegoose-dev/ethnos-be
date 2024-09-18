@@ -45,11 +45,11 @@ const {
 
 export class CommandService {
 
-    static async assignCardsToBand(player: Player, payload: IPlayBandPayload, bandCards: Card[]) {
+    static async assignCardsToBand(player: Player, bandCards: Card[], leaderId: number) {
         await Card.update({
             state: CardState.IN_BAND,
             playerId: player.id,
-            leaderId: payload.leaderId,
+            leaderId,
             index: null,
         }, {
             where: {
@@ -58,8 +58,22 @@ export class CommandService {
         });
     }
 
-    static getBandCards(player: Player, cardIds: number[]): Card[] {
-        return player.cards.filter(card => cardIds.includes(card.id));
+    static filterElfRemainingCards = (remainingCards: Card[], cardIdsToKeep: number[], bandSize: number) => {
+        if (!Array.isArray(cardIdsToKeep)) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'cardIdsToKeep must be an array');
+        }
+
+        const remainingCardIds = remainingCards.map(card => card.id);
+
+        if (!cardIdsToKeep.every(cardId => remainingCardIds.includes(cardId))) {
+            throw new CustomException(ERROR_BAD_REQUEST, "cardIdsToKeep must only include IDs of cards in a player's hand");
+        }
+
+        if (cardIdsToKeep.length > bandSize) {
+            throw new CustomException(ERROR_BAD_REQUEST, "cardIdsToKeep must not exceed the size of the band");
+        }
+
+        return remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
     }
 
     static getBandDetails(leader: Card, bandCards: Card[], payload: IPlayBandPayload): IBandDetails {
@@ -76,10 +90,6 @@ export class CommandService {
         }
 
         return { tribe, color, bandSize };
-    }
-
-    static getLeader(bandCards: Card[], leaderId: number): Card {
-        return bandCards.find(card => card.id === leaderId);
     }
 
     static getRemainingCards(player: Player, cardIds: number[]): Card[] {
@@ -205,14 +215,15 @@ export class CommandService {
     static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload> {
         let nextAction;
 
-        const bandCards = this.getBandCards(player, payload.cardIds);
-        const leader = this.getLeader(bandCards, payload.leaderId);
+        const bandCards = player.cards.filter(card => payload.cardIds.includes(card.id));
+        const leader = bandCards.find(card => card.id === payload.leaderId);
         const band = this.getBandDetails(leader, bandCards, payload);
         let remainingCards = this.getRemainingCards(player, payload.cardIds);
 
+        // TODO: validate that the tribe is legal
         this.validateTribe(band.tribe);
 
-        await this.assignCardsToBand(player, payload, bandCards);
+        await this.assignCardsToBand(player, bandCards, leader.id);
         const region = await this.getRegion(game, band.color);
         const playerRegion = await this.getPlayerRegion(region, player);
 
@@ -259,24 +270,6 @@ export class CommandService {
         await player.update({
             merfolkTrackScore: player.merfolkTrackScore + bandSize,
         });
-    }
-
-    static filterElfRemainingCards = (remainingCards: Card[], cardIdsToKeep: number[], bandSize: number) => {
-        if (!Array.isArray(cardIdsToKeep)) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'cardIdsToKeep must be an array');
-        }
-
-        const remainingCardIds = remainingCards.map(card => card.id);
-
-        if (!cardIdsToKeep.every(cardId => remainingCardIds.includes(cardId))) {
-            throw new CustomException(ERROR_BAD_REQUEST, "cardIdsToKeep must only include IDs of cards in a player's hand");
-        }
-
-        if (cardIdsToKeep.length > bandSize) {
-            throw new CustomException(ERROR_BAD_REQUEST, "cardIdsToKeep must not exceed the size of the band");
-        }
-
-        return remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
     }
 
     static async handleRemainingCards({

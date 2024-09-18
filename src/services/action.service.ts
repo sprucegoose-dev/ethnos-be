@@ -1,5 +1,5 @@
 import { Card } from '../models/card.model';
-import { ActionType, IActionPayload } from '../types/action.interface';
+import { ActionType, IActionPayload, IPlayBandPayload } from '../types/action.interface';
 import { CardState } from '../types/card.interface';
 import { GameState } from '../types/game.interface';
 import { TribeName } from '../types/tribe.interface';
@@ -28,9 +28,9 @@ export class ActionService {
                 type: ActionType.DRAW_CARD
             });
 
-            if (cardsInMarket.length) {
+            for (const card of cardsInMarket) {
                 actions.push({
-                    cardIds: cardsInMarket.map(card => card.id),
+                    cardId: card.id,
                     type: ActionType.PICK_UP_CARD
                 });
             }
@@ -45,24 +45,29 @@ export class ActionService {
         return actions;
     }
 
-    static getPlayBandActions(cardsInHand: Card[]): IActionPayload[] {
-        const leaders = cardsInHand.filter(card => card.tribe.name !== TribeName.SKELETON);
-
+    static getPlayBandActions(cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = [];
 
-        for (const leader of leaders) {
+        for (const card of cardsInHand) {
+            if (card.tribe.name === TribeName.SKELETON) {
+                continue;
+            }
+
             const sameColorBand = cardsInHand.filter(card => !card.color || card.color === leader.color);
             const sameTribeBand = cardsInHand.filter(card => !card.color || card.tribe.name === leader.tribe.name);
             playBandActions.push({
+                leaderId: card.id,
                 cardIds: sameColorBand.map(card => card.id),
                 type: ActionType.PLAY_BAND
             });
             playBandActions.push({
+                leaderId: card.id,
                 cardIds: sameTribeBand.map(card => card.id),
                 type: ActionType.PLAY_BAND
             });
         }
 
+        // @ts-ignore
         return playBandActions;
     }
 }

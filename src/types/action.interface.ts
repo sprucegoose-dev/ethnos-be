@@ -17,7 +17,7 @@ export interface IActionPayloadBase {
         ActionType.ADD_TOKEN;
 }
 
-export interface IPickUpCarddPayload {
+export interface IPickUpCardPayload {
     cardId: number;
     type: ActionType.PICK_UP_CARD;
 }
@@ -32,7 +32,7 @@ export interface IPlayBandPayload {
 
 export type IActionPayload = IActionPayloadBase |
     IPlayBandPayload |
-    IPickUpCarddPayload;
+    IPickUpCardPayload;
 
 export interface INextActionPayload {
     type: ActionType;

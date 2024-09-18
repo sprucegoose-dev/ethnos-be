@@ -43,7 +43,18 @@ async function assignCardsToPlayer(playerId: number, cardIdsToAssign: number[]) 
 
 }
 
+
 describe('CommandService', () => {
+    const settings = {
+        tribes: [
+            TribeName.DWARF,
+            TribeName.MINOTAUR,
+            TribeName.MERFOLK,
+            TribeName.CENTAUR,
+            TribeName.ELF,
+            TribeName.WIZARD,
+        ]
+    };
 
     describe('handleDrawCard', () => {
         let game: Game;
@@ -56,18 +67,6 @@ describe('CommandService', () => {
             await PlayerService.create(userB.id, game.id);
             await PlayerService.create(userC.id, game.id);
             await PlayerService.create(userD.id, game.id);
-
-            const settings = {
-                tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
-                    TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
-                ]
-            };
-
             await GameService.start(userA.id, game.id, settings);
 
             gameState = await GameService.getState(game.id);
@@ -202,18 +201,6 @@ describe('CommandService', () => {
             await PlayerService.create(userB.id, game.id);
             await PlayerService.create(userC.id, game.id);
             await PlayerService.create(userD.id, game.id);
-
-            const settings = {
-                tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
-                    TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
-                ]
-            };
-
             await GameService.start(userA.id, game.id, settings);
 
             gameState = await GameService.getState(game.id);
@@ -302,18 +289,6 @@ describe('CommandService', () => {
             await PlayerService.create(userB.id, game.id);
             await PlayerService.create(userC.id, game.id);
             await PlayerService.create(userD.id, game.id);
-
-            const settings = {
-                tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
-                    TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
-                ]
-            };
-
             await GameService.start(userA.id, game.id, settings);
 
             gameState = await GameService.getState(game.id);
@@ -443,6 +418,55 @@ describe('CommandService', () => {
             const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
             expect(updatedCardsInMarket.length).toBe(originalCardsInMarket.length);
+        });
+    });
+
+    describe('assignCardsToBand', () => {
+        let game: Game;
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            game = await GameService.create(userA.id);
+            playerA = await PlayerService.create(userA.id, game.id);
+            await PlayerService.create(userB.id, game.id);
+            await PlayerService.create(userC.id, game.id);
+            await PlayerService.create(userD.id, game.id);
+
+            await GameService.start(userA.id, game.id, settings);
+
+            gameState = await GameService.getState(game.id);
+        });
+
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it('assigns the provided cards to a band', async () => {
+            gameState = await GameService.getState(game.id);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 5);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            await CommandService.assignCardsToBand(player, cardsToAssign, cardsToAssign[0].id);
+
+            const cardsInBand = await Card.findAll({
+                where: {
+                    id: cardIdsToAssign,
+                    state: CardState.IN_BAND,
+                    leaderId: cardsToAssign[0].id
+                }
+            });
+
+            expect(cardsInBand.length).toBe(5);
         });
 
     });
