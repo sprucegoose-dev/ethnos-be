@@ -10,12 +10,45 @@ import PlayerService from './player.service';
 import { TribeName } from '../types/tribe.interface';
 import { CommandService } from './command.service';
 import { CardState } from '../types/card.interface';
-import { Color, GameState, IGameState } from '../types/game.interface';
+import { Color, GameState, IGameSettings, IGameState } from '../types/game.interface';
 import { Card } from '../models/card.model';
 import { Player } from '../models/player.model';
 import { Op } from 'sequelize';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
 import { ActionType } from '../types/action.interface';
+
+
+const defaultSettings =  {
+    tribes: [
+        TribeName.DWARF,
+        TribeName.MINOTAUR,
+        TribeName.MERFOLK,
+        TribeName.CENTAUR,
+        TribeName.ELF,
+        TribeName.WIZARD,
+    ]
+};
+
+async function createGame(settings: IGameSettings = defaultSettings) {
+    const game = await GameService.create(userA.id);
+    const playerA = await PlayerService.create(userA.id, game.id);
+    const playerB = await PlayerService.create(userB.id, game.id);
+    const playerC = await PlayerService.create(userC.id, game.id);
+    const playerD = await PlayerService.create(userD.id, game.id);
+
+    await GameService.start(userA.id, game.id, settings);
+
+    const gameState = await GameService.getState(game.id);
+
+    return {
+        gameId: game.id,
+        gameState,
+        playerA,
+        playerB,
+        playerC,
+        playerD
+    }
+}
 
 function getCardsFromDeck(cards: Card[], quantity: number): number[] {
     return cards.filter(card =>
@@ -40,36 +73,19 @@ async function assignCardsToPlayer(playerId: number, cardIdsToAssign: number[]) 
             }
         },
     });
-
 }
 
-
 describe('CommandService', () => {
-    const settings = {
-        tribes: [
-            TribeName.DWARF,
-            TribeName.MINOTAUR,
-            TribeName.MERFOLK,
-            TribeName.CENTAUR,
-            TribeName.ELF,
-            TribeName.WIZARD,
-        ]
-    };
-
     describe('handleDrawCard', () => {
-        let game: Game;
+        let gameId: number;
         let gameState: IGameState;
         let playerA: Player;
 
         beforeEach(async () => {
-            game = await GameService.create(userA.id);
-            playerA = await PlayerService.create(userA.id, game.id);
-            await PlayerService.create(userB.id, game.id);
-            await PlayerService.create(userC.id, game.id);
-            await PlayerService.create(userD.id, game.id);
-            await GameService.start(userA.id, game.id, settings);
-
-            gameState = await GameService.getState(game.id);
+            const result = await createGame();
+            gameId = result.gameId;
+            playerA = result.playerA;
+            gameState = result.gameState;
         });
 
         afterEach(async () => {
@@ -83,7 +99,7 @@ describe('CommandService', () => {
 
             const player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            const updatedGame = await GameService.getState(game.id);
+            const updatedGame = await GameService.getState(gameId);
 
             try {
                 await CommandService.handleDrawCard(updatedGame, player);
@@ -97,7 +113,7 @@ describe('CommandService', () => {
         it("should add a card from the deck to the player's hand", async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            let updatedGame = await GameService.getState(game.id);
+            let updatedGame = await GameService.getState(gameId);
 
             const cardsInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
 
@@ -109,7 +125,7 @@ describe('CommandService', () => {
 
             expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
 
-            updatedGame = await GameService.getState(game.id);
+            updatedGame = await GameService.getState(gameId);
 
             const updatedCardInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
 
@@ -119,7 +135,7 @@ describe('CommandService', () => {
         it("should skip a dragon card and instead draw the next card", async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            let updatedGame = await GameService.getState(game.id);
+            let updatedGame = await GameService.getState(gameId);
 
             const cardsInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
 
@@ -148,7 +164,7 @@ describe('CommandService', () => {
 
             expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
 
-            updatedGame = await GameService.getState(game.id);
+            updatedGame = await GameService.getState(gameId);
 
             const updatedCardInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
 
@@ -165,7 +181,7 @@ describe('CommandService', () => {
         it('should end the game if the last dragon is revealed', async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            let updatedGame = await GameService.getState(game.id);
+            let updatedGame = await GameService.getState(gameId);
 
             const dragonCard = updatedGame.cards
                 .find(card =>
@@ -184,26 +200,22 @@ describe('CommandService', () => {
 
             await CommandService.handleDrawCard(updatedGame, player);
 
-            updatedGame = await GameService.getState(game.id);
+            updatedGame = await GameService.getState(gameId);
 
             expect(updatedGame.state).toBe(GameState.ENDED);
         });
     });
 
     describe('handlePickUpCard', () => {
-        let game: Game;
+        let gameId: number;
         let gameState: IGameState;
         let playerA: Player;
 
         beforeEach(async () => {
-            game = await GameService.create(userA.id);
-            playerA = await PlayerService.create(userA.id, game.id);
-            await PlayerService.create(userB.id, game.id);
-            await PlayerService.create(userC.id, game.id);
-            await PlayerService.create(userD.id, game.id);
-            await GameService.start(userA.id, game.id, settings);
-
-            gameState = await GameService.getState(game.id);
+            const result = await createGame();
+            gameId = result.gameId;
+            playerA = result.playerA;
+            gameState = result.gameState;
         });
 
         afterEach(async () => {
@@ -219,12 +231,12 @@ describe('CommandService', () => {
 
             const cardToPickUp = await Card.findOne({
                 where: {
-                    gameId: game.id,
+                    gameId: gameId,
                     state: CardState.IN_MARKET
                 }
             });
 
-            const updatedGame = await GameService.getState(game.id);
+            const updatedGame = await GameService.getState(gameId);
 
             try {
                 await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
@@ -240,12 +252,12 @@ describe('CommandService', () => {
 
             const cardToPickUp = await Card.findOne({
                 where: {
-                    gameId: game.id,
+                    gameId: gameId,
                     state: CardState.IN_DECK
                 }
             });
 
-            const updatedGame = await GameService.getState(game.id);
+            const updatedGame = await GameService.getState(gameId);
 
             try {
                 await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
@@ -263,12 +275,12 @@ describe('CommandService', () => {
 
             const cardToPickUp = await Card.findOne({
                 where: {
-                    gameId: game.id,
+                    gameId: gameId,
                     state: CardState.IN_MARKET
                 }
             });
 
-            const updatedGame = await GameService.getState(game.id);
+            const updatedGame = await GameService.getState(gameId);
 
             await CommandService.handlePickUpCard(updatedGame, player, cardToPickUp.id);
 
@@ -279,19 +291,15 @@ describe('CommandService', () => {
     });
 
     describe('handleRemainingCards', () => {
-        let game: Game;
+        let gameId: number;
         let gameState: IGameState;
         let playerA: Player;
 
         beforeEach(async () => {
-            game = await GameService.create(userA.id);
-            playerA = await PlayerService.create(userA.id, game.id);
-            await PlayerService.create(userB.id, game.id);
-            await PlayerService.create(userC.id, game.id);
-            await PlayerService.create(userD.id, game.id);
-            await GameService.start(userA.id, game.id, settings);
-
-            gameState = await GameService.getState(game.id);
+            const result = await createGame();
+            gameId = result.gameId;
+            playerA = result.playerA;
+            gameState = result.gameState;
         });
 
         afterEach(async () => {
@@ -303,7 +311,7 @@ describe('CommandService', () => {
             const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
             await assignCardsToPlayer(playerA.id, cardIdsToAssign);
 
-            let updatedGame = await GameService.getState(game.id);
+            let updatedGame = await GameService.getState(gameId);
 
             const originalCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
@@ -327,7 +335,7 @@ describe('CommandService', () => {
                 }
             });
 
-            updatedGame = await GameService.getState(game.id);
+            updatedGame = await GameService.getState(gameId);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
@@ -342,7 +350,7 @@ describe('CommandService', () => {
             const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
             await assignCardsToPlayer(playerA.id, cardIdsToAssign);
 
-            let updatedGame = await GameService.getState(game.id);
+            let updatedGame = await GameService.getState(gameId);
 
             const originalCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
@@ -368,7 +376,7 @@ describe('CommandService', () => {
                 }
             });
 
-            updatedGame = await GameService.getState(game.id);
+            updatedGame = await GameService.getState(gameId);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
@@ -385,7 +393,7 @@ describe('CommandService', () => {
             const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
             await assignCardsToPlayer(playerA.id, cardIdsToAssign);
 
-            let updatedGame = await GameService.getState(game.id);
+            let updatedGame = await GameService.getState(gameId);
 
             const originalCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
@@ -409,7 +417,7 @@ describe('CommandService', () => {
                 }
             });
 
-            updatedGame = await GameService.getState(game.id);
+            updatedGame = await GameService.getState(gameId);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
@@ -422,20 +430,15 @@ describe('CommandService', () => {
     });
 
     describe('assignCardsToBand', () => {
-        let game: Game;
+        let gameId: number;
         let gameState: IGameState;
         let playerA: Player;
 
         beforeEach(async () => {
-            game = await GameService.create(userA.id);
-            playerA = await PlayerService.create(userA.id, game.id);
-            await PlayerService.create(userB.id, game.id);
-            await PlayerService.create(userC.id, game.id);
-            await PlayerService.create(userD.id, game.id);
-
-            await GameService.start(userA.id, game.id, settings);
-
-            gameState = await GameService.getState(game.id);
+            const result = await createGame();
+            gameId = result.gameId;
+            playerA = result.playerA;
+            gameState = result.gameState;
         });
 
         afterEach(async () => {
@@ -444,7 +447,7 @@ describe('CommandService', () => {
         });
 
         it('assigns the provided cards to a band', async () => {
-            gameState = await GameService.getState(game.id);
+            gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
                 card.tribe.name === TribeName.DWARF
@@ -467,6 +470,80 @@ describe('CommandService', () => {
             });
 
             expect(cardsInBand.length).toBe(5);
+        });
+
+    });
+
+    describe('getBandDetails', () => {
+
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it("returns a band details object with the 'tribe', 'color', and 'bandSize'", async () => {
+            const {
+                gameState,
+            } = await createGame();
+
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.DWARF).slice(0, 3);
+
+            const leader = bandCards[0];
+
+            const bandDetails = CommandService.getBandDetails(leader, bandCards);
+
+            expect(bandDetails).toEqual({
+                color: leader.color,
+                tribe: leader.tribe.name,
+                bandSize: 3
+            });
+        });
+
+        it("returns a band size of +1 when the leader is a Minotaur", async () => {
+            const {
+                gameState,
+            } = await createGame();
+
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.MINOTAUR).slice(0, 3);
+
+            const leader = bandCards[0];
+
+            const bandDetails = CommandService.getBandDetails(leader, bandCards);
+
+            expect(bandDetails).toEqual({
+                color: leader.color,
+                tribe: leader.tribe.name,
+                bandSize: 4
+            });
+        });
+
+
+        it("returns a band color based on the specified region when the leader is a Wingfolk", async () => {
+            const {
+                gameState
+            } = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.WINGFOLK,
+                ]
+            })
+
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.WINGFOLK).slice(0, 3);
+
+            const leader = bandCards[0];
+            leader.color = Color.GRAY;
+
+            const bandDetails = CommandService.getBandDetails(leader, bandCards, Color.PURPLE);
+
+            expect(bandDetails).toEqual({
+                color: Color.PURPLE,
+                tribe: leader.tribe.name,
+                bandSize: 3
+            });
         });
 
     });

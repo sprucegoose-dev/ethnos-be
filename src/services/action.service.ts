@@ -48,20 +48,20 @@ export class ActionService {
     static getPlayBandActions(cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = [];
 
-        for (const card of cardsInHand) {
-            if (card.tribe.name === TribeName.SKELETON) {
+        for (const leader of cardsInHand) {
+            if (leader.tribe.name === TribeName.SKELETON) {
                 continue;
             }
 
             const sameColorBand = cardsInHand.filter(card => !card.color || card.color === leader.color);
             const sameTribeBand = cardsInHand.filter(card => !card.color || card.tribe.name === leader.tribe.name);
             playBandActions.push({
-                leaderId: card.id,
+                leaderId: leader.id,
                 cardIds: sameColorBand.map(card => card.id),
                 type: ActionType.PLAY_BAND
             });
             playBandActions.push({
-                leaderId: card.id,
+                leaderId: leader.id,
                 cardIds: sameTribeBand.map(card => card.id),
                 type: ActionType.PLAY_BAND
             });

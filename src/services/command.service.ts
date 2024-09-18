@@ -76,7 +76,7 @@ export class CommandService {
         return remainingCards.filter(card => !cardIdsToKeep.includes(card.id));
     }
 
-    static getBandDetails(leader: Card, bandCards: Card[], payload: IPlayBandPayload): IBandDetails {
+    static getBandDetails(leader: Card, bandCards: Card[], regionColor?: Color): IBandDetails {
         let tribe = leader.tribe.name;
         let color = leader.color;
         let bandSize = bandCards.length;
@@ -85,8 +85,8 @@ export class CommandService {
             bandSize++;
         }
 
-        if (tribe === WINGFOLK) {
-            color = payload.regionColor;
+        if (tribe === WINGFOLK && regionColor) {
+            color = regionColor;
         }
 
         return { tribe, color, bandSize };
@@ -217,7 +217,7 @@ export class CommandService {
 
         const bandCards = player.cards.filter(card => payload.cardIds.includes(card.id));
         const leader = bandCards.find(card => card.id === payload.leaderId);
-        const band = this.getBandDetails(leader, bandCards, payload);
+        const band = this.getBandDetails(leader, bandCards, payload.regionColor);
         let remainingCards = this.getRemainingCards(player, payload.cardIds);
 
         // TODO: validate that the tribe is legal
