@@ -4,7 +4,7 @@ export enum TribeName {
     DRAGON = 'Dragon',
     ELF = 'Elf',
     GIANT = 'Giant',
-    HALFING = 'Halfing',
+    HALFLING = 'Halfling',
     MERFOLK = 'Merfolk',
     MINOTAUR = 'Minotaur',
     ORC = 'Orc',

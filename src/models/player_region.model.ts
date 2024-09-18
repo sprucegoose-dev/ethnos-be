@@ -8,7 +8,7 @@ import {Region} from './region.model';
 import {Player} from './player.model';
 
 @Table({
-    tableName: 'conversation_user',
+    tableName: 'player_region',
     timestamps: false,
 })
 export default class PlayerRegion extends Model {
@@ -19,6 +19,7 @@ export default class PlayerRegion extends Model {
             model: Region,
             key: 'id',
         },
+        primaryKey: true,
     })
     regionId: number;
 
@@ -29,8 +30,12 @@ export default class PlayerRegion extends Model {
             model: Player,
             key: 'id',
         },
+        primaryKey: true,
     })
     playerId: number;
 
+    @Column({
+        defaultValue: 0,
+    })
     tokens: number;
 }

@@ -302,7 +302,7 @@ class GameService {
 
                 }
             } else {
-                const quantityInEachColor = tribe.name === TribeName.HALFING ? 4 : 2;
+                const quantityInEachColor = tribe.name === TribeName.HALFLING ? 4 : 2;
 
                 for (let i = 0; i < quantityInEachColor; i++) {
                     for (let j = 0; j < colors.length; j++) {

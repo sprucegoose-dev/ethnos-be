@@ -15,9 +15,6 @@ export interface IHandleTribeOptions {
     band: IBandDetails;
     game: Game;
     player: Player;
-    payload: IPlayBandPayload;
-    remainingCards: Card[];
-    playerRegion: PlayerRegion;
 }
 
 export interface IRemainingCardsOptions {

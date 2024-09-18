@@ -16,9 +16,10 @@ import { Player } from '../models/player.model';
 import { Op } from 'sequelize';
 import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
 import { ActionType } from '../types/action.interface';
+import PlayerRegion from '../models/player_region.model';
 
 
-const defaultSettings =  {
+const defaultSettings = {
     tribes: [
         TribeName.DWARF,
         TribeName.MINOTAUR,
@@ -664,7 +665,6 @@ describe('CommandService', () => {
             await Card.truncate();
         });
 
-
         it('should draw cards equal to the size of the band played', async () => {
             await Card.update({
                 playerId: null,
@@ -746,6 +746,147 @@ describe('CommandService', () => {
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
             expect(player.trollTokens).toEqual([4]);
+        });
+    });
+
+    describe('addTokenToRegion', () => {
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it('should add a token to a the target region', async () => {
+            const result = await createGame();
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await Card.update({
+                playerId: null,
+                state: CardState.IN_DECK
+            }, {
+                where: {
+                    playerId: playerA.id
+                }
+            });
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const bandCards = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const band = CommandService.getBandDetails(bandCards[0], bandCards.map(card => card.id));
+
+            await CommandService.addTokenToRegion(gameState, player, band);
+
+            const region = await CommandService.getRegion(gameState, bandCards[0].color);
+            const playerRegion = await CommandService.getPlayerRegion(region, player);
+
+            expect(playerRegion.tokens).toBe(1);
+        });
+
+        it("should NOT add a token to a the target region if the band size is smaller than the player's tokens already in the region", async () => {
+            const result = await createGame();
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await Card.update({
+                playerId: null,
+                state: CardState.IN_DECK
+            }, {
+                where: {
+                    playerId: playerA.id
+                }
+            });
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const bandCards = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const band = CommandService.getBandDetails(bandCards[0], bandCards.map(card => card.id));
+
+            const region = await CommandService.getRegion(gameState, bandCards[0].color);
+
+            await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: region.id,
+                tokens: 3
+            });
+
+            await CommandService.addTokenToRegion(gameState, player, band);
+
+            const playerRegion = await CommandService.getPlayerRegion(region, player);
+
+            expect(playerRegion.tokens).toBe(3);
+        });
+
+        it("should NOT add a token to a the target region if the band leader is a Halfling", async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.HALFLING,
+                ]
+            });
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await Card.update({
+                playerId: null,
+                state: CardState.IN_DECK
+            }, {
+                where: {
+                    playerId: playerA.id
+                }
+            });
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.HALFLING
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const bandCards = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const band = CommandService.getBandDetails(bandCards[0], bandCards.map(card => card.id));
+
+            const region = await CommandService.getRegion(gameState, bandCards[0].color);
+
+            await CommandService.addTokenToRegion(gameState, player, band);
+
+            const playerRegion = await CommandService.getPlayerRegion(region, player);
+
+            expect(playerRegion.tokens).toBe(0);
         });
     });
 });

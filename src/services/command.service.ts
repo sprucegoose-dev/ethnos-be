@@ -25,16 +25,15 @@ import {
     Color,
     GameState
 } from '../types/game.interface';
-import { IHandleTribeOptions, IRemainingCardsOptions } from '../types/command.interface';
+import { IRemainingCardsOptions } from '../types/command.interface';
 import { ActionService } from './action.service';
 
 const {
     CENTAUR,
     DRAGON,
-    // DWARF,
     ELF,
     GIANT,
-    HALFING,
+    HALFLING,
     MERFOLK,
     MINOTAUR,
     ORC,
@@ -45,6 +44,36 @@ const {
 } = TribeName;
 
 export class CommandService {
+
+    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[] = []): Promise<INextActionPayload> {
+        const {
+            bandSize,
+            color,
+            tribe,
+        } = band;
+
+        let nextAction;
+
+        const region = await this.getRegion(game, color);
+        let playerRegion = await this.getPlayerRegion(region, player);
+
+        if (!playerRegion) {
+            playerRegion = await PlayerRegion.create({
+                playerId: player.id,
+                regionId: region.id,
+            });
+        }
+
+        if (tribe !== HALFLING && bandSize > playerRegion.tokens) {
+            await playerRegion.update({ tokens: playerRegion.tokens + 1 });
+
+            if (tribe === CENTAUR && remainingCards.length) {
+                nextAction = { type: ActionType.PLAY_BAND };
+            }
+        }
+
+        return nextAction;
+    }
 
     static async assignCardsToBand(player: Player, bandCardIds: number[], leaderId: number) {
         await Card.update({
@@ -99,7 +128,7 @@ export class CommandService {
         return player.cards.filter(card => !cardIds.includes(card.id));
     }
 
-    static async getPlayerRegion(region: Region, player: Player) {
+    static async getPlayerRegion(region: Region, player: Player): Promise<PlayerRegion> {
         return PlayerRegion.findOne({
             where: {
                 regionId: region.id,
@@ -108,7 +137,7 @@ export class CommandService {
         });
     }
 
-    static async getRegion(game: Game, color: Color) {
+    static async getRegion(game: Game, color: Color): Promise<Region> {
         return Region.findOne({ where: { gameId: game.id, color } });
     }
 
@@ -223,21 +252,13 @@ export class CommandService {
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
         let remainingCards = this.getRemainingCards(player, payload.cardIds);
 
-
         this.validateBand(cardsInHand, payload.cardIds, leader);
 
         await this.assignCardsToBand(player, payload.cardIds, leader.id);
-        const region = await this.getRegion(game, band.color);
-        const playerRegion = await this.getPlayerRegion(region, player);
 
-        nextAction = await this.handleTribeLogic({
-            band,
-            game,
-            player,
-            payload,
-            remainingCards,
-            playerRegion
-        });
+        nextAction = await this.addTokenToRegion(game, player, band, remainingCards);
+
+        await this.handleTribeLogic(game,player, band);
 
         await CommandService.handleRemainingCards({
             remainingCards,
@@ -305,28 +326,12 @@ export class CommandService {
         }
     }
 
-    static async handleTribeLogic({
-        band,
-        game,
-        player,
-        remainingCards,
-        playerRegion,
-    }: IHandleTribeOptions): Promise<INextActionPayload> {
-        let nextAction;
-
+    static async handleTribeLogic(game: Game, player: Player, band: IBandDetails): Promise<void> {
         const {
             bandSize,
             color,
             tribe,
         } = band;
-
-        if (tribe !== HALFING && bandSize > playerRegion.tokens) {
-            await playerRegion.update({ tokens: playerRegion.tokens + 1 });
-
-            if (tribe === CENTAUR && remainingCards.length) {
-                nextAction = { type: ActionType.PLAY_BAND };
-            }
-        }
 
         switch (tribe) {
             case ORC:
@@ -345,8 +350,6 @@ export class CommandService {
                 await this.handleTrollTokens(game, player, bandSize);
                 break;
         }
-
-        return nextAction;
     }
 
     static async handleTrollTokens(game: Game, player: Player, bandSize: number) {
