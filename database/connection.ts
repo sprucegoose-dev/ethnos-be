@@ -8,6 +8,7 @@ import { Player } from '../src/models/player.model';
 import { Region } from '../src/models/region.model';
 import { User } from '../src/models/user.model';
 import PlayerRegion from '../src/models/player_region.model';
+import { NextAction } from '../src/models/nextAction.model';
 
 interface IDatabaseEnvVars {
     NODE_ENV: string;
@@ -47,6 +48,7 @@ const options = {
         Card,
         Region,
         PlayerRegion,
+        NextAction,
     ],
 };
 
@@ -62,6 +64,7 @@ const sequelize = NODE_ENV === 'test' ?
             Card,
             Region,
             PlayerRegion,
+            NextAction,
         ],
     }) :
     new Sequelize(DB_NAME, DB_USER, DB_PASS, options);

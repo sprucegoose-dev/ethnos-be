@@ -48,9 +48,9 @@ module.exports = {
             },
         };
 
-        return queryInterface.createTable('regions', schema);
+        return queryInterface.createTable('next_actions', schema);
     },
     down: (queryInterface) => {
-        return queryInterface.dropTable('regions');
+        return queryInterface.dropTable('next_actions');
     }
 };
