@@ -60,7 +60,6 @@ module.exports = {
                     model: 'games',
                     key: 'id',
                 },
-                allowNull: true,
             },
             player_id: {
                 ...foreignKey,

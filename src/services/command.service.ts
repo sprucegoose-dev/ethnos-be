@@ -27,6 +27,8 @@ import {
 } from '../types/game.interface';
 import { IRemainingCardsOptions } from '../types/command.interface';
 import { ActionService } from './action.service';
+import { NextAction } from '../models/nextAction.model';
+import { NextActionState } from '../types/nextAction.interface';
 
 const {
     CENTAUR,
@@ -45,14 +47,12 @@ const {
 
 export class CommandService {
 
-    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[] = []): Promise<INextActionPayload> {
+    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[] = []): Promise<void> {
         const {
             bandSize,
             color,
             tribe,
         } = band;
-
-        let nextAction;
 
         const region = await this.getRegion(game, color);
         let playerRegion = await this.getPlayerRegion(region, player);
@@ -68,11 +68,14 @@ export class CommandService {
             await playerRegion.update({ tokens: playerRegion.tokens + 1 });
 
             if (tribe === CENTAUR && remainingCards.length) {
-                nextAction = { type: ActionType.PLAY_BAND };
+                await NextAction.create({
+                    gameId: game.id,
+                    playerId: player.id,
+                    type: ActionType.PLAY_BAND,
+                    state: NextActionState.PENDING
+                });
             }
         }
-
-        return nextAction;
     }
 
     static async assignCardsToBand(player: Player, bandCardIds: number[], leaderId: number) {
@@ -156,23 +159,24 @@ export class CommandService {
             throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
         }
 
-        let nextAction = null;
+        let nextActions = [];
 
         switch (payload.type) {
             case ActionType.DRAW_CARD:
                 await CommandService.handleDrawCard(game, activePlayer);
                 break;
             case ActionType.PLAY_BAND:
-                nextAction = await CommandService.handlePlayBand(game, activePlayer, payload);
+                nextActions = await CommandService.handlePlayBand(game, activePlayer, payload);
                 break;
             case ActionType.PICK_UP_CARD:
-                nextAction = await CommandService.handlePickUpCard(game, activePlayer, payload.cardId);
+                await CommandService.handlePickUpCard(game, activePlayer, payload.cardId);
                 break;
         }
 
-        if (!nextAction) {
+        // TODO: update actions log
+
+        if (!nextActions.length) {
             // end turn;
-        } else {
             // set next player to be the active player
         }
 
@@ -244,9 +248,7 @@ export class CommandService {
         }
     }
 
-    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload> {
-        let nextAction;
-
+    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload[]> {
         const leader = player.cards.find(card => card.id === payload.leaderId);
         const band = this.getBandDetails(leader, payload.cardIds, payload.regionColor);
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
@@ -256,19 +258,26 @@ export class CommandService {
 
         await this.assignCardsToBand(player, payload.cardIds, leader.id);
 
-        nextAction = await this.addTokenToRegion(game, player, band, remainingCards);
+        await this.addTokenToRegion(game, player, band, remainingCards);
 
         await this.handleTribeLogic(game,player, band);
 
+        const nextActions = await NextAction.findAll({
+            where: {
+                gameId: game.id,
+                state: NextActionState.PENDING,
+            }
+        });
+
         await CommandService.handleRemainingCards({
             remainingCards,
-            nextAction,
+            nextActions,
             player,
             cardIdsToKeep: payload.cardIdsToKeep,
             band,
         });
 
-        return nextAction;
+        return nextActions;
     }
 
     static async handleOrcTokens(player: Player, color: Color) {
@@ -277,7 +286,7 @@ export class CommandService {
         }
     }
 
-    static async handleMerfolkTrack(player: Player, bandSize: number) {
+    static async handleMerfolkTrack(player: Player, bandSize: number): Promise<void> {
         const merfolkTrackCheckpoints = [3, 7, 12, 18];
         let freeTokens = 0;
 
@@ -288,7 +297,12 @@ export class CommandService {
         }
 
         for (let i = 0; i < freeTokens; i++) {
-            // TODO: add 'FREE_TOKEN' next action for each free token
+            await NextAction.create({
+                gameId: player.gameId,
+                playerId: player.id,
+                type: ActionType.ADD_TOKEN,
+                state: NextActionState.PENDING
+            });
         }
 
         await player.update({
@@ -298,7 +312,7 @@ export class CommandService {
 
     static async handleRemainingCards({
         remainingCards,
-        nextAction,
+        nextActions,
         player,
         cardIdsToKeep,
         band,
@@ -307,7 +321,7 @@ export class CommandService {
             remainingCards = CommandService.filterElfRemainingCards(remainingCards, cardIdsToKeep, band.bandSize);
         }
 
-        if (band.tribe === CENTAUR && nextAction?.type === ActionType.PLAY_BAND) {
+        if (band.tribe === CENTAUR && nextActions.find(action => action.type === ActionType.PLAY_BAND)) {
             return;
         }
 

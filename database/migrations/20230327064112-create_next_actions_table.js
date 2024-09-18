@@ -22,19 +22,29 @@ module.exports = {
                     key: 'id',
                 },
             },
-            color: {
+            player_id: {
+                ...foreignKey,
+                references: {
+                    model: 'players',
+                    key: 'id',
+                },
+            },
+            type: {
                 type: Sequelize.ENUM,
                 values: [
-                    'red',
-                    'green',
-                    'purple',
-                    'blue',
-                    'gray',
-                    'orange'
+                    'draw_card',
+                    'pick_up_card',
+                    'play_band',
+                    'keep_cards',
+                    'add_token',
                 ],
             },
-            values: {
-                type: Sequelize.JSON,
+            state: {
+                type: Sequelize.ENUM,
+                values: [
+                    'pending',
+                    'resolved',
+                ],
             },
         };
 

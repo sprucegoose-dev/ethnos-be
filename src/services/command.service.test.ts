@@ -323,7 +323,7 @@ describe('CommandService', () => {
 
             await CommandService.handleRemainingCards({
                 remainingCards,
-                nextAction: null,
+                nextActions: [],
                 player,
                 cardIdsToKeep: [],
                 band: {
@@ -364,7 +364,7 @@ describe('CommandService', () => {
 
             await CommandService.handleRemainingCards({
                 remainingCards,
-                nextAction: null,
+                nextActions: [],
                 player,
                 cardIdsToKeep,
                 band: {
@@ -403,9 +403,10 @@ describe('CommandService', () => {
 
             expect(remainingCards.length).toBe(6);
 
+
             await CommandService.handleRemainingCards({
                 remainingCards,
-                nextAction: { type: ActionType.PLAY_BAND },
+                nextActions: [{ type: ActionType.PLAY_BAND }],
                 player,
                 cardIdsToKeep: [],
                 band: {

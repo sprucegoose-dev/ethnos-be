@@ -19,7 +19,6 @@ export class Card extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
 
-
     @Column
     state: CardState;
 

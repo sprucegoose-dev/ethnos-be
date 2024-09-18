@@ -11,6 +11,7 @@ export enum ActionType {
 }
 
 export interface IActionPayloadBase {
+    nextActionId?: number;
     cardIds?: number[];
     type: ActionType.DRAW_CARD |
         ActionType.KEEP_CARDS |
@@ -23,6 +24,7 @@ export interface IPickUpCardPayload {
 }
 
 export interface IPlayBandPayload {
+    nextActionId?: number;
     cardIds?: number[];
     cardIdsToKeep?: number[];
     leaderId: number;
