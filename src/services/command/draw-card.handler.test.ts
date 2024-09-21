@@ -9,7 +9,7 @@ import PlayerService from '@services/player/player.service';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 import {
-    // GameState,
+    GameState,
     IGameState
 } from '@interfaces/game.interface';
 
@@ -26,12 +26,16 @@ describe('DrawCardHandler', () => {
     let gameId: number;
     let gameState: IGameState;
     let playerA: Player;
+    let playerB: Player;
+    let playerC: Player;
 
     describe('handleDrawCard', () => {
         beforeEach(async () => {
             const result = await createGame();
             gameId = result.gameId;
             playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
             gameState = result.gameState;
         });
 
@@ -125,31 +129,120 @@ describe('DrawCardHandler', () => {
             expect(revealedDragons.length).toBe(1);
         });
 
-        // it('should end the game if the last dragon is revealed', async () => {
-        //     let player = await PlayerService.getPlayerWithCards(playerA.id);
+        it("should end the current 'age' and reset the cards if the last dragon is revealed", async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-        //     let updatedGame = await GameService.getState(gameId);
+            let updatedGame = await GameService.getState(gameId);
 
-        //     const dragonCard = updatedGame.cards
-        //         .find(card =>
-        //             card.state === CardState.IN_DECK &&
-        //             card.tribe.name === TribeName.DRAGON
-        //         );
+            const dragonCard = updatedGame.cards
+                .find(card =>
+                    card.state === CardState.IN_DECK &&
+                    card.tribe.name === TribeName.DRAGON
+                );
 
-        //     const nonDragonCard = updatedGame.cards
-        //         .filter(card => card.state === CardState.IN_DECK)
-        //         .find(card => card.tribe.name !== TribeName.DRAGON);
+            // set as second-to-last card in deck
+            dragonCard.index = updatedGame.cards.length  - 2;
 
-        //     dragonCard.index = 0;
-        //     nonDragonCard.index = 1;
+            const nonDragonCard = updatedGame.cards
+                .filter(card => card.state === CardState.IN_DECK)
+                .find(card => card.tribe.name !== TribeName.DRAGON);
 
-        //     updatedGame.cards = [dragonCard, nonDragonCard];
+            // set as last card in deck
+            nonDragonCard.index = updatedGame.cards.length - 1;
 
-        //     await DrawCardHandler.handleDrawCard(updatedGame, player);
+            for (const card of updatedGame.cards) {
+                if (![dragonCard.id, nonDragonCard.id].includes(card.id)) {
+                    // remove all but a dragon card and non-dragon card from the deck
+                    card.state = CardState.IN_MARKET;
+                }
+            }
 
-        //     updatedGame = await GameService.getState(gameId);
+            await DrawCardHandler.handleDrawCard(updatedGame, player);
 
-        //     expect(updatedGame.state).toBe(GameState.ENDED);
-        // });
+            updatedGame = await GameService.getState(gameId);
+
+            expect(updatedGame.state).toBe(GameState.STARTED);
+            expect(updatedGame.age).toBe(2);
+        });
+
+        it("should end the game if the last dragon is revealed and it's the  final age (4+ player game)", async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            let updatedGame = await GameService.getState(gameId);
+
+            updatedGame.age = 3;
+
+            const dragonCard = updatedGame.cards
+                .find(card =>
+                    card.state === CardState.IN_DECK &&
+                    card.tribe.name === TribeName.DRAGON
+                );
+
+            // set as second-to-last card in deck
+            dragonCard.index = updatedGame.cards.length  - 2;
+
+            const nonDragonCard = updatedGame.cards
+                .filter(card => card.state === CardState.IN_DECK)
+                .find(card => card.tribe.name !== TribeName.DRAGON);
+
+            // set as last card in deck
+            nonDragonCard.index = updatedGame.cards.length - 1;
+
+            for (const card of updatedGame.cards) {
+                if (![dragonCard.id, nonDragonCard.id].includes(card.id)) {
+                    // remove all but a dragon card and non-dragon card from the deck
+                    card.state = CardState.IN_MARKET;
+                }
+            }
+
+            await DrawCardHandler.handleDrawCard(updatedGame, player);
+
+            updatedGame = await GameService.getState(gameId);
+
+            expect(updatedGame.state).toBe(GameState.ENDED);
+        });
+
+        it("should end the game if the last dragon is revealed and it's the  final age (3 player game)", async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            let updatedGame = await GameService.getState(gameId);
+
+            updatedGame.players = [
+                playerA,
+                playerB,
+                playerC,
+            ];
+
+            updatedGame.age = 2;
+
+            const dragonCard = updatedGame.cards
+                .find(card =>
+                    card.state === CardState.IN_DECK &&
+                    card.tribe.name === TribeName.DRAGON
+                );
+
+            // set as second-to-last card in deck
+            dragonCard.index = updatedGame.cards.length  - 2;
+
+            const nonDragonCard = updatedGame.cards
+                .filter(card => card.state === CardState.IN_DECK)
+                .find(card => card.tribe.name !== TribeName.DRAGON);
+
+            // set as last card in deck
+            nonDragonCard.index = updatedGame.cards.length - 1;
+
+            for (const card of updatedGame.cards) {
+                if (![dragonCard.id, nonDragonCard.id].includes(card.id)) {
+                    // remove all but a dragon card and non-dragon card from the deck
+                    card.state = CardState.IN_MARKET;
+                }
+            }
+
+            await DrawCardHandler.handleDrawCard(updatedGame, player);
+
+            updatedGame = await GameService.getState(gameId);
+
+            expect(updatedGame.state).toBe(GameState.ENDED);
+        });
     });
 });

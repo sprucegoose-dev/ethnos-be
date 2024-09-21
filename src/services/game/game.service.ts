@@ -15,7 +15,6 @@ import {
     GameState,
     IGameSettings,
     IGameState,
-    ITribeCard,
     TRIBES,
 } from '@interfaces/game.interface';
 import {
@@ -23,7 +22,6 @@ import {
     EVENT_GAME_UPDATE,
 } from '@interfaces/event.interface';
 
-import CardService from '@services/card/card.service';
 import PlayerService from '@services/player/player.service';
 import EventService from '@services/event/event.service';
 
@@ -222,7 +220,7 @@ export default class GameService {
         if (game.players.length - 1 === 0) {
             await game.destroy();
         } else {
-            const updatedGameState = await GameService.getState(gameId);
+            const updatedGameState = await this.getState(gameId);
 
             EventService.emitEvent({
                 type: EVENT_GAME_UPDATE,
@@ -282,8 +280,9 @@ export default class GameService {
         }
     }
 
-    static generateTribeCards(tribes: Tribe[]): ITribeCard[] {
-        const tribeCards = [];
+    static async generateCards(gameId: number, tribes: Tribe[]): Promise<Card[]> {
+        const cards = [];
+        let card;
 
         const colors = [
             Color.BLUE,
@@ -297,29 +296,86 @@ export default class GameService {
         for (const tribe of tribes) {
             if (tribe.name === TribeName.DRAGON) {
                 for (let i = 0; i < 3; i++) {
-                    tribeCards.push(({
+                    card = await Card.create({
                         color: null,
-                        name: tribe.name,
+                        gameId,
                         tribeId: tribe.id,
-                    }));
-
+                        state: CardState.IN_DECK,
+                    });
+                    card.tribe = tribe;
+                    cards.push(card);
                 }
             } else {
                 const quantityInEachColor = tribe.name === TribeName.HALFLING ? 4 : 2;
 
                 for (let i = 0; i < quantityInEachColor; i++) {
                     for (let j = 0; j < colors.length; j++) {
-                        tribeCards.push({
+                        card = await Card.create({
                             color: tribe.name === TribeName.SKELETON ? null : colors[j],
-                            name: tribe.name,
+                            gameId,
                             tribeId: tribe.id,
+                            state: CardState.IN_DECK,
                         });
+                        card.tribe = tribe;
+                        cards.push(card);
                     }
                 }
             }
         }
 
-        return tribeCards;
+        return cards;
+    }
+
+    static async dealCards(gameId: number, players: Player[], allCards: Card[]) {
+        const cards = shuffle(allCards.filter(card => card.tribe.name !== TribeName.DRAGON));
+        const dragonsCards = allCards.filter(card => card.tribe.name === TribeName.DRAGON);
+        const playerCards = cards.splice(0, players.length);
+        const marketCards = cards.splice(0, players.length * 2);
+
+        for (let i = 0; i < players.length; i++) {
+            await Card.update({
+                state: CardState.IN_HAND,
+                index: null,
+                playerId: players[i].id,
+                gameId,
+            }, {
+                where: {
+                    id: playerCards[i].id
+                }
+            });
+        }
+
+        for (let i = 0; i < marketCards.length; i++) {
+            await Card.update({
+                state: CardState.IN_MARKET,
+                index: i,
+                playerId: null,
+                gameId,
+            }, {
+                where: {
+                    id: marketCards[i].id,
+                }
+            });
+        }
+
+        const bottomHalfOfDeck = cards.splice(-Math.ceil(cards.length / 2));
+
+        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonsCards]);
+
+        const deck = [...cards, ...bottomHalfWithlDragons];
+
+        for (let i = 0; i < deck.length; i++) {
+            await Card.update({
+                state: CardState.IN_DECK,
+                index: i,
+                playerId: null,
+                gameId,
+            }, {
+                where: {
+                    id: deck[i].id,
+                }
+            });
+        }
     }
 
     static async start(userId: number, gameId: number, settings: IGameSettings): Promise<void> {
@@ -369,55 +425,13 @@ export default class GameService {
             }
         }));
 
-        const tribeCards = GameService.generateTribeCards(tribes);
-        const cards = shuffle(tribeCards.filter(tribe => tribe.name !== TribeName.DRAGON));
+        const cards = await this.generateCards(game.id, tribes);
 
-        const dragonsCards = tribeCards.filter(tribe => tribe.name === TribeName.DRAGON);
-        const playerCards = cards.splice(0, players.length);
-        const marketCards = cards.splice(0, players.length * 2);
-
-        for (let i = 0; i < players.length; i++) {
-            await CardService.create({
-                tribeId: playerCards[i].tribeId,
-                color: marketCards[i].color,
-                state: CardState.IN_HAND,
-                index: 0,
-                playerId: players[i].id,
-                gameId,
-            });
-        }
-
-        for (let i = 0; i < marketCards.length; i++) {
-            await CardService.create({
-                tribeId: marketCards[i].tribeId,
-                state: CardState.IN_MARKET,
-                color: marketCards[i].color,
-                index: i,
-                playerId: null,
-                gameId,
-            });
-        }
-
-        const bottomHalfOfDeck = cards.splice(-Math.ceil(cards.length / 2));
-
-        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonsCards]);
-
-        const deck = [...cards, ...bottomHalfWithlDragons];
-
-        for (let i = 0; i < deck.length; i++) {
-            await CardService.create({
-                tribeId: deck[i].tribeId,
-                color: deck[i].color,
-                state: CardState.IN_DECK,
-                index: i,
-                playerId: null,
-                gameId,
-            });
-        }
+        await this.dealCards(game.id, players, cards);
 
         const startingPlayerId = shuffle(players)[0].id;
 
-        await GameService.generateRegions(gameId);
+        await this.generateRegions(gameId);
 
         await Game.update(
             {
@@ -438,4 +452,16 @@ export default class GameService {
             payload: activeGames
         });
     }
+
+    static async startNewAge(game: Game) {
+        await game.update({
+            age: game.age + 1,
+        });
+
+        // do scoring
+
+        await this.dealCards(game.id, game.players, game.cards);
+
+        // set next player
+    };
 }

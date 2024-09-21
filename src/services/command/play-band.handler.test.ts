@@ -544,108 +544,6 @@ describe('PlayBandHandler', () => {
 
     });
 
-    describe('validateBand', () => {
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
-
-        it("returns 'true' if the band is valid", async () => {
-            const {
-                gameState,
-                playerA,
-            } = await createGame();
-
-            const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
-            ).slice(0, 3);
-
-            const cardIdsToAssign = cardsToAssign.map(card => card.id);
-
-            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
-
-            const player = await PlayerService.getPlayerWithCards(playerA.id);
-
-            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-
-            const isValid = PlayBandHandler.validateBand(cardsInHand, cardIdsToAssign, cardsInHand[0]);
-
-            expect(isValid).toBe(true);
-        });
-
-        it("throws an error if the band is invalid", async () => {
-            const {
-                gameState,
-                playerA,
-            } = await createGame();
-
-            const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
-            ).slice(0, 3);
-
-            const cardIdsToAssign = cardsToAssign.map(card => card.id);
-
-            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
-
-            const player = await PlayerService.getPlayerWithCards(playerA.id);
-
-            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-
-            try {
-                PlayBandHandler.validateBand(cardsInHand, [100, 101, 102], cardsInHand[0]);
-                throw new Error('Expected error not to be thrown');
-            } catch (error: any) {
-                expect(error.type).toBe(ERROR_BAD_REQUEST);
-                expect(error.message).toBe('Invalid band');
-            }
-        });
-
-        it("throws an error if the band leader is a skeleton", async () => {
-            const {
-                gameState,
-                playerA,
-            } = await createGame({
-                tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
-                    TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.SKELETON,
-                ]
-            });
-
-            const leaderToAssign =  gameState.cards.find(card =>
-                card.tribe.name === TribeName.SKELETON &&
-                !card.playerId
-            );
-
-            const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
-                !card.playerId
-            ).slice(0, 2);
-
-            const cardIdsToAssign = [
-                leaderToAssign.id,
-                ...cardsToAssign.map(card => card.id),
-            ]
-
-            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
-
-            const player = await PlayerService.getPlayerWithCards(playerA.id);
-
-            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-
-            try {
-                PlayBandHandler.validateBand(cardsInHand, cardIdsToAssign, leaderToAssign);
-                throw new Error('Expected error not to be thrown');
-            } catch (error: any) {
-                expect(error.type).toBe(ERROR_BAD_REQUEST);
-                expect(error.message).toBe('A Skeleton cannot be the leader of a band');
-            }
-        });
-    });
-
     describe('getRemainingCards', () => {
         let gameState: IGameState;
         let playerA: Player;
@@ -820,4 +718,107 @@ describe('PlayBandHandler', () => {
         });
 
     });
+
+    describe('validateBand', () => {
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it("returns 'true' if the band is valid", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame();
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const isValid = PlayBandHandler.validateBand(cardsInHand, cardIdsToAssign, cardsInHand[0]);
+
+            expect(isValid).toBe(true);
+        });
+
+        it("throws an error if the band is invalid", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame();
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            try {
+                PlayBandHandler.validateBand(cardsInHand, [100, 101, 102], cardsInHand[0]);
+                throw new Error('Expected error not to be thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Invalid band');
+            }
+        });
+
+        it("throws an error if the band leader is a skeleton", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.SKELETON,
+                ]
+            });
+
+            const leaderToAssign =  gameState.cards.find(card =>
+                card.tribe.name === TribeName.SKELETON &&
+                !card.playerId
+            );
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 2);
+
+            const cardIdsToAssign = [
+                leaderToAssign.id,
+                ...cardsToAssign.map(card => card.id),
+            ]
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+            try {
+                PlayBandHandler.validateBand(cardsInHand, cardIdsToAssign, leaderToAssign);
+                throw new Error('Expected error not to be thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('A Skeleton cannot be the leader of a band');
+            }
+        });
+    });
+
 });

@@ -9,6 +9,7 @@ import Player from '@models/player.model';
 import { CardState } from '@interfaces/card.interface';
 import { GameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
+import GameService from '../game/game.service';
 
 const {
     DRAGON,
@@ -46,12 +47,15 @@ export default class DrawCardHandler {
         } while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
 
         if (!dragonsRemaining) {
-            // TODO: increment age
+            const finalAge = game.players.length >= 4 ? 3 : 2;
 
-            if ((game.players.length <= 3 && game.age === 2) || game.age === 3) {
+            if (finalAge == game.age) {
                 await game.update({
                     state: GameState.ENDED
                 });
+            } else {
+
+                await GameService.startNewAge(game);
             }
         } else {
             await nextCard.update({
