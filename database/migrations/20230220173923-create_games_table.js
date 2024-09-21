@@ -49,6 +49,10 @@ module.exports = {
             password: {
                 type: Sequelize.STRING,
             },
+            age: {
+                type: Sequelize.INTEGER,
+                defaultValue: 1,
+            },
             created_at: Sequelize.DATE,
             updated_at: Sequelize.DATE,
         };

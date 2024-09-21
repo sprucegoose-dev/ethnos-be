@@ -1,11 +1,11 @@
 import { Op } from 'sequelize';
 import shuffle from 'lodash.shuffle';
 
-import { Card } from '../models/card.model';
-import { Tribe } from '../models/tribe.model';
-import { Game } from '../models/game.model';
-import { Player } from '../models/player.model';
-import { TribeName } from '../types/tribe.interface';
+import { Card } from '../../models/card.model';
+import { Tribe } from '../../models/tribe.model';
+import { Game } from '../../models/game.model';
+import { Player } from '../../models/player.model';
+import { TribeName } from '../../types/tribe.interface';
 import {
     Color,
     GameState,
@@ -13,23 +13,23 @@ import {
     IGameState,
     ITribeCard,
     TRIBES,
-} from '../types/game.interface';
-import CardService from './card.service';
+} from '../../types/game.interface';
+import CardService from '../card/card.service';
 import {
     CustomException,
     ERROR_BAD_REQUEST,
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
-} from '../helpers/exception_handler';
-import PlayerService from './player.service';
-import EventService from './event.service';
-import { User } from '../models/user.model';
+} from '../../helpers/exception_handler';
+import PlayerService from '../player/player.service';
+import EventService from '../event/event.service';
+import { User } from '../../models/user.model';
 import {
     EVENT_ACTIVE_GAMES_UPDATE,
     EVENT_GAME_UPDATE,
-} from '../types/event.interface';
-import { CardState } from '../types/card.interface';
-import { Region } from '../models/region.model';
+} from '../../types/event.interface';
+import { CardState } from '../../types/card.interface';
+import { Region } from '../../models/region.model';
 
 class GameService {
 

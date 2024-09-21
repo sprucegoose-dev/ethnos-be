@@ -1,6 +1,5 @@
 import { Dialect } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { Band } from '../src/models/band.model';
 import { Card } from '../src/models/card.model';
 import { Tribe } from '../src/models/tribe.model';
 import { Game } from '../src/models/game.model';
@@ -41,10 +40,9 @@ const options = {
     },
     models: [
         User,
-        Game,
         Player,
+        Game,
         Tribe,
-        Band,
         Card,
         Region,
         PlayerRegion,
@@ -57,10 +55,9 @@ const sequelize = NODE_ENV === 'test' ?
         logging: false,
         models: [
             User,
-            Game,
             Player,
+            Game,
             Tribe,
-            Band,
             Card,
             Region,
             PlayerRegion,

@@ -1,9 +1,9 @@
-import { gameSocket } from '..';
+import { gameSocket } from '../..';
 import {
     EVENT_ACTIVE_GAMES_UPDATE,
     EVENT_GAME_UPDATE,
     IEventType,
-} from '../types/event.interface';
+} from '../../types/event.interface';
 
 class EventService {
 

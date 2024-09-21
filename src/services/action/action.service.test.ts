@@ -1,19 +1,19 @@
-import { Game } from '../models/game.model';
-import GameService from './game.service';
+import { Game } from '../../models/game.model';
+import GameService from '../game/game.service';
 import {
     userA,
     userB,
     userC,
     userD,
-} from '../../jest.setup';
-import PlayerService from './player.service';
-import { TribeName } from '../types/tribe.interface';
+} from '../../../jest.setup';
+import PlayerService from '../player/player.service';
+import { TribeName } from '../../types/tribe.interface';
 import { ActionService } from './action.service';
-import { ActionType } from '../types/action.interface';
-import { CardState } from '../types/card.interface';
-import { Color } from '../types/game.interface';
-import { Card } from '../models/card.model';
-import { Player } from '../models/player.model';
+import { ActionType } from '../../types/action.interface';
+import { CardState } from '../../types/card.interface';
+import { Color } from '../../types/game.interface';
+import { Card } from '../../models/card.model';
+import { Player } from '../../models/player.model';
 
 const arrayEquals = (arrayA: any[], arrayB: any[]) => {
     return arrayA.every((value, index) => value === arrayB[index])

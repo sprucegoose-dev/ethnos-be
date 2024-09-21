@@ -4,7 +4,7 @@ import { Response, Request, NextFunction } from 'express';
 
 import { exceptionHandler } from '../helpers/exception_handler.decorator';
 import { CustomException, ERROR_UNAUTHORIZED } from '../helpers/exception_handler';
-import UserService from '../services/user.service';
+import UserService from '../services/user/user.service';
 
 @exceptionHandler()
 class AuthMiddleware {

@@ -1,9 +1,9 @@
-import { Card } from '../models/card.model';
-import { ActionType, IActionPayload, IPlayBandPayload } from '../types/action.interface';
-import { CardState } from '../types/card.interface';
-import { GameState } from '../types/game.interface';
-import { TribeName } from '../types/tribe.interface';
-import GameService from './game.service';
+import { Card } from '../../models/card.model';
+import { ActionType, IActionPayload, IPlayBandPayload } from '../../types/action.interface';
+import { CardState } from '../../types/card.interface';
+import { GameState } from '../../types/game.interface';
+import { TribeName } from '../../types/tribe.interface';
+import GameService from '../game/game.service';
 
 export class ActionService {
 

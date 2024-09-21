@@ -1,13 +1,14 @@
 import { Game } from '../models/game.model';
 import { GameState } from '../types/game.interface';
-import { IUserResponse } from '../types/user.interface';
-import UserService from '../services/user.service';
-import GameService from '../services/game.service';
+import GameService from '../services/game/game.service';
 import StaleGamesCleaner, {
     IN_PROGRESS_GAMES_TIMEOUT_HRS,
     PENDING_GAMES_TIMEOUT_HRS,
 } from './clean_stale_games';
 import moment from 'moment';
+import {
+    userA,
+} from '../../jest.setup';
 
 const {
     CREATED,
@@ -15,18 +16,6 @@ const {
 } = GameState;
 
 describe('StaleGamesCleaner', () => {
-    const userDataA = {
-        username: 'SpruceGoose',
-        email: 'spruce.goose@gmail.com',
-        password: 'alrighty.then',
-    };
-
-    let userA: IUserResponse;
-
-    beforeAll(async () => {
-        userA = await UserService.create(userDataA);
-    });
-
     describe('cleanUp', () => {
 
         beforeEach(async () => {

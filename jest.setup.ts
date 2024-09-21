@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from './database/connection';
 import { IUserResponse } from './src/types/user.interface';
-import UserService from './src/services/user.service';
+import UserService from './src/services/user/user.service';
 
 const glob = require('glob');
 const path = require('path');
@@ -54,7 +54,7 @@ beforeAll(async () => {
     userD = await UserService.create(userDataD);
 });
 
-jest.mock('./src/services/event.service.ts', () => {
+jest.mock('./src/services/event/event.service.ts', () => {
     return {
         emitEvent: jest.fn(),
     }

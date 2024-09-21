@@ -1,20 +1,20 @@
-import { Card } from '../models/card.model';
-import { Game } from '../models/game.model';
-import EventService from './event.service';
-import { EVENT_ACTIVE_GAMES_UPDATE } from '../types/event.interface';
+import { Card } from '../../models/card.model';
+import { Game } from '../../models/game.model';
+import EventService from '../event/event.service';
+import { EVENT_ACTIVE_GAMES_UPDATE } from '../../types/event.interface';
 import GameService from './game.service';
-import PlayerService from './player.service';
-import { GameState, IGameSettings } from '../types/game.interface';
-import { ERROR_BAD_REQUEST } from '../helpers/exception_handler';
-import { Player } from '../models/player.model';
-import { TribeName } from '../types/tribe.interface';
-import { CardState } from '../types/card.interface';
+import PlayerService from '../player/player.service';
+import { GameState, IGameSettings } from '../../types/game.interface';
+import { ERROR_BAD_REQUEST } from '../../helpers/exception_handler';
+import { Player } from '../../models/player.model';
+import { TribeName } from '../../types/tribe.interface';
+import { CardState } from '../../types/card.interface';
 import {
     userA,
     userB,
     userC,
     userD,
-} from '../../jest.setup';
+} from '../../../jest.setup';
 
 describe('GameService', () => {
 

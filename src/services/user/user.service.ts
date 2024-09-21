@@ -7,15 +7,15 @@ import {
     ERROR_BAD_REQUEST,
     ERROR_NOT_FOUND,
     ERROR_UNAUTHORIZED,
-} from '../helpers/exception_handler';
-import { User } from '../models/user.model';
+} from '../../helpers/exception_handler';
+import { User } from '../../models/user.model';
 import {
     IUserRequest,
     IUserResponse,
     PASSWORD_MIN_CHARS,
     USERNAME_MAX_CHARS,
     USERNAME_MIN_CHARS,
-} from '../types/user.interface';
+} from '../../types/user.interface';
 
 class UserService {
 
@@ -31,20 +31,25 @@ class UserService {
         const sessionId = uuid();
         const sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
 
-        const user = await User.create({
-            username,
-            email,
-            password: await bcrypt.hash(password, 10),
-            sessionId,
-            sessionExp,
-        });
+        try {
+            const user = await User.create({
+                username,
+                email,
+                password: await bcrypt.hash(password, 10),
+                sessionId,
+                sessionExp,
+            });
 
-        return {
-            id: user.id,
-            username,
-            sessionId,
-            sessionExp,
-        };
+            return {
+                id: user.id,
+                username,
+                sessionId,
+                sessionExp,
+            };
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 
     static async login(email: string, password: string): Promise<IUserResponse> {

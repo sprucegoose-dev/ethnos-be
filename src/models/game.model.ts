@@ -62,6 +62,11 @@ export class Game extends Model {
     @Column
     password: String;
 
+    @Column({
+        defaultValue: 1,
+    })
+    age: number;
+
     @CreatedAt
     @Column({ field: 'created_at' })
     // @ts-ignore

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 
 import { exceptionHandler } from '../helpers/exception_handler.decorator';
-import { ActionService } from '../services/action.service';
-import CommandService from '../services/command.service';
-import GameService from '../services/game.service';
+import { ActionService } from '../services/action/action.service';
+import CommandService from '../services/command/command.service';
+import GameService from '../services/game/game.service';
 import { IActionRequest } from '../types/action.interface';
 import { AuthRequest } from '../types/index.interface';
 import { IGameSettings } from '../types/game.interface';
