@@ -1,8 +1,10 @@
 
 import { Op } from 'sequelize';
-import { Card } from '../../models/card.model';
-import { Tribe } from '../../models/tribe.model';
-import { ICard, ICardFilters } from '../../types/card.interface';
+
+import Card from '@models/card.model';
+import Tribe from '@models/tribe.model';
+
+import { ICard, ICardFilters } from '@interfaces/card.interface';
 
 class CardService {
 

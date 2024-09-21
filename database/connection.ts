@@ -1,13 +1,14 @@
 import { Dialect } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { Card } from '../src/models/card.model';
-import { Tribe } from '../src/models/tribe.model';
-import { Game } from '../src/models/game.model';
-import { Player } from '../src/models/player.model';
-import { Region } from '../src/models/region.model';
-import { User } from '../src/models/user.model';
-import PlayerRegion from '../src/models/player_region.model';
-import { NextAction } from '../src/models/nextAction.model';
+
+import Card from '@models/card.model';
+import Tribe from '@models/tribe.model';
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import Region from '@models/region.model';
+import User from '@models/user.model';
+import PlayerRegion from '@models/player_region.model';
+import NextAction from '@models/nextAction.model';
 
 interface IDatabaseEnvVars {
     NODE_ENV: string;

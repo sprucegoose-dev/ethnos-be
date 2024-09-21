@@ -15,7 +15,7 @@ import {
         },
     },
 })
-export class User extends Model {
+export default class User extends Model {
 
     @Column
     username: string;

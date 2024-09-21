@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from './database/connection';
-import { IUserResponse } from './src/types/user.interface';
+import { IUserResponse } from './src/interfaces/user.interface';
 import UserService from './src/services/user/user.service';
 
 const glob = require('glob');

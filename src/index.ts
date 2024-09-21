@@ -3,11 +3,11 @@ import { Socket } from 'socket.io';
 import UsersController from './controllers/user.controller';
 import GamesController from './controllers/game.controller';
 import AuthMiddleware from './middleware/auth.middleware';
-import '../database/connection';
 import {
     EVENT_JOIN_GAME,
     EVENT_LEAVE_GAME,
-} from './types/event.interface';
+} from './interfaces/event.interface';
+import '../database/connection';
 
 const express = require('express');
 const app = require('express')();

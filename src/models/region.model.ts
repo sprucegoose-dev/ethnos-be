@@ -5,14 +5,14 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { Game } from './game.model';
-import { Color } from '../types/game.interface';
+import Game from './game.model';
+import { Color } from '@interfaces/game.interface';
 
 @Table({
     tableName: 'regions',
     timestamps: false,
 })
-export class Region extends Model {
+export default class Region extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
 

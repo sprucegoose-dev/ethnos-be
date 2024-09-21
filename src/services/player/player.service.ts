@@ -1,6 +1,6 @@
-import { Card } from '../../models/card.model';
-import { Player } from '../../models/player.model';
-import { Tribe } from '../../models/tribe.model';
+import Card from '@models/card.model';
+import Player from '@models/player.model';
+import Tribe from '@models/tribe.model';
 
 class PlayerService {
 

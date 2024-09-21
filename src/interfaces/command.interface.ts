@@ -1,6 +1,7 @@
-import { Card } from '../models/card.model';
-import { Game } from '../models/game.model';
-import { Player } from '../models/player.model';
+import Card from '@models/card.model';
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+
 import { INextActionPayload } from './action.interface';
 import { Color } from './game.interface';
 

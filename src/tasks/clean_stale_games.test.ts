@@ -1,14 +1,14 @@
-import { Game } from '../models/game.model';
-import { GameState } from '../types/game.interface';
-import GameService from '../services/game/game.service';
 import StaleGamesCleaner, {
     IN_PROGRESS_GAMES_TIMEOUT_HRS,
     PENDING_GAMES_TIMEOUT_HRS,
 } from './clean_stale_games';
+
+import Game from '@models/game.model';
+import { GameState } from '@interfaces/game.interface';
+import GameService from '@services/game/game.service';
+import { userA } from '@jest.setup';
+
 import moment from 'moment';
-import {
-    userA,
-} from '../../jest.setup';
 
 const {
     CREATED,

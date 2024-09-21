@@ -1,18 +1,26 @@
-import { Game } from '../../models/game.model';
-import GameService from '../game/game.service';
-import PlayerService from '../player/player.service';
-import { TribeName } from '../../types/tribe.interface';
+import Game from '@models/game.model';
+import PlayerRegion from '@models/player_region.model';
+import NextAction from '@models/nextAction.model';
+import Card from '@models/card.model';
+import Player from '@models/player.model';
+
+import GameService from '@services/game/game.service';
+import PlayerService from '@services/player/player.service';
+
+import { TribeName } from '@interfaces/tribe.interface';
+import { Color, IGameState } from '@interfaces/game.interface';
+import { CardState } from '@interfaces/card.interface';
+import { NextActionState } from '@interfaces/nextAction.interface';
+import { ActionType } from '@interfaces/action.interface';
+
+import { ERROR_BAD_REQUEST } from '@helpers/exception_handler';
+
+import {
+    assignCardsToPlayer,
+    createGame,
+    getCardsFromDeck
+} from './test-helpers';
 import PlayBandHandler from './play-band.handler';
-import { CardState } from '../../types/card.interface';
-import { Color, IGameState } from '../../types/game.interface';
-import { Card } from '../../models/card.model';
-import { Player } from '../../models/player.model';
-import { ERROR_BAD_REQUEST } from '../../helpers/exception_handler';
-import { ActionType } from '../../types/action.interface';
-import PlayerRegion from '../../models/player_region.model';
-import { NextAction } from '../../models/nextAction.model';
-import { NextActionState } from '../../types/nextAction.interface';
-import { assignCardsToPlayer, createGame, getCardsFromDeck } from './test-helpers';
 
 describe('PlayBandHandler', () => {
 

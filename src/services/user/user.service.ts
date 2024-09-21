@@ -7,15 +7,17 @@ import {
     ERROR_BAD_REQUEST,
     ERROR_NOT_FOUND,
     ERROR_UNAUTHORIZED,
-} from '../../helpers/exception_handler';
-import { User } from '../../models/user.model';
+} from '@helpers/exception_handler';
+
+import User from '@models/user.model';
+
 import {
     IUserRequest,
     IUserResponse,
     PASSWORD_MIN_CHARS,
     USERNAME_MAX_CHARS,
     USERNAME_MIN_CHARS,
-} from '../../types/user.interface';
+} from '@interfaces/user.interface';
 
 class UserService {
 

@@ -4,16 +4,16 @@ import {
     Table,
 } from 'sequelize-typescript';
 
-import { Game } from './game.model';
-import { Player } from './player.model';
-import { NextActionState } from '../types/nextAction.interface';
-import { ActionType } from '../types/action.interface';
+import Game from './game.model';
+import Player from './player.model';
+import { NextActionState } from '@interfaces/nextAction.interface';
+import { ActionType } from '@interfaces/action.interface';
 
 @Table({
     tableName: 'next_actions',
     timestamps: false,
 })
-export class NextAction extends Model {
+export default class NextAction extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
 

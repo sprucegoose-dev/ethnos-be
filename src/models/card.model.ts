@@ -5,17 +5,19 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { Tribe } from './tribe.model';
-import { Game } from './game.model';
-import { Player } from './player.model';
-import { CardState } from '../types/card.interface';
-import { Color } from '../types/game.interface';
+
+import { CardState } from '@interfaces/card.interface';
+import { Color } from '@interfaces/game.interface';
+
+import Tribe from './tribe.model';
+import Game from './game.model';
+import Player from './player.model';
 
 @Table({
     tableName: 'cards',
     timestamps: false,
 })
-export class Card extends Model {
+export default class Card extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
 

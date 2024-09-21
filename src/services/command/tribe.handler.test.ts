@@ -1,13 +1,16 @@
-import { Game } from '../../models/game.model';
-import GameService from '../game/game.service';
-import PlayerService from '../player/player.service';
-import { TribeName } from '../../types/tribe.interface';
-import TribeService from './tribe.handler';
-import { CardState } from '../../types/card.interface';
-import { IGameState } from '../../types/game.interface';
-import { Card } from '../../models/card.model';
-import { Player } from '../../models/player.model';
+import Game from '@models/game.model';
+import Card from '@models/card.model';
+import Player from '@models/player.model';
+
+import GameService from '@services/game/game.service';
+import PlayerService from '@services/player/player.service';
+
+import { TribeName } from '@interfaces/tribe.interface';
+import { CardState } from '@interfaces/card.interface';
+import { IGameState } from '@interfaces/game.interface';
+
 import { createGame } from './test-helpers';
+import TribeService from './tribe.handler';
 
 describe('TribeService', () => {
 

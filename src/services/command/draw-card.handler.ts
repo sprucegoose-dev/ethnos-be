@@ -1,12 +1,14 @@
 import {
     CustomException,
     ERROR_BAD_REQUEST,
-} from '../../helpers/exception_handler';
-import { Game } from '../../models/game.model';
-import { Player } from '../../models/player.model';
-import { CardState } from '../../types/card.interface';
-import { GameState } from '../../types/game.interface';
-import { TribeName } from '../../types/tribe.interface';
+} from '@helpers/exception_handler';
+
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+
+import { CardState } from '@interfaces/card.interface';
+import { GameState } from '@interfaces/game.interface';
+import { TribeName } from '@interfaces/tribe.interface';
 
 const {
     DRAGON,

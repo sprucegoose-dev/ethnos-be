@@ -1,18 +1,21 @@
 import {
     ActionType,
     IActionPayload,
-} from '../../types/action.interface';
+} from '@interfaces/action.interface';
+import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
+
 import {
     CustomException,
     ERROR_BAD_REQUEST,
     ERROR_NOT_FOUND,
-} from '../../helpers/exception_handler';
-import GameService from '../game/game.service';
-import { EVENT_GAME_UPDATE } from '../../types/event.interface';
+} from '@helpers/exception_handler';
+
+import GameService from '@services/game/game.service';
+import EventService from '@services/event/event.service';
+
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
-import EventService from '../event/event.service';
 
 export default class CommandService {
 

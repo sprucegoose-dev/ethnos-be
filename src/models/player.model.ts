@@ -7,16 +7,16 @@ import {
     Table,
 } from 'sequelize-typescript';
 
-import { Game } from './game.model';
-import { User } from './user.model';
-import { Color } from '../types/game.interface';
-import { Card } from './card.model';
+import Game from './game.model';
+import User from './user.model';
+import { Color } from '@interfaces/game.interface';
+import Card from './card.model';
 
 @Table({
     tableName: 'players',
     timestamps: false,
 })
-export class Player extends Model {
+export default class Player extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
     id: number;
 

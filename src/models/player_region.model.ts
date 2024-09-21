@@ -4,8 +4,9 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import {Region} from './region.model';
-import {Player} from './player.model';
+
+import Region from './region.model';
+import Player from './player.model';
 
 @Table({
     tableName: 'player_region',

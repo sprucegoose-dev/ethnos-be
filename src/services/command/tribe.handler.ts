@@ -1,17 +1,19 @@
+import { Op } from 'sequelize';
+
 import {
     ActionType,
     IBandDetails,
-} from '../../types/action.interface';
-import { Game } from '../../models/game.model';
-import { Player } from '../../models/player.model';
-import { CardState } from '../../types/card.interface';
-import { TribeName } from '../../types/tribe.interface';
-import { Op } from 'sequelize';
-import {
-    Color,
-} from '../../types/game.interface';
-import { NextAction } from '../../models/nextAction.model';
-import { NextActionState } from '../../types/nextAction.interface';
+} from '@interfaces/action.interface';
+
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import NextAction from '@models/nextAction.model';
+
+import { CardState } from '@interfaces/card.interface';
+import { TribeName } from '@interfaces/tribe.interface';
+import { Color } from '@interfaces/game.interface';
+import { NextActionState } from '@interfaces/nextAction.interface';
+
 import DrawCardHandler from './draw-card.handler';
 
 const {

@@ -1,6 +1,7 @@
-import { Game } from '../models/game.model';
 import { Op } from 'sequelize';
-import { GameState } from '../types/game.interface';
+
+import Game from '@models/game.model';
+import { GameState } from '@interfaces/game.interface';
 
 const moment = require('moment');
 

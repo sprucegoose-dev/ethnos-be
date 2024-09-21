@@ -1,17 +1,25 @@
 
-import { Game } from '../../models/game.model';
-import GameService from '../game/game.service';
-import PlayerService from '../player/player.service';
-import { TribeName } from '../../types/tribe.interface';
-import { CardState } from '../../types/card.interface';
+import Game from '@models/game.model';
+import Card from '@models/card.model';
+import Player from '@models/player.model';
+
+import GameService from '@services/game/game.service';
+import PlayerService from '@services/player/player.service';
+
+import { TribeName } from '@interfaces/tribe.interface';
+import { CardState } from '@interfaces/card.interface';
 import {
     // GameState,
     IGameState
-} from '../../types/game.interface';
-import { Card } from '../../models/card.model';
-import { Player } from '../../models/player.model';
-import { ERROR_BAD_REQUEST } from '../../helpers/exception_handler';
-import { assignCardsToPlayer, createGame, getCardsFromDeck } from './test-helpers';
+} from '@interfaces/game.interface';
+
+import { ERROR_BAD_REQUEST } from '@helpers/exception_handler';
+
+import {
+    assignCardsToPlayer,
+    createGame,
+    getCardsFromDeck
+} from './test-helpers';
 import DrawCardHandler from './draw-card.handler';
 
 describe('DrawCardHandler', () => {

@@ -1,11 +1,15 @@
 import { Op } from 'sequelize';
 import shuffle from 'lodash.shuffle';
 
-import { Card } from '../../models/card.model';
-import { Tribe } from '../../models/tribe.model';
-import { Game } from '../../models/game.model';
-import { Player } from '../../models/player.model';
-import { TribeName } from '../../types/tribe.interface';
+import Card from '@models/card.model';
+import Tribe from '@models/tribe.model';
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import Region from '@models/region.model';
+import User from '@models/user.model';
+
+import { TribeName } from '@interfaces/tribe.interface';
+import { CardState } from '@interfaces/card.interface';
 import {
     Color,
     GameState,
@@ -13,25 +17,24 @@ import {
     IGameState,
     ITribeCard,
     TRIBES,
-} from '../../types/game.interface';
-import CardService from '../card/card.service';
+} from '@interfaces/game.interface';
+import {
+    EVENT_ACTIVE_GAMES_UPDATE,
+    EVENT_GAME_UPDATE,
+} from '@interfaces/event.interface';
+
+import CardService from '@services/card/card.service';
+import PlayerService from '@services/player/player.service';
+import EventService from '@services/event/event.service';
+
 import {
     CustomException,
     ERROR_BAD_REQUEST,
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
-} from '../../helpers/exception_handler';
-import PlayerService from '../player/player.service';
-import EventService from '../event/event.service';
-import { User } from '../../models/user.model';
-import {
-    EVENT_ACTIVE_GAMES_UPDATE,
-    EVENT_GAME_UPDATE,
-} from '../../types/event.interface';
-import { CardState } from '../../types/card.interface';
-import { Region } from '../../models/region.model';
+} from '@helpers/exception_handler';
 
-class GameService {
+export default class GameService {
 
     static async create(userId: number, autoAddPlayer: boolean = false): Promise<IGameState> {
         if (await this.hasActiveGames(userId)) {
@@ -436,5 +439,3 @@ class GameService {
         });
     }
 }
-
-export default GameService;

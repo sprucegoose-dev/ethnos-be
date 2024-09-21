@@ -6,6 +6,16 @@ const config: Config.InitialOptions = {
     testRegex: '(setup|test)\\.[jt]sx?$',
     testEnvironment: 'node',
     setupFilesAfterEnv: ['<rootDir>/../jest.setup.ts'],
+    moduleNameMapper: {
+        '^@controllers/(.*)$': '<rootDir>/controllers/$1',
+        '^@helpers/(.*)$': '<rootDir>/helpers/$1',
+        '^@middleware/(.*)$': '<rootDir>/middleware/$1',
+        '^@models/(.*)$': '<rootDir>/models/$1',
+        '^@services/(.*)$': '<rootDir>/services/$1',
+        '^@tasks/(.*)$': '<rootDir>/tasks/$1',
+        '^@interfaces/(.*)$': '<rootDir>/interfaces/$1',
+        '^@jest.setup$': '<rootDir>/../jest.setup'
+      },
     preset: 'ts-jest',
     transform: {
         '^.+\\.(js|ts|tsx)?$': 'ts-jest',

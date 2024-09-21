@@ -1,28 +1,31 @@
+import { Op } from 'sequelize';
+
 import {
     ActionType,
     IBandDetails,
     INextActionPayload,
     IPlayBandPayload
-} from '../../types/action.interface';
+} from '@interfaces/action.interface';
+import { CardState } from '@interfaces/card.interface';
+import { TribeName } from '@interfaces/tribe.interface';
+import { Color } from '@interfaces/game.interface';
+import { IRemainingCardsOptions } from '@interfaces/command.interface';
+import { NextActionState } from '@interfaces/nextAction.interface';
+
 import {
     CustomException,
     ERROR_BAD_REQUEST,
-} from '../../helpers/exception_handler';
-import { Game } from '../../models/game.model';
-import { Player } from '../../models/player.model';
-import { CardState } from '../../types/card.interface';
-import { TribeName } from '../../types/tribe.interface';
-import { Card } from '../../models/card.model';
-import { Op } from 'sequelize';
-import { Region } from '../../models/region.model';
-import PlayerRegion from '../../models/player_region.model';
-import {
-    Color,
-} from '../../types/game.interface';
-import { IRemainingCardsOptions } from '../../types/command.interface';
-import { ActionService } from '../action/action.service';
-import { NextAction } from '../../models/nextAction.model';
-import { NextActionState } from '../../types/nextAction.interface';
+} from '@helpers/exception_handler';
+
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import Card from '@models/card.model';
+import Region from '@models/region.model';
+import PlayerRegion from '@models/player_region.model';
+import NextAction from '@models/nextAction.model';
+
+import { ActionService } from '@services/action/action.service';
+
 import TribeService from './tribe.handler';
 
 const {

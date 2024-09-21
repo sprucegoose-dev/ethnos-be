@@ -1,16 +1,19 @@
 import { Op } from 'sequelize';
-import { Card } from '../../models/card.model';
-import { CardState } from '../../types/card.interface';
-import { TribeName } from '../../types/tribe.interface';
-import GameService from '../game/game.service';
-import PlayerService from '../player/player.service';
-import { IGameSettings } from '../../types/game.interface';
+
+import Card from '@models/card.model';
+
+import { CardState } from '@interfaces/card.interface';
+import { TribeName } from '@interfaces/tribe.interface';
+import { IGameSettings } from '@interfaces/game.interface';
+
+import GameService from '@services/game/game.service';
+import PlayerService from '@services/player/player.service';
 import {
     userA,
     userB,
     userC,
     userD,
-} from '../../../jest.setup';
+} from '@jest.setup';
 
 const defaultSettings = {
     tribes: [

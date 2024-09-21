@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 
-import { exceptionHandler } from '../helpers/exception_handler.decorator';
-import { AuthRequest } from '../types/index.interface';
-import UserService from '../services/user/user.service';
+import { exceptionHandler } from '@helpers/exception_handler.decorator';
+import { AuthRequest } from '@interfaces/index.interface';
+import UserService from '@services/user/user.service';
 
 @exceptionHandler()
 class UsersController {

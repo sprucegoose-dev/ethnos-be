@@ -1,10 +1,12 @@
 import {
     CustomException,
     ERROR_BAD_REQUEST,
-} from '../../helpers/exception_handler';
-import { Game } from '../../models/game.model';
-import { Player } from '../../models/player.model';
-import { CardState } from '../../types/card.interface';
+} from '@helpers/exception_handler';
+
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+
+import { CardState } from '@interfaces/card.interface';
 
 export default class PickUpCardHandler {
 
