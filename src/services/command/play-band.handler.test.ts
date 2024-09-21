@@ -11,7 +11,7 @@ import { TribeName } from '@interfaces/tribe.interface';
 import { Color, IGameState } from '@interfaces/game.interface';
 import { CardState } from '@interfaces/card.interface';
 import { NextActionState } from '@interfaces/nextAction.interface';
-import { ActionType } from '@interfaces/action.interface';
+import { ActionType, IPlayBandPayload } from '@interfaces/action.interface';
 
 import { ERROR_BAD_REQUEST } from '@helpers/exception_handler';
 
@@ -22,6 +22,7 @@ import {
     returnPlayerCardsToDeck
 } from './test-helpers';
 import PlayBandHandler from './play-band.handler';
+import { Op } from 'sequelize';
 
 describe('PlayBandHandler', () => {
 
@@ -91,20 +92,16 @@ describe('PlayBandHandler', () => {
 
             await PlayBandHandler.addTokenToRegion(gameState, player, band);
 
-            try {
-                const nextAction = await NextAction.findOne({
-                    where: {
-                        gameId: gameId,
-                        playerId: playerA.id,
-                        state: NextActionState.PENDING,
-                        type: ActionType.PLAY_BAND
-                    }
-                });
+            const nextAction = await NextAction.findOne({
+                where: {
+                    gameId: gameId,
+                    playerId: playerA.id,
+                    state: NextActionState.PENDING,
+                    type: ActionType.PLAY_BAND
+                }
+            });
 
-                expect(nextAction).toBeDefined();
-            } catch (error) {
-                console.log(error);
-            }
+            expect(nextAction).toBeDefined();
         });
 
         it("should NOT add a token to a the target region if the band size is smaller than the player's tokens already in the region", async () => {
@@ -684,5 +681,141 @@ describe('PlayBandHandler', () => {
             expect(remainingCards.length).toBe(1);
             expect(remainingCards[0].id).toBe(cardsToAssign[2].id);
         });
+    });
+
+    describe('handlePlayBand', () => {
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it('adds a token to the target region', async () => {
+            const result = await createGame();
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const leader = cardsToAssign[0];
+
+            const payload: IPlayBandPayload = {
+                cardIds: cardIdsToAssign,
+                leaderId: leader.id,
+                type: ActionType.PLAY_BAND
+            }
+
+            await PlayBandHandler.handlePlayBand(gameState, player, payload);
+
+            const region = await PlayBandHandler.getRegion(gameState, leader.color);
+            const playerRegion = await PlayBandHandler.getPlayerRegion(region, player);
+
+            expect(playerRegion.tokens).toBe(1);
+        });
+
+        it('assigns the cards to a band', async () => {
+            const result = await createGame();
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const leaderId = cardIdsToAssign[0];
+
+            const payload: IPlayBandPayload = {
+                cardIds: cardIdsToAssign,
+                leaderId,
+                type: ActionType.PLAY_BAND
+            }
+
+            await PlayBandHandler.handlePlayBand(gameState, player, payload);
+
+            const bandCards = await Card.findAll({
+                where: {
+                    playerId: playerA.id,
+                    leaderId,
+                    state: CardState.IN_BAND,
+                }
+            });
+
+            expect(bandCards.length).toBe(3);
+        });
+
+        it("discards any cards remaining in the player's hand", async () => {
+            const result = await createGame();
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 5);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const bandCardIds = cardIdsToAssign.slice(0, 3);
+
+            const remainingCardIds = cardIdsToAssign.slice(3)
+
+            const leaderId = bandCardIds[0];
+
+            const payload: IPlayBandPayload = {
+                cardIds: bandCardIds.slice(0, 3),
+                leaderId,
+                type: ActionType.PLAY_BAND
+            }
+
+            await PlayBandHandler.handlePlayBand(gameState, player, payload);
+
+            const discardedCards = await Card.findAll({
+                where: {
+                    playerId: null,
+                    leaderId: null,
+                    state: CardState.IN_MARKET,
+                    id: {
+                        [Op.in]: remainingCardIds,
+                    }
+                }
+            });
+
+            expect(discardedCards.length).toBe(2);
+        });
+
     });
 });

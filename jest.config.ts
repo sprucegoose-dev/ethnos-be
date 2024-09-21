@@ -21,7 +21,7 @@ const config: Config.InitialOptions = {
         '^.+\\.(js|ts|tsx)?$': 'ts-jest',
         "^.+\\.(js|jsx)$": "babel-jest",
     },
-    collectCoverage: false,
+    collectCoverage: true,
     collectCoverageFrom: [
         '**/*.{ts,tsx}',
         '!**/*.interface.ts',

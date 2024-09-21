@@ -52,7 +52,7 @@ export class ActionService {
     }
 
     static getPlayBandActions(cardsInHand: Card[]): IPlayBandPayload[] {
-        const playBandActions = [];
+        const playBandActions: IPlayBandPayload[] = [];
 
         for (const leader of cardsInHand) {
             if (leader.tribe.name === TribeName.SKELETON) {
@@ -73,7 +73,6 @@ export class ActionService {
             });
         }
 
-        // @ts-ignore
         return playBandActions;
     }
 }

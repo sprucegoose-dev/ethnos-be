@@ -63,8 +63,8 @@ export default class PlayBandHandler {
                 await NextAction.create({
                     gameId: game.id,
                     playerId: player.id,
-                    type: ActionType.PLAY_BAND,
-                    state: NextActionState.PENDING
+                    state: NextActionState.PENDING,
+                    type: ActionType.PLAY_BAND
                 });
             }
         }
@@ -103,7 +103,7 @@ export default class PlayBandHandler {
         if (remainingCards.length) {
             await Card.update({
                 state: CardState.IN_MARKET,
-                playerId: player.id,
+                playerId: null,
                 leaderId: null,
                 index: null,
             }, {
