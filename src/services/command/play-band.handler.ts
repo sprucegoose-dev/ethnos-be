@@ -39,7 +39,7 @@ const {
 
 export default class PlayBandHandler {
 
-    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[] = []): Promise<void> {
+    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[]): Promise<void> {
         const {
             bandSize,
             color,

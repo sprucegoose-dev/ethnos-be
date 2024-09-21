@@ -57,7 +57,7 @@ describe('PlayBandHandler', () => {
 
             const band = PlayBandHandler.getBandDetails(bandCards[0], bandCards.map(card => card.id));
 
-            await PlayBandHandler.addTokenToRegion(gameState, player, band);
+            await PlayBandHandler.addTokenToRegion(gameState, player, band, []);
 
             const region = await PlayBandHandler.getRegion(gameState, bandCards[0].color);
             const playerRegion = await PlayBandHandler.getPlayerRegion(region, player);
@@ -78,7 +78,7 @@ describe('PlayBandHandler', () => {
             const cardsToAssign = gameState.cards.filter(card =>
                 card.tribe.name === TribeName.CENTAUR &&
                 !card.playerId
-            ).slice(0, 3);
+            ).slice(0, 5);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
 
@@ -86,11 +86,13 @@ describe('PlayBandHandler', () => {
 
             const player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            const bandCards = player.cards.filter(card => card.state === CardState.IN_HAND);
-
+            const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+            const bandCards = cardsInHand.slice(0, 3);
+            const bandCardIds = bandCards.map(card => card.id);
             const band = PlayBandHandler.getBandDetails(bandCards[0], bandCards.map(card => card.id));
+            const remainingCards = PlayBandHandler.getRemainingCards(cardsInHand, bandCardIds);
 
-            await PlayBandHandler.addTokenToRegion(gameState, player, band);
+            await PlayBandHandler.addTokenToRegion(gameState, player, band, remainingCards);
 
             const nextAction = await NextAction.findOne({
                 where: {
@@ -101,7 +103,7 @@ describe('PlayBandHandler', () => {
                 }
             });
 
-            expect(nextAction).toBeDefined();
+            expect(nextAction).not.toBeNull();
         });
 
         it("should NOT add a token to a the target region if the band size is smaller than the player's tokens already in the region", async () => {
@@ -136,7 +138,7 @@ describe('PlayBandHandler', () => {
                 tokens: 3
             });
 
-            await PlayBandHandler.addTokenToRegion(gameState, player, band);
+            await PlayBandHandler.addTokenToRegion(gameState, player, band, []);
 
             const playerRegion = await PlayBandHandler.getPlayerRegion(region, player);
 
@@ -178,7 +180,7 @@ describe('PlayBandHandler', () => {
 
             const region = await PlayBandHandler.getRegion(gameState, bandCards[0].color);
 
-            await PlayBandHandler.addTokenToRegion(gameState, player, band);
+            await PlayBandHandler.addTokenToRegion(gameState, player, band, []);
 
             const playerRegion = await PlayBandHandler.getPlayerRegion(region, player);
 
