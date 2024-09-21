@@ -149,8 +149,8 @@ export default class PlayBandHandler {
         return { tribe, color, bandSize };
     }
 
-    static getRemainingCards(player: Player, cardIds: number[]): Card[] {
-        return player.cards.filter(card => !cardIds.includes(card.id));
+    static getRemainingCards(cardsInHand: Card[], bandCardIds: number[]): Card[] {
+        return cardsInHand.filter(card => !bandCardIds.includes(card.id));
     }
 
     static async getPlayerRegion(region: Region, player: Player): Promise<PlayerRegion> {
@@ -170,7 +170,7 @@ export default class PlayBandHandler {
         const leader = player.cards.find(card => card.id === payload.leaderId);
         const band = this.getBandDetails(leader, payload.cardIds, payload.regionColor);
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-        let remainingCards = this.getRemainingCards(player, payload.cardIds);
+        let remainingCards = this.getRemainingCards(cardsInHand, payload.cardIds);
 
         this.validateBand(cardsInHand, payload.cardIds, leader);
 

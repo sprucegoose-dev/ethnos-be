@@ -9,7 +9,7 @@ import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 import { IGameState } from '@interfaces/game.interface';
 
-import { createGame } from './test-helpers';
+import { createGame, returnPlayerCardsToDeck } from './test-helpers';
 import TribeService from './tribe.handler';
 
 describe('TribeService', () => {
@@ -92,14 +92,7 @@ describe('TribeService', () => {
         });
 
         it('should draw cards equal to the size of the band played', async () => {
-            await Card.update({
-                playerId: null,
-                state: CardState.IN_DECK
-            }, {
-                where: {
-                    playerId: playerA.id
-                }
-            });
+            await returnPlayerCardsToDeck(playerA.id);
 
             gameState = await GameService.getState(gameId);
 

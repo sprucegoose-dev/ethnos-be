@@ -68,3 +68,14 @@ export async function assignCardsToPlayer(playerId: number, cardIdsToAssign: num
         },
     });
 }
+
+export async function returnPlayerCardsToDeck(playerId: number) {
+    await Card.update({
+        playerId: null,
+        state: CardState.IN_DECK
+    }, {
+        where: {
+            playerId,
+        }
+    });
+}

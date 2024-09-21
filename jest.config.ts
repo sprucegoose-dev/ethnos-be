@@ -21,6 +21,15 @@ const config: Config.InitialOptions = {
         '^.+\\.(js|ts|tsx)?$': 'ts-jest',
         "^.+\\.(js|jsx)$": "babel-jest",
     },
+    collectCoverage: false,
+    collectCoverageFrom: [
+        '**/*.{ts,tsx}',
+        '!**/*.interface.ts',
+        '!**/*.test.ts',
+        '!**/index.ts'
+    ],
+    coverageDirectory: '<rootDir>/../coverage',
+    coverageReporters: ['text', 'lcov'],
 };
 
 export default config;
