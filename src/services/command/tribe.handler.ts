@@ -64,7 +64,7 @@ export default class TribeHandler {
             await NextAction.create({
                 gameId: player.gameId,
                 playerId: player.id,
-                type: ActionType.ADD_TOKEN,
+                type: ActionType.ADD_FREE_TOKEN,
                 state: NextActionState.PENDING
             });
         }

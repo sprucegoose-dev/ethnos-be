@@ -58,6 +58,58 @@ export default class GameService {
         return await this.getState(game.id);
     }
 
+    static async dealCards(gameId: number, players: Player[], allCards: Card[]) {
+        const cards = shuffle(allCards.filter(card => card.tribe.name !== TribeName.DRAGON));
+        const dragonsCards = allCards.filter(card => card.tribe.name === TribeName.DRAGON);
+        const playerCards = cards.splice(0, players.length);
+        const marketCards = cards.splice(0, players.length * 2);
+
+        for (let i = 0; i < players.length; i++) {
+            await Card.update({
+                state: CardState.IN_HAND,
+                index: null,
+                playerId: players[i].id,
+                gameId,
+            }, {
+                where: {
+                    id: playerCards[i].id
+                }
+            });
+        }
+
+        for (let i = 0; i < marketCards.length; i++) {
+            await Card.update({
+                state: CardState.IN_MARKET,
+                index: i,
+                playerId: null,
+                gameId,
+            }, {
+                where: {
+                    id: marketCards[i].id,
+                }
+            });
+        }
+
+        const bottomHalfOfDeck = cards.splice(-Math.ceil(cards.length / 2));
+
+        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonsCards]);
+
+        const deck = [...cards, ...bottomHalfWithlDragons];
+
+        for (let i = 0; i < deck.length; i++) {
+            await Card.update({
+                state: CardState.IN_DECK,
+                index: i,
+                playerId: null,
+                gameId,
+            }, {
+                where: {
+                    id: deck[i].id,
+                }
+            });
+        }
+    }
+
     static async getActiveGames(): Promise<Omit<IGameState, 'cards'>[]> {
         return await Game.findAll({
             where: {
@@ -82,6 +134,11 @@ export default class GameService {
                 },
             ]
         });
+    }
+
+    static getNextPlayerId(activePlayerId: number, turnOrder: number[]): number {
+        const turnIndex = turnOrder.indexOf(activePlayerId);
+        return turnIndex === turnOrder.length - 1 ? turnOrder[0] : turnOrder[turnIndex + 1];
     }
 
     static async getState(gameId: number): Promise<IGameState> {
@@ -326,56 +383,8 @@ export default class GameService {
         return cards;
     }
 
-    static async dealCards(gameId: number, players: Player[], allCards: Card[]) {
-        const cards = shuffle(allCards.filter(card => card.tribe.name !== TribeName.DRAGON));
-        const dragonsCards = allCards.filter(card => card.tribe.name === TribeName.DRAGON);
-        const playerCards = cards.splice(0, players.length);
-        const marketCards = cards.splice(0, players.length * 2);
-
-        for (let i = 0; i < players.length; i++) {
-            await Card.update({
-                state: CardState.IN_HAND,
-                index: null,
-                playerId: players[i].id,
-                gameId,
-            }, {
-                where: {
-                    id: playerCards[i].id
-                }
-            });
-        }
-
-        for (let i = 0; i < marketCards.length; i++) {
-            await Card.update({
-                state: CardState.IN_MARKET,
-                index: i,
-                playerId: null,
-                gameId,
-            }, {
-                where: {
-                    id: marketCards[i].id,
-                }
-            });
-        }
-
-        const bottomHalfOfDeck = cards.splice(-Math.ceil(cards.length / 2));
-
-        const bottomHalfWithlDragons = shuffle([...bottomHalfOfDeck, ...dragonsCards]);
-
-        const deck = [...cards, ...bottomHalfWithlDragons];
-
-        for (let i = 0; i < deck.length; i++) {
-            await Card.update({
-                state: CardState.IN_DECK,
-                index: i,
-                playerId: null,
-                gameId,
-            }, {
-                where: {
-                    id: deck[i].id,
-                }
-            });
-        }
+    static async setTurnOrder(players: Player[]): number[] {
+        return shuffle(players).map(player => player.id);
     }
 
     static async start(userId: number, gameId: number, settings: IGameSettings): Promise<void> {
@@ -429,7 +438,9 @@ export default class GameService {
 
         await this.dealCards(game.id, players, cards);
 
-        const startingPlayerId = shuffle(players)[0].id;
+        const turnOrder = this.setTurnOrder(players);
+
+        const startingPlayerId = turnOrder[0];
 
         await this.generateRegions(gameId);
 
@@ -437,6 +448,7 @@ export default class GameService {
             {
                 activePlayerId: startingPlayerId,
                 state: GameState.STARTED,
+                turnOrder,
             },
             {
                 where: {

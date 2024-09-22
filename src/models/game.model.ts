@@ -59,13 +59,19 @@ export default class Game extends Model {
     })
     maxPlayers: number;
 
-    @Column
-    password: String;
+    @Column({
+        field: 'turn_order',
+        defaultValue: [],
+    })
+    turnOrder: number[];
 
     @Column({
         defaultValue: 1,
     })
     age: number;
+
+    @Column
+    password: String;
 
     @CreatedAt
     @Column({ field: 'created_at' })

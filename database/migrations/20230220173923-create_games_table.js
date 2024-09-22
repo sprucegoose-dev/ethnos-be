@@ -46,12 +46,16 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 defaultValue: 6,
             },
-            password: {
-                type: Sequelize.STRING,
+            turn_order: {
+                type: Sequelize.JSON,
+                defaultValue: [],
             },
             age: {
                 type: Sequelize.INTEGER,
                 defaultValue: 1,
+            },
+            password: {
+                type: Sequelize.STRING,
             },
             created_at: Sequelize.DATE,
             updated_at: Sequelize.DATE,

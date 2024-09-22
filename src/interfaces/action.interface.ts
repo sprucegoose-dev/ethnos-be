@@ -7,20 +7,24 @@ export enum ActionType {
     PICK_UP_CARD = 'pick_up_card',
     PLAY_BAND = 'play_band',
     KEEP_CARDS = 'keep_cards',
-    ADD_TOKEN = 'add_token'
+    ADD_FREE_TOKEN = 'add_free_token'
 }
 
 export interface IActionPayloadBase {
-    nextActionId?: number;
     cardIds?: number[];
     type: ActionType.DRAW_CARD |
-        ActionType.KEEP_CARDS |
-        ActionType.ADD_TOKEN;
+        ActionType.KEEP_CARDS;
 }
 
 export interface IPickUpCardPayload {
     cardId: number;
     type: ActionType.PICK_UP_CARD;
+}
+
+export interface IAddFreeTokenPayload {
+    nextActionId: number;
+    regionColor: Color;
+    type: ActionType.ADD_FREE_TOKEN;
 }
 
 export interface IPlayBandPayload {
@@ -34,7 +38,8 @@ export interface IPlayBandPayload {
 
 export type IActionPayload = IActionPayloadBase |
     IPlayBandPayload |
-    IPickUpCardPayload;
+    IPickUpCardPayload |
+    IAddFreeTokenPayload;
 
 export interface INextActionPayload {
     type: ActionType;

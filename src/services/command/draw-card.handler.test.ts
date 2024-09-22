@@ -165,7 +165,7 @@ describe('DrawCardHandler', () => {
             expect(updatedGame.age).toBe(2);
         });
 
-        it("should end the game if the last dragon is revealed and it's the  final age (4+ player game)", async () => {
+        it("should end the game if the last dragon is revealed and it's the final age (4+ player game)", async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
             let updatedGame = await GameService.getState(gameId);
@@ -202,7 +202,7 @@ describe('DrawCardHandler', () => {
             expect(updatedGame.state).toBe(GameState.ENDED);
         });
 
-        it("should end the game if the last dragon is revealed and it's the  final age (3 player game)", async () => {
+        it("should end the game if the last dragon is revealed and it's the final age (3 player game)", async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
             let updatedGame = await GameService.getState(gameId);

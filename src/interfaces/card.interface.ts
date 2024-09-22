@@ -1,4 +1,4 @@
-import { Color } from './game.interface';
+import Card from '../models/card.model';
 
 export enum CardState {
     IN_MARKET = 'in_market',
@@ -8,16 +8,10 @@ export enum CardState {
     REVEALED = 'revealed',
 }
 
-export interface ICard {
-    bandId?: number;
-    color: Color;
-    index?: number;
-    gameId?: number;
-    playerId?: number;
-    state: CardState;
-    tribeId: number;
-}
-
 export interface ICardFilters {
     playerIds?: number[];
+}
+
+export interface IGroupedCards {
+    [leaderId: string]: Card[];
 }

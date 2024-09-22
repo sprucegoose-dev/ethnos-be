@@ -36,7 +36,7 @@ module.exports = {
                     'pick_up_card',
                     'play_band',
                     'keep_cards',
-                    'add_token',
+                    'add_free_token',
                 ],
             },
             state: {

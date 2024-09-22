@@ -16,6 +16,10 @@ import EventService from '@services/event/event.service';
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
+import NextAction from '../../models/nextAction.model';
+import { NextActionState } from '../../interfaces/nextAction.interface';
+import TokenHandler from './token.handler';
+import Game from '../../models/game.model';
 
 export default class CommandService {
 
@@ -36,23 +40,48 @@ export default class CommandService {
 
         let nextActions = [];
 
+        let nextActionId;
+
         switch (payload.type) {
             case ActionType.DRAW_CARD:
                 await DrawCardHandler.handleDrawCard(game, activePlayer);
                 break;
             case ActionType.PLAY_BAND:
-                nextActions = await PlayBandHandler.handlePlayBand(game, activePlayer, payload);
+                nextActionId = payload.nextActionId;
+                 await PlayBandHandler.handlePlayBand(game, activePlayer, payload);
                 break;
             case ActionType.PICK_UP_CARD:
                 await PickUpCardHandler.handlePickUpCard(game, activePlayer, payload.cardId);
+                break;
+            case ActionType.ADD_FREE_TOKEN:
+                nextActionId = payload.nextActionId;
+                await TokenHandler.addFreeTokenToRegion(game, activePlayer, payload);
                 break;
         }
 
         // TODO: update actions log
 
+        if (payload.type === ActionType.PLAY_BAND) {
+            nextActions = await NextAction.findAll({
+                where: {
+                    gameId: game.id,
+                    state: NextActionState.PENDING,
+                }
+            });
+        }
+
         if (!nextActions.length) {
-            // end turn;
-            // set next player to be the active player
+            // if the age has ended, the next player should be the player with the lowest score
+            const nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
+
+            await Game.update({
+                activePlayerId: nextPlayerId,
+            }, {
+                where: {
+                    id: game.id,
+                    age: game.age // if the age has already advanced, this query will intenationally fail
+                }
+            });
         }
 
         const updatedGameState = await GameService.getState(gameId);

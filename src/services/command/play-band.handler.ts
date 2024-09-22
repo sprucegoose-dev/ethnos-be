@@ -3,7 +3,6 @@ import { Op } from 'sequelize';
 import {
     ActionType,
     IBandDetails,
-    INextActionPayload,
     IPlayBandPayload
 } from '@interfaces/action.interface';
 import { CardState } from '@interfaces/card.interface';
@@ -39,7 +38,7 @@ const {
 
 export default class PlayBandHandler {
 
-    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[]): Promise<void> {
+    static async addTokenToRegion(game: Game, player: Player, band: IBandDetails, remainingCards: Card[]): Promise<boolean> {
         const {
             bandSize,
             color,
@@ -48,6 +47,7 @@ export default class PlayBandHandler {
 
         const region = await this.getRegion(game, color);
         let playerRegion = await this.getPlayerRegion(region, player);
+        let tokenAdded = false;
 
         if (!playerRegion) {
             playerRegion = await PlayerRegion.create({
@@ -59,6 +59,8 @@ export default class PlayBandHandler {
         if (tribe !== HALFLING && bandSize > playerRegion.tokens) {
             await playerRegion.update({ tokens: playerRegion.tokens + 1 });
 
+            tokenAdded = true;
+
             if (tribe === CENTAUR && remainingCards.length) {
                 await NextAction.create({
                     gameId: game.id,
@@ -68,6 +70,8 @@ export default class PlayBandHandler {
                 });
             }
         }
+
+        return tokenAdded;
     }
 
     static async assignCardsToBand(player: Player, bandCardIds: number[], leaderId: number) {
@@ -87,7 +91,7 @@ export default class PlayBandHandler {
 
     static async discardRemainingCards({
         remainingCards,
-        nextActions,
+        tokenAdded,
         player,
         cardIdsToKeep,
         band,
@@ -96,7 +100,7 @@ export default class PlayBandHandler {
             remainingCards = this.filterOutCardsToKeep(remainingCards, cardIdsToKeep, band.bandSize);
         }
 
-        if (band.tribe === CENTAUR && nextActions.find(action => action.type === ActionType.PLAY_BAND)) {
+        if (band.tribe === CENTAUR && tokenAdded) {
             return;
         }
 
@@ -166,7 +170,21 @@ export default class PlayBandHandler {
         return Region.findOne({ where: { gameId: game.id, color } });
     }
 
-    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<INextActionPayload[]> {
+    static async resolvePendingNextAction(nextActionId: number): Promise<void> {
+        if (!nextActionId) {
+            return;
+        }
+
+        await NextAction.update({
+            state: NextActionState.RESOLVED,
+        }, {
+            where: {
+                id: nextActionId
+            }
+        });
+    }
+
+    static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<void> {
         const leader = player.cards.find(card => card.id === payload.leaderId);
         const band = this.getBandDetails(leader, payload.cardIds, payload.regionColor);
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
@@ -174,28 +192,32 @@ export default class PlayBandHandler {
 
         this.validateBand(cardsInHand, payload.cardIds, leader);
 
+        await this.resolvePendingNextAction(payload.nextActionId);
+
         await this.assignCardsToBand(player, payload.cardIds, leader.id);
 
-        await this.addTokenToRegion(game, player, band, remainingCards);
+        const tokenAdded = await this.addTokenToRegion(game, player, band, remainingCards);
 
         await TribeService.handleTribeLogic(game,player, band);
 
-        const nextActions = await NextAction.findAll({
-            where: {
-                gameId: game.id,
-                state: NextActionState.PENDING,
-            }
-        });
-
         await this.discardRemainingCards({
             remainingCards,
-            nextActions,
+            tokenAdded,
             player,
             cardIdsToKeep: payload.cardIdsToKeep,
             band,
         });
 
-        return nextActions;
+        // TODO: test
+        if (payload.nextActionId) {
+            await NextAction.update({
+                state: NextActionState.RESOLVED,
+            }, {
+                where: {
+                    id: payload.nextActionId
+                }
+            });
+        }
     }
 
     static validateBand(cardsInHand: Card[], bandCardIds: number[], leader: Card): boolean {

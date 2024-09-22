@@ -49,12 +49,11 @@ export default class DrawCardHandler {
         if (!dragonsRemaining) {
             const finalAge = game.players.length >= 4 ? 3 : 2;
 
-            if (finalAge == game.age) {
+            if (game.age === finalAge) {
                 await game.update({
                     state: GameState.ENDED
                 });
             } else {
-
                 await GameService.startNewAge(game);
             }
         } else {

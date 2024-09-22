@@ -8,13 +8,17 @@ import {
 import { CardState } from '@interfaces/card.interface';
 import { GameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
+import { NextActionState } from '@interfaces/nextAction.interface';
 
 import GameService from '@services/game/game.service';
+
+import NextAction from '@models/nextAction.model';
 
 export class ActionService {
 
     static async getActions(gameId: number, userId: number): Promise<IActionPayload[]> {
         const game = await GameService.getState(gameId);
+
         let actions: IActionPayload[] = [];
 
         const activePlayer = game.players.find(p =>
@@ -24,6 +28,13 @@ export class ActionService {
         if (!activePlayer || game.state === GameState.ENDED) {
             return actions;
         }
+
+        const nextAction = await NextAction.findOne({
+            where: {
+                gameId: gameId,
+                state: NextActionState.PENDING,
+            }
+        });
 
         const cardsInHand = activePlayer.cards.filter(card => card.state === CardState.IN_HAND);
 
@@ -46,6 +57,23 @@ export class ActionService {
 
         if (playBandActions.length) {
             actions = [...actions, ...playBandActions];
+        }
+
+        if (nextAction.type === ActionType.PLAY_BAND) {
+            actions = actions.filter(action =>
+                action.type === ActionType.PLAY_BAND
+            ).map(action => ({
+                ...action,
+                nextActionId: nextAction.id,
+            }));
+        }
+
+        if (nextAction.type === ActionType.ADD_FREE_TOKEN) {
+            actions = [{
+                type: ActionType.ADD_FREE_TOKEN,
+                nextActionId: nextAction.id,
+                regionColor: null,
+            }];
         }
 
         return actions;
