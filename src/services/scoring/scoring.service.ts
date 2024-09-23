@@ -31,12 +31,67 @@ export default class ScoringService {
           }, {});
     }
 
-    static async scoreBands(player: Player): Promise<void> {
+    static getTrollTokenTotals(players: Player[]) {
+        const trollTokenTotals: { [playerId: number]: number } = {};
+        let trollTokenSum = 0;
+
+        for (const player of players) {
+            for (const trollToken of player.trollTokens) {
+                trollTokenSum += trollToken;
+            }
+
+            trollTokenTotals[player.id] = trollTokenSum;
+        }
+
+        return trollTokenTotals;
+    }
+
+    static async handleScoring(game: Game) {
+        const players = game.players;
+        const finalAge = players.length >= 4 ? 3 : 2;
+        const trollTokenTotals = this.getTrollTokenTotals(players);
+        const totalPoints: { [playerId: number]: number } = {};
+
+        for (const player of game.players) {
+            totalPoints[player.id] = player.points;
+            totalPoints[player.id] += this.scoreBands(player);
+
+            if (game.age === finalAge) {
+                totalPoints[player.id] += this.scoreOrcBoard(player);
+            }
+        }
+
+        const giantsScore = this.scoreGiantToken(players, game.age);
+
+        if (giantsScore) {
+            totalPoints[giantsScore.playerId] += giantsScore.points;
+        }
+
+        // score merfolks
+
+        const regionPoints = await this.scoreRegions(game, trollTokenTotals);
+
+        for (const [playerId, points] of Object.entries(regionPoints)) {
+            totalPoints[Number(playerId)] += points;
+        }
+
+        for (const [playerId, points] of Object.entries(totalPoints)) {
+            await Player.update({
+                points
+            }, {
+                where: {
+                    id: playerId
+                }
+            });
+        }
+    }
+
+    static scoreBands(player: Player): number {
         const cardsInBands = player.cards.filter(card => card.state === CardState.IN_BAND);
 
         const bands = this.groupCardsByLeader(cardsInBands);
 
-        let points = player.points;
+        let points = 0;
 
         let leader;
         let bandSize;
@@ -56,12 +111,10 @@ export default class ScoringService {
             points += BAND_VALUES[bandSize];
         }
 
-        await player.update({
-            points
-        });
+        return points;
     }
 
-    static async scoreRegions(game: Game) {
+    static async scoreRegions(game: Game, trollTokenTotals: { [playerId: number]: number }): Promise<{[playerId: number]: number}> {
         const regions = await Region.findAll({
             where: {
                 gameId: game.id
@@ -76,22 +129,10 @@ export default class ScoringService {
             }
         });
 
-        const finalAge = game.players.length >= 4 ? 3 : 2;
-
-        const trollTokenTotals: { [playerId: number]: number } = {};
-
         const totalPoints: { [playerId: number]: number } = {};
 
         for (const player of game.players) {
-            let trollTokenSum = 0;
-
-            for (const trollToken of player.trollTokens) {
-                trollTokenSum += trollToken;
-            }
-
-            trollTokenTotals[player.id] = trollTokenSum;
-
-            totalPoints[player.id] = player.points;
+            totalPoints[player.id] = 0;
         }
 
         const regionRankings: { [rank: string]: number[] } = {};
@@ -127,30 +168,26 @@ export default class ScoringService {
             }
         }
 
-        for (const player of game.players) {
-            // get player who is highest on the Merfolk track (in case of tie, trolls break ties)
-
-            // get player with the largest giant band (in case of tie, trolls break ties)
-
-            if (game.age === finalAge) {
-                totalPoints[player.id] += this.scoreOrcBoard(player);
-            }
-        }
-
-
-        for (const [playerId, points] of Object.entries(totalPoints)) {
-            await Player.update({
-                points
-            }, {
-                where: {
-                    id: playerId
-                }
-            })
-        }
+        return totalPoints;
     }
 
-    static async scoreGiantToken() {
+    static scoreGiantToken(players: Player[], age: number): { playerId: number, points: number} {
+        const tokenHolder = players.sort((a, b) => b.giantTokenValue - a.giantTokenValue)[0];
 
+        const points: {[age: number]: number} = {
+            1: 2,
+            2: 4,
+            3: 6
+        };
+
+        if (tokenHolder.giantTokenValue) {
+            return {
+                playerId: tokenHolder.id,
+                points: points[age]
+            };
+        }
+
+        return null;
     }
 
     static async scoreMerfolkTrack() {

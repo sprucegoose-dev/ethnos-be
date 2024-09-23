@@ -31,6 +31,7 @@ import {
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
 } from '@helpers/exception_handler';
+import ScoringService from '../scoring/scoring.service';
 
 export default class GameService {
 
@@ -383,7 +384,7 @@ export default class GameService {
         return cards;
     }
 
-    static async setTurnOrder(players: Player[]): number[] {
+    static setTurnOrder(players: Player[]): number[] {
         return shuffle(players).map(player => player.id);
     }
 
@@ -466,14 +467,28 @@ export default class GameService {
     }
 
     static async startNewAge(game: Game) {
-        await game.update({
-            age: game.age + 1,
-        });
-
-        // do scoring
+        await ScoringService.handleScoring(game);
 
         await this.dealCards(game.id, game.players, game.cards);
 
-        // set next player
+        await Player.update({
+            giantTokenValue: 0,
+        }, {
+            where: {
+                gameId: game.id
+            }
+        });
+
+        // TODO: get active player ID - either the player with the fewest points,
+        // or in case of tie, use troll token,
+        // or use player who is after the player who drew the last dragon
+
+        const activePlayerId = '';
+
+        await game.update({
+            age: game.age + 1,
+            activePlayerId,
+        });
+
     };
 }
