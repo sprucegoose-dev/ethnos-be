@@ -7,7 +7,7 @@ import {
     Table,
     UpdatedAt,
 } from 'sequelize-typescript';
-import { GameState } from '@interfaces/game.interface';
+import { GameState, IGameSettings } from '@interfaces/game.interface';
 import Card from './card.model';
 import Player from './player.model';
 import User from './user.model';
@@ -72,6 +72,9 @@ export default class Game extends Model {
 
     @Column
     password: String;
+
+    @Column
+    settings: IGameSettings;
 
     @CreatedAt
     @Column({ field: 'created_at' })

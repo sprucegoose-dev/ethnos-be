@@ -422,6 +422,7 @@ export default class GameService {
         if (!settings ||
             !settings.tribes ||
             !Array.isArray(settings.tribes) ||
+            Object.keys(settings).length > 1 ||
             settings.tribes.filter((tribe) => !TRIBES.includes(tribe)).length
         ) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Invalid game settings');
@@ -449,6 +450,7 @@ export default class GameService {
             {
                 activePlayerId: startingPlayerId,
                 state: GameState.STARTED,
+                settings,
                 turnOrder,
             },
             {

@@ -67,7 +67,13 @@ export default class ScoringService {
             totalPoints[giantsScore.playerId] += giantsScore.points;
         }
 
-        // score merfolks
+        const merfolkPoints = this.scoreMerfolkTrack(game, trollTokenTotals);
+
+        if (merfolkPoints) {
+            for (const [playerId, points] of Object.entries(merfolkPoints)) {
+                totalPoints[Number(playerId)] += points;
+            }
+        }
 
         const regionPoints = await this.scoreRegions(game, trollTokenTotals);
 
@@ -174,10 +180,13 @@ export default class ScoringService {
     static scoreGiantToken(players: Player[], age: number): { playerId: number, points: number} {
         const tokenHolder = players.sort((a, b) => b.giantTokenValue - a.giantTokenValue)[0];
 
-        const points: {[age: number]: number} = {
+        const points: {[age: number]: number} = players.length >= 4 ? {
             1: 2,
             2: 4,
             3: 6
+        } : {
+            1: 2,
+            2: 5
         };
 
         if (tokenHolder.giantTokenValue) {
@@ -190,8 +199,55 @@ export default class ScoringService {
         return null;
     }
 
-    static async scoreMerfolkTrack() {
+    static scoreMerfolkTrack(game: Game, trollTokenTotals: { [playerId: number]: number }): {[playerId: number]: number} {
+        if (game.settings.tribes.find(tribeName => tribeName === TribeName.MERFOLK)) {
+            const merfolkRankings: { [rank: string]: number[] } = {};
 
+            const points: {[age: number]: number} = game.players.length >= 4 ? {
+                1: 1,
+                2: 2,
+                3: 4
+            } : {
+                1: 1,
+                2: 3,
+            };
+
+            game.players.sort((a, b) => {
+                    if (b.merfolkTrackScore === a.merfolkTrackScore) {
+                       return trollTokenTotals[b.id] - trollTokenTotals[a.id];
+                    }
+
+                    return b.merfolkTrackScore - a.merfolkTrackScore
+                })
+                .map(player => {
+                    const merfolkRank = `${player.merfolkTrackScore}.${trollTokenTotals[player.id]}`;
+
+                    if (merfolkRankings[merfolkRank]) {
+                        merfolkRankings[merfolkRank].push(player.id);
+                    } else {
+                        merfolkRankings[merfolkRank] = [player.id];
+                    }
+                });
+
+            const firstPlaceValue = points[game.age];
+
+            const totalPoints: { [playerId: number]: number } = {};
+
+            for (const playerIds of Object.values(merfolkRankings)) {
+
+                const pointsPerPlayer = Math.floor(firstPlaceValue / playerIds.length);
+
+                for (const playerId of playerIds) {
+                    totalPoints[playerId] += pointsPerPlayer;
+                }
+
+                break;
+            }
+
+            return totalPoints;
+        }
+
+        return null;
     }
 
     static scoreOrcBoard(player: Player): number {
@@ -207,5 +263,4 @@ export default class ScoringService {
 
         return orcBoardPoints[player.orcTokens.length];
     }
-
 }
