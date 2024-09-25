@@ -59,7 +59,7 @@ export class ActionService {
             actions = [...actions, ...playBandActions];
         }
 
-        if (nextAction.type === ActionType.PLAY_BAND) {
+        if (nextAction?.type === ActionType.PLAY_BAND) {
             actions = actions.filter(action =>
                 action.type === ActionType.PLAY_BAND
             ).map(action => ({
@@ -68,7 +68,7 @@ export class ActionService {
             }));
         }
 
-        if (nextAction.type === ActionType.ADD_FREE_TOKEN) {
+        if (nextAction?.type === ActionType.ADD_FREE_TOKEN) {
             actions = [{
                 type: ActionType.ADD_FREE_TOKEN,
                 nextActionId: nextAction.id,

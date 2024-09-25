@@ -48,9 +48,7 @@ describe('ActionService', () => {
             await GameService.start(userA.id, game.id, settings);
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("should return a 'play band' action if a player has at least one card in their hand", async () => {
             const updatedGame = await GameService.getState(game.id);

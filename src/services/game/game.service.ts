@@ -32,6 +32,7 @@ import {
     ERROR_NOT_FOUND,
 } from '@helpers/exception_handler';
 import ScoringService from '../scoring/scoring.service';
+// import { IScoringResults } from '../../interfaces/command.interface';
 
 export default class GameService {
 
@@ -468,6 +469,20 @@ export default class GameService {
         });
     }
 
+    // static getNewAgeFirstPlayer = ({totalPoints, trollTokenTotals}: IScoringResults, prevActivePlayerId: number, turnOrder: number[]): number => {
+    //     let activePlayerId;
+
+    //     for (const [playerId, points] of Object.entries(totalPoints)) {
+
+    //     }
+
+    //     // first player will be the player with the fewer points
+    //     // troll tokens break ties
+    //     // if still tied, player who is closest to the player who drew the dragon
+
+    //     return activePlayerId;
+    // }
+
     static async startNewAge(game: Game) {
         await ScoringService.handleScoring(game);
 
@@ -475,6 +490,7 @@ export default class GameService {
 
         await Player.update({
             giantTokenValue: 0,
+            trollTokens: [],
         }, {
             where: {
                 gameId: game.id
@@ -485,11 +501,11 @@ export default class GameService {
         // or in case of tie, use troll token,
         // or use player who is after the player who drew the last dragon
 
-        const activePlayerId = '';
+        // const activePlayerId = this.getNewAgeFirstPlayer(scoringResults, game.activePlayerId, game.turnOrder);
 
         await game.update({
             age: game.age + 1,
-            activePlayerId,
+            // activePlayerId,
         });
 
     };

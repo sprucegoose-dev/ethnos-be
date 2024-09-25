@@ -31,10 +31,7 @@ describe('PickUpCardHandler', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should throw an error if a player already has 10 cards in hand', async () => {
             const cardIdsToAssign = getCardsFromDeck(gameState.cards, 9);

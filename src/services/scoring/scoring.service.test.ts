@@ -1,5 +1,4 @@
 import Game from '@models/game.model';
-import Card from '@models/card.model';
 import Player from '@models/player.model';
 
 import GameService from '@services/game/game.service';
@@ -9,7 +8,7 @@ import { Color, IGameState } from '@interfaces/game.interface';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import ScoringService from './scoring.service';
-import { CardState } from '../../interfaces/card.interface';
+import { CardState } from '@interfaces/card.interface';
 
 describe('ScoringService', () => {
 
@@ -34,10 +33,7 @@ describe('ScoringService', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should return cards grouped by the leader ID', async () => {
             await returnPlayerCardsToDeck(playerA.id);
@@ -87,10 +83,7 @@ describe('ScoringService', () => {
             playerC = result.playerC;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('returns the total sum of troll tokens for each player', () => {
             playerA.trollTokens = [2, 3];
@@ -126,10 +119,7 @@ describe('ScoringService', () => {
             gameId = result.gameId;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("returns the total points for a player's bands", async () => {
             await returnPlayerCardsToDeck(playerA.id);

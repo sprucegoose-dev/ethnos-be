@@ -27,10 +27,7 @@ import { Op } from 'sequelize';
 describe('PlayBandHandler', () => {
 
     describe('addTokenToRegion', () => {
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should add a token to a the target region', async () => {
             const result = await createGame();
@@ -200,10 +197,7 @@ describe('PlayBandHandler', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('assigns the provided cards to a band', async () => {
             gameState = await GameService.getState(gameId);
@@ -245,10 +239,7 @@ describe('PlayBandHandler', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("discards any remaining cards left in a player's hand", async () => {
             const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
@@ -268,7 +259,7 @@ describe('PlayBandHandler', () => {
 
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
-                nextActions: [],
+                tokenAdded: false,
                 player,
                 cardIdsToKeep: [],
                 band: {
@@ -309,7 +300,7 @@ describe('PlayBandHandler', () => {
 
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
-                nextActions: [],
+                tokenAdded: false,
                 player,
                 cardIdsToKeep,
                 band: {
@@ -350,7 +341,7 @@ describe('PlayBandHandler', () => {
 
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
-                nextActions: [{ type: ActionType.PLAY_BAND }],
+                tokenAdded: true,
                 player,
                 cardIdsToKeep: [],
                 band: {
@@ -373,10 +364,7 @@ describe('PlayBandHandler', () => {
     });
 
     describe('filterOutCardsToKeep', () => {
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("filters out the card IDs to keep from the remaining cards in a player's hand", async () => {
             const {
@@ -473,10 +461,7 @@ describe('PlayBandHandler', () => {
 
     describe('getBandDetails', () => {
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("returns a band details object with the 'tribe', 'color', and 'bandSize'", async () => {
             const {
@@ -554,10 +539,7 @@ describe('PlayBandHandler', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("returns the cards remaining in a player's hand after having played a band", async () => {
             await returnPlayerCardsToDeck(playerA.id);
@@ -584,10 +566,8 @@ describe('PlayBandHandler', () => {
     });
 
     describe('handlePlayBand', () => {
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+
+        afterEach(async () => await Game.truncate());
 
         it('adds a token to the target region', async () => {
             const result = await createGame();
@@ -720,10 +700,8 @@ describe('PlayBandHandler', () => {
     });
 
     describe('validateBand', () => {
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+
+        afterEach(async () => await Game.truncate());
 
         it("returns 'true' if the band is valid", async () => {
             const {

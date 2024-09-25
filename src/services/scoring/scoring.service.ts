@@ -8,6 +8,7 @@ import { TribeName } from '@interfaces/tribe.interface';
 import Region from '../../models/region.model';
 import Game from '../../models/game.model';
 import PlayerRegion from '../../models/player_region.model';
+import { IScoringResults } from '../../interfaces/command.interface';
 
 export default class ScoringService {
 
@@ -38,7 +39,7 @@ export default class ScoringService {
         return trollTokenTotals;
     }
 
-    static async handleScoring(game: Game) {
+    static async handleScoring(game: Game): Promise<IScoringResults> {
         const players = game.players;
         const finalAge = players.length >= 4 ? 3 : 2;
         const trollTokenTotals = this.getTrollTokenTotals(players);
@@ -81,6 +82,11 @@ export default class ScoringService {
                     id: playerId
                 }
             });
+        }
+
+        return {
+            totalPoints,
+            trollTokenTotals,
         }
     }
 

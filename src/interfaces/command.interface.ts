@@ -23,3 +23,8 @@ export interface IRemainingCardsOptions {
     cardIdsToKeep: number[];
     band: IBandDetails;
 }
+
+export interface IScoringResults {
+    totalPoints: {[playerId: number]: number};
+    trollTokenTotals: {[playerId: number]: number};
+}

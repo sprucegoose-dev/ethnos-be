@@ -1,5 +1,4 @@
 import Game from '@models/game.model';
-import Card from '@models/card.model';
 import Player from '@models/player.model';
 
 import GameService from '@services/game/game.service';
@@ -37,11 +36,7 @@ describe('TribeService', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
-
+        afterEach(async () => await Game.truncate());
 
         it('should assign a troll token equal to the size of the band played, if available', async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
@@ -86,10 +81,7 @@ describe('TribeService', () => {
             gameState = result.gameState;
         });
 
-        afterEach(async () => {
-            await Game.truncate();
-            await Card.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should draw cards equal to the size of the band played', async () => {
             await returnPlayerCardsToDeck(playerA.id);
