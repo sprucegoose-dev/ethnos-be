@@ -2,6 +2,7 @@ import {
     BelongsTo,
     Column,
     CreatedAt,
+    DataType,
     HasMany,
     Model,
     Table,
@@ -60,6 +61,7 @@ export default class Game extends Model {
     maxPlayers: number;
 
     @Column({
+        type: DataType.JSON,
         field: 'turn_order',
         defaultValue: [],
     })
@@ -73,7 +75,9 @@ export default class Game extends Model {
     @Column
     password: String;
 
-    @Column
+    @Column({
+        type: DataType.JSON
+    })
     settings: IGameSettings;
 
     @CreatedAt

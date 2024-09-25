@@ -19,7 +19,7 @@ import {
     assignCardsToPlayer,
     createGame,
     getCardsFromDeck
-} from './test-helpers';
+} from '../test-helpers';
 import DrawCardHandler from './draw-card.handler';
 
 describe('DrawCardHandler', () => {

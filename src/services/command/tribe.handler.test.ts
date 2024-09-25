@@ -9,7 +9,7 @@ import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 import { IGameState } from '@interfaces/game.interface';
 
-import { createGame, returnPlayerCardsToDeck } from './test-helpers';
+import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import TribeService from './tribe.handler';
 
 describe('TribeService', () => {

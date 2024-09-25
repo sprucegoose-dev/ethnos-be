@@ -20,7 +20,7 @@ import {
     createGame,
     getCardsFromDeck,
     returnPlayerCardsToDeck
-} from './test-helpers';
+} from '../test-helpers';
 import PlayBandHandler from './play-band.handler';
 import { Op } from 'sequelize';
 

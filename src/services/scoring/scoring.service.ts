@@ -20,7 +20,7 @@ const BAND_VALUES: { [key: number]: number } = {
 
 export default class ScoringService {
 
-    static groupCardsByLeader(cards: Card[]) {
+    static groupCardsByLeader(cards: Card[]): IGroupedCards {
         return cards.reduce<IGroupedCards>((acc, card) => {
             const { leaderId } = card;
             if (!acc[leaderId]) {
@@ -28,7 +28,7 @@ export default class ScoringService {
             }
             acc[leaderId].push(card);
             return acc;
-          }, {});
+        }, {});
     }
 
     static getTrollTokenTotals(players: Player[]) {

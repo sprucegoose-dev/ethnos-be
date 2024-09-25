@@ -14,7 +14,7 @@ import {
     assignCardsToPlayer,
     createGame,
     getCardsFromDeck
-} from './test-helpers';
+} from '../test-helpers';
 
 import PickUpCardHandler from './pick-up-card.handler';
 
