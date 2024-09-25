@@ -65,4 +65,45 @@ describe('ScoringService', () => {
         });
 
     });
+
+    describe('getTrollTokenTotals', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+        });
+
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it('returns the total sum of troll tokens for each player', () => {
+            playerA.trollTokens = [2, 3];
+            playerB.trollTokens = [4];
+            playerC.trollTokens = [1, 5];
+
+            const trollTokenTotals = ScoringService.getTrollTokenTotals([playerA, playerB, playerC]);
+
+            expect(trollTokenTotals[playerA.id]).toBe(5);
+            expect(trollTokenTotals[playerB.id]).toBe(4);
+            expect(trollTokenTotals[playerC.id]).toBe(6);
+        });
+    });
+
+
 });

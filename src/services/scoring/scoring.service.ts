@@ -33,9 +33,10 @@ export default class ScoringService {
 
     static getTrollTokenTotals(players: Player[]) {
         const trollTokenTotals: { [playerId: number]: number } = {};
-        let trollTokenSum = 0;
 
         for (const player of players) {
+            let trollTokenSum = 0;
+
             for (const trollToken of player.trollTokens) {
                 trollTokenSum += trollToken;
             }
