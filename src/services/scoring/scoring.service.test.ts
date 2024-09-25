@@ -9,7 +9,7 @@ import { Color, IGameState } from '@interfaces/game.interface';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import ScoringService from './scoring.service';
-
+import { CardState } from '../../interfaces/card.interface';
 
 describe('ScoringService', () => {
 
@@ -105,5 +105,79 @@ describe('ScoringService', () => {
         });
     });
 
+    describe('scoreBands', () => {
+        let playerA: Player;
+        let gameState: IGameState
+        let gameId: number;
 
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            gameState = result.gameState;
+            gameId = result.gameId;
+        });
+
+        afterEach(async () => {
+            await Game.truncate();
+            await Card.truncate();
+        });
+
+        it("returns the total points for a player's bands", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameId);
+
+            // 3 points
+            const bandA = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.CENTAUR &&
+                card.color !== Color.ORANGE &&
+                !card.playerId
+            ).slice(0, 3);
+
+            // 10 points
+            const bandB = gameState.cards.filter(card =>
+                card.color === Color.ORANGE &&
+                card.tribe.name !== TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 5);
+
+            // 6 points (dwarfs are +1 band size)
+            const bandC = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                card.color !== Color.ORANGE &&
+                !card.playerId
+            ).slice(0, 3);
+
+            bandA.map(card => {
+                card.leaderId = bandA[0].id;
+                card.state = CardState.IN_BAND;
+                card.playerId = playerA.id;
+            });
+            bandB.map(card => {
+                card.leaderId = bandB[0].id;
+                card.state = CardState.IN_BAND;
+                card.playerId = playerA.id;
+            });
+            bandC.map(card => {
+                card.leaderId = bandC[0].id;
+                card.state = CardState.IN_BAND;
+                card.playerId = playerA.id;
+            });
+
+            playerA.cards = [...bandA, ...bandB, ...bandC];
+
+            const points = ScoringService.scoreBands(playerA);
+
+            expect(points).toBe(19);
+        });
+    });
 });

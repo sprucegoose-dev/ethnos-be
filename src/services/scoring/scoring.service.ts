@@ -9,15 +9,6 @@ import Region from '../../models/region.model';
 import Game from '../../models/game.model';
 import PlayerRegion from '../../models/player_region.model';
 
-const BAND_VALUES: { [key: number]: number } = {
-    1: 0,
-    2: 1,
-    3: 3,
-    4: 6,
-    5: 10,
-    6: 15
-}
-
 export default class ScoringService {
 
     static groupCardsByLeader(cards: Card[]): IGroupedCards {
@@ -94,6 +85,15 @@ export default class ScoringService {
     }
 
     static scoreBands(player: Player): number {
+        const BAND_VALUES: { [key: number]: number } = {
+            1: 0,
+            2: 1,
+            3: 3,
+            4: 6,
+            5: 10,
+            6: 15
+        };
+
         const cardsInBands = player.cards.filter(card => card.state === CardState.IN_BAND);
 
         const bands = this.groupCardsByLeader(cardsInBands);
@@ -103,6 +103,10 @@ export default class ScoringService {
         let leader;
         let bandSize;
 
+        if (!Object.keys(bands).length) {
+            return points;
+        }
+
         for (const [leaderId, bandCards] of Object.entries(bands)) {
             leader = bandCards.find(card => card.id === Number(leaderId));
             bandSize = bandCards.length;
@@ -110,12 +114,12 @@ export default class ScoringService {
             if (leader.tribe.name === TribeName.DWARF) {
                 bandSize++;
             }
-        }
 
-        if (bandSize >= 6) {
-            points += 15;
-        } else {
-            points += BAND_VALUES[bandSize];
+            if (bandSize >= 6) {
+                points += 15;
+            } else {
+                points += BAND_VALUES[bandSize];
+            }
         }
 
         return points;
