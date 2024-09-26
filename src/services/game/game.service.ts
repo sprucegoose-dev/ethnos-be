@@ -32,7 +32,7 @@ import {
     ERROR_NOT_FOUND,
 } from '@helpers/exception_handler';
 import ScoringService from '../scoring/scoring.service';
-// import { IScoringResults } from '../../interfaces/command.interface';
+import { IScoringResults } from '../../interfaces/command.interface';
 
 export default class GameService {
 
@@ -469,22 +469,37 @@ export default class GameService {
         });
     }
 
-    // static getNewAgeFirstPlayer = ({totalPoints, trollTokenTotals}: IScoringResults, prevActivePlayerId: number, turnOrder: number[]): number => {
-    //     let activePlayerId;
+    static getNewAgeFirstPlayer = ({totalPoints, trollTokenTotals}: IScoringResults, prevActivePlayerId: number, turnOrder: number[]): number => {
+        console.log(trollTokenTotals, prevActivePlayerId, turnOrder);
+        let activePlayerId;
 
-    //     for (const [playerId, points] of Object.entries(totalPoints)) {
+        let lowestScore = 0;
 
-    //     }
+        for (const points of Object.values(totalPoints)) {
+            if (points <= lowestScore) {
+                lowestScore = points;
+            }
+        }
 
-    //     // first player will be the player with the fewer points
-    //     // troll tokens break ties
-    //     // if still tied, player who is closest to the player who drew the dragon
+        const playerIds = Object.keys(totalPoints).filter((playerId) => totalPoints[Number(playerId)] === lowestScore);
 
-    //     return activePlayerId;
-    // }
+        if (playerIds.length === 1) {
+            return Number(playerIds[0]);
+        }
+
+        // find players with highest troll token values
+
+
+
+        // first player will be the player with the fewer points
+        // troll tokens break ties
+        // if still tied, player who is closest to the player who drew the dragon
+
+        return activePlayerId;
+    }
 
     static async startNewAge(game: Game) {
-        await ScoringService.handleScoring(game);
+        const scoringResults = await ScoringService.handleScoring(game);
 
         await this.dealCards(game.id, game.players, game.cards);
 
@@ -501,11 +516,11 @@ export default class GameService {
         // or in case of tie, use troll token,
         // or use player who is after the player who drew the last dragon
 
-        // const activePlayerId = this.getNewAgeFirstPlayer(scoringResults, game.activePlayerId, game.turnOrder);
+        const activePlayerId = this.getNewAgeFirstPlayer(scoringResults, game.activePlayerId, game.turnOrder);
 
         await game.update({
             age: game.age + 1,
-            // activePlayerId,
+            activePlayerId,
         });
 
     };

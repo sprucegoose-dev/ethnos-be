@@ -211,54 +211,54 @@ export default class ScoringService {
     }
 
     static scoreMerfolkTrack(game: Game, trollTokenTotals: { [playerId: number]: number }): {[playerId: number]: number} {
-        if (game.settings.tribes.find(tribeName => tribeName === TribeName.MERFOLK)) {
-            const merfolkRankings: { [rank: string]: number[] } = {};
-
-            const points: {[age: number]: number} = game.players.length >= 4 ? {
-                1: 1,
-                2: 2,
-                3: 4
-            } : {
-                1: 1,
-                2: 3,
-            };
-
-            game.players.sort((a, b) => {
-                    if (b.merfolkTrackScore === a.merfolkTrackScore) {
-                       return trollTokenTotals[b.id] - trollTokenTotals[a.id];
-                    }
-
-                    return b.merfolkTrackScore - a.merfolkTrackScore
-                })
-                .map(player => {
-                    const merfolkRank = `${player.merfolkTrackScore}.${trollTokenTotals[player.id]}`;
-
-                    if (merfolkRankings[merfolkRank]) {
-                        merfolkRankings[merfolkRank].push(player.id);
-                    } else {
-                        merfolkRankings[merfolkRank] = [player.id];
-                    }
-                });
-
-            const firstPlaceValue = points[game.age];
-
-            const totalPoints: { [playerId: number]: number } = {};
-
-            for (const playerIds of Object.values(merfolkRankings)) {
-
-                const pointsPerPlayer = Math.floor(firstPlaceValue / playerIds.length);
-
-                for (const playerId of playerIds) {
-                    totalPoints[playerId] += pointsPerPlayer;
-                }
-
-                break;
-            }
-
-            return totalPoints;
+        if (!game.settings.tribes.find(tribeName => tribeName === TribeName.MERFOLK)) {
+            return null;
         }
 
-        return null;
+        const merfolkRankings: { [rank: string]: number[] } = {};
+
+        const points: {[age: number]: number} = game.players.length >= 4 ? {
+            1: 1,
+            2: 2,
+            3: 4
+        } : {
+            1: 1,
+            2: 3,
+        };
+
+        game.players.sort((a, b) => {
+                if (b.merfolkTrackScore === a.merfolkTrackScore) {
+                    return trollTokenTotals[b.id] - trollTokenTotals[a.id];
+                }
+
+                return b.merfolkTrackScore - a.merfolkTrackScore
+            })
+            .map(player => {
+                const merfolkRank = `${player.merfolkTrackScore}.${trollTokenTotals[player.id]}`;
+
+                if (merfolkRankings[merfolkRank]) {
+                    merfolkRankings[merfolkRank].push(player.id);
+                } else {
+                    merfolkRankings[merfolkRank] = [player.id];
+                }
+            });
+
+
+        const firstPlaceValue = points[game.age];
+
+        const totalPoints: { [playerId: number]: number } = {};
+
+        for (const playerIds of Object.values(merfolkRankings)) {
+            const pointsPerPlayer = Math.floor(firstPlaceValue / playerIds.length);
+
+            for (const playerId of playerIds) {
+                totalPoints[playerId] = pointsPerPlayer;
+            }
+
+            break;
+        }
+
+        return totalPoints;
     }
 
     static scoreOrcBoard(player: Player): number {

@@ -170,4 +170,136 @@ describe('ScoringService', () => {
             expect(points).toBe(19);
         });
     });
+
+    describe('scoreGiantToken', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('it should return the points for the player with the largest giant band', () => {
+            playerA.giantTokenValue = 4;
+            playerB.giantTokenValue = 5;
+            playerC.giantTokenValue = 3;
+            playerD.giantTokenValue = 0;
+            const age = 2;
+            const giantScore = ScoringService.scoreGiantToken([playerA, playerB, playerC, playerD], age);
+            const expectedPoints = 4;
+            expect(giantScore).toEqual({ playerId: playerB.id, points: expectedPoints });
+        });
+
+        it('should return null if no player has played a giant band', () => {
+            playerA.giantTokenValue = 0;
+            playerB.giantTokenValue = 0;
+            playerC.giantTokenValue = 0;
+            playerD.giantTokenValue = 0;
+            const age = 2;
+            const giantScore = ScoringService.scoreGiantToken([playerA, playerB, playerC, playerD], age);
+            expect(giantScore).toEqual(null);
+        });
+    });
+
+    describe('scoreMerfolkTrack', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('it should return the points for the player with the largest giant band', () => {
+            playerA.merfolkTrackScore = 2;
+            playerB.merfolkTrackScore = 8;
+            playerC.merfolkTrackScore = 5;
+            playerD.merfolkTrackScore = 4;
+            gameState.players = [playerA, playerB, playerC, playerD];
+            gameState.age = 1;
+            const trollTokenTotals = ScoringService.getTrollTokenTotals(gameState.players);
+            const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
+            expect(merfolkScore).toEqual({ [playerB.id]: 1 });
+        });
+
+        it('should break ties based on troll tokens', () => {
+            playerA.merfolkTrackScore = 8;
+            playerA.trollTokens = [4,1];
+
+            playerB.merfolkTrackScore = 8;
+            playerB.trollTokens = [2];
+
+            playerC.merfolkTrackScore = 3;
+            playerD.merfolkTrackScore = 2;
+            gameState.players = [playerA, playerB, playerC, playerD];
+            gameState.age = 1;
+            const trollTokenTotals = ScoringService.getTrollTokenTotals(gameState.players);
+            const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
+            expect(merfolkScore).toEqual({ [playerA.id]: 1 });
+        });
+
+        it('should split the points if players are tied', () => {
+            playerA.merfolkTrackScore = 6;
+            playerB.merfolkTrackScore = 6;
+            playerC.merfolkTrackScore = 6;
+            playerD.merfolkTrackScore = 2;
+            gameState.players = [playerA, playerB, playerC, playerD];
+            gameState.age = 3;
+            const trollTokenTotals = ScoringService.getTrollTokenTotals(gameState.players);
+            const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
+            expect(merfolkScore).toEqual({ [playerA.id]: 1, [playerB.id]: 1, [playerC.id]: 1 });
+        });
+
+        it("should return 'null' if Merfolk are not in the game", () => {
+            gameState.settings = {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.SKELETON,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            }
+            gameState.age = 3;
+            const trollTokenTotals = ScoringService.getTrollTokenTotals(gameState.players);
+            const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
+            expect(merfolkScore).toBe(null);
+        });
+    });
 });

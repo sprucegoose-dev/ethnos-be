@@ -55,7 +55,10 @@ export default class Player extends Model {
       })
       trollTokens: number[];
 
-    @Column({ field: 'merfolk_track_score' })
+    @Column({
+        field: 'merfolk_track_score',
+        defaultValue: 0,
+    })
     merfolkTrackScore: number;
 
     @Column({ defaultValue: 0 })
