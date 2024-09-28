@@ -9,6 +9,8 @@ import { Color, IGameState } from '@interfaces/game.interface';
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import ScoringService from './scoring.service';
 import { CardState } from '@interfaces/card.interface';
+import Region from '../../models/region.model';
+import PlayerRegion from '../../models/player_region.model';
 
 describe('ScoringService', () => {
 
@@ -219,11 +221,231 @@ describe('ScoringService', () => {
     });
 
     describe('scoreRegion', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+        let gameId: number;
+        let playerARegion: PlayerRegion;
+        let playerBRegion: PlayerRegion;
+        let playerCRegion: PlayerRegion;
+        let playerDRegion: PlayerRegion;
+        let trollTokenTotals: { [playerId: number]: number };
 
-        it('should give the player with the most tokens in a region the highest point value for that region', () => {
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+            gameId = result.gameId;
 
+            trollTokenTotals = {
+                [playerA.id]: 0,
+                [playerB.id]: 0,
+                [playerC.id]: 0,
+                [playerD.id]: 0,
+            };
         });
 
+        afterEach(async () => await Game.truncate());
+
+        it('should give the player with the most tokens in a region the highest point value for that region (age: 1)', async () => {
+            const region = await Region.findOne({
+                where: {
+                    gameId
+                }
+            });
+
+            const trollTokenTotals = {
+                [playerA.id]: 0,
+                [playerB.id]: 0,
+                [playerC.id]: 0,
+                [playerD.id]: 0,
+            };
+
+            const gameAge = 1;
+
+            playerARegion = await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: region.id,
+                tokens: 4
+            });
+
+            playerBRegion = await PlayerRegion.create({
+                playerId: playerB.id,
+                regionId: region.id,
+                tokens: 1
+            });
+
+            playerCRegion = await PlayerRegion.create({
+                playerId: playerC.id,
+                regionId: region.id,
+                tokens: 2,
+            });
+
+            region.values = [2, 6, 10];
+
+            const totalPoints = ScoringService.scoreRegion(region, [playerARegion, playerBRegion, playerCRegion], trollTokenTotals, gameAge);
+
+            expect(totalPoints).toEqual({ [playerA.id]: region.values[0] });
+        });
+
+        it('should give the 1st, 2nd, and 3rd players with the most tokens in a region points (age: 3)', async () => {
+            const region = await Region.findOne({
+                where: {
+                    gameId
+                }
+            });
+
+            const gameAge = 3;
+
+            playerARegion = await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: region.id,
+                tokens: 4
+            });
+
+            playerBRegion = await PlayerRegion.create({
+                playerId: playerB.id,
+                regionId: region.id,
+                tokens: 1
+            });
+
+            playerCRegion = await PlayerRegion.create({
+                playerId: playerC.id,
+                regionId: region.id,
+                tokens: 2,
+            });
+
+            playerDRegion = await PlayerRegion.create({
+                playerId: playerD.id,
+                regionId: region.id,
+                tokens: 5,
+            });
+
+            region.values = [2, 6, 10];
+
+            const totalPoints = ScoringService.scoreRegion(region, [
+                playerARegion,
+                playerBRegion,
+                playerCRegion,
+                playerDRegion
+            ], trollTokenTotals, gameAge);
+
+            expect(totalPoints).toEqual({
+                [playerC.id]: region.values[0],
+                [playerA.id]: region.values[1],
+                [playerD.id]: region.values[2]
+            });
+        });
+
+        it('should combine and split region points when players are tied (age: 3) (example 1)', async () => {
+            const region = await Region.findOne({
+                where: {
+                    gameId
+                }
+            });
+
+            const gameAge = 3;
+
+            playerARegion = await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: region.id,
+                tokens: 5
+            });
+
+            playerBRegion = await PlayerRegion.create({
+                playerId: playerB.id,
+                regionId: region.id,
+                tokens: 1
+            });
+
+            playerCRegion = await PlayerRegion.create({
+                playerId: playerC.id,
+                regionId: region.id,
+                tokens: 2,
+            });
+
+            playerDRegion = await PlayerRegion.create({
+                playerId: playerD.id,
+                regionId: region.id,
+                tokens: 5,
+            });
+
+            region.values = [2, 6, 10];
+
+            const totalPoints = ScoringService.scoreRegion(region, [
+                playerARegion,
+                playerBRegion,
+                playerCRegion,
+                playerDRegion
+            ], trollTokenTotals, gameAge);
+
+            expect(totalPoints).toEqual({
+                [playerC.id]: 2,
+                [playerA.id]: 8,
+                [playerD.id]: 8
+            });
+        });
+
+        it('should combine and split region points when players are tied (age: 3) (example 2)', async () => {
+            const region = await Region.findOne({
+                where: {
+                    gameId
+                }
+            });
+
+            const gameAge = 3;
+
+            playerARegion = await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: region.id,
+                tokens: 5
+            });
+
+            playerBRegion = await PlayerRegion.create({
+                playerId: playerB.id,
+                regionId: region.id,
+                tokens: 5
+            });
+
+            playerCRegion = await PlayerRegion.create({
+                playerId: playerC.id,
+                regionId: region.id,
+                tokens: 2,
+            });
+
+            playerDRegion = await PlayerRegion.create({
+                playerId: playerD.id,
+                regionId: region.id,
+                tokens: 5,
+            });
+
+            region.values = [2, 6, 10];
+
+            const totalPoints = ScoringService.scoreRegion(region, [
+                playerARegion,
+                playerBRegion,
+                playerCRegion,
+                playerDRegion
+            ], trollTokenTotals, gameAge);
+
+            expect(totalPoints).toEqual({
+                [playerA.id]: 6,
+                [playerB.id]: 6,
+                [playerD.id]: 6
+            });
+        });
     });
 
     describe('scoreMerfolkTrack', () => {

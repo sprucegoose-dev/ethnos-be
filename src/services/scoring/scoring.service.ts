@@ -136,16 +136,16 @@ export default class ScoringService {
         const totalPoints: { [playerId: number]: number } = {};
 
         playersInRegion
-        .sort((playerA, playerB) => playerB.tokens - playerA.tokens)
-        .map(playerRegion => {
-            const rankKey = `${playerRegion.tokens}.${trollTokenTotals[playerRegion.playerId]}`;
+            .sort((playerA, playerB) => playerB.tokens - playerA.tokens)
+            .map(playerRegion => {
+                const rankKey = `${playerRegion.tokens}.${trollTokenTotals[playerRegion.playerId]}`;
 
-            if (regionRankings[rankKey]) {
-                regionRankings[rankKey].push(playerRegion.playerId);
-            } else {
-                regionRankings[rankKey] = [playerRegion.playerId];
-            }
-        });
+                if (regionRankings[rankKey]) {
+                    regionRankings[rankKey].push(playerRegion.playerId);
+                } else {
+                    regionRankings[rankKey] = [playerRegion.playerId];
+                }
+            });
 
         const regionPoints = region.values.slice(0, age).sort((a, b) => b - a);
 
@@ -159,7 +159,7 @@ export default class ScoringService {
             const pointsPerPlayer = Math.floor(totalValue / playerIds.length);
 
             for (const playerId of playerIds) {
-                totalPoints[playerId] += pointsPerPlayer;
+                totalPoints[playerId] = pointsPerPlayer;
             }
         }
 
