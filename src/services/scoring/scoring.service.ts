@@ -131,6 +131,41 @@ export default class ScoringService {
         return points;
     }
 
+    static scoreRegion(region: Region, playersInRegion: PlayerRegion[], trollTokenTotals: { [playerId: number]: number }, age: number) {
+        const regionRankings: { [rank: string]: number[] } = {};
+        const totalPoints: { [playerId: number]: number } = {};
+
+        playersInRegion
+        .sort((playerA, playerB) => playerB.tokens - playerA.tokens)
+        .map(playerRegion => {
+            const rankKey = `${playerRegion.tokens}.${trollTokenTotals[playerRegion.playerId]}`;
+
+            if (regionRankings[rankKey]) {
+                regionRankings[rankKey].push(playerRegion.playerId);
+            } else {
+                regionRankings[rankKey] = [playerRegion.playerId];
+            }
+        });
+
+        const regionPoints = region.values.slice(0, age).sort((a, b) => b - a);
+
+        for (const playerIds of Object.values(regionRankings)) {
+            if (!regionPoints.length) {
+                continue;
+            }
+
+            const totalValue = regionPoints.splice(0, playerIds.length).reduce<number>((acc, currentValue) => acc += currentValue, 0);
+
+            const pointsPerPlayer = Math.floor(totalValue / playerIds.length);
+
+            for (const playerId of playerIds) {
+                totalPoints[playerId] += pointsPerPlayer;
+            }
+        }
+
+        return totalPoints;
+    }
+
     static async scoreRegions(game: Game, trollTokenTotals: { [playerId: number]: number }): Promise<{[playerId: number]: number}> {
         const regions = await Region.findAll({
             where: {
@@ -152,36 +187,15 @@ export default class ScoringService {
             totalPoints[player.id] = 0;
         }
 
-        const regionRankings: { [rank: string]: number[] } = {};
-
         for (const region of regions) {
-            playerRegions
-                .filter(playerRegion => playerRegion.regionId === region.id)
-                .sort((a, b) => b.tokens - a.tokens)
-                .map(playerRegion => {
-                    const rankKey = `${playerRegion.tokens}.${trollTokenTotals[playerRegion.playerId]}`;
+            const playersInRegion = playerRegions.filter(playerRegion =>
+                playerRegion.regionId === region.id
+            );
 
-                    if (regionRankings[rankKey]) {
-                        regionRankings[rankKey].push(playerRegion.playerId);
-                    } else {
-                        regionRankings[rankKey] = [playerRegion.playerId];
-                    }
-                });
+            const regionPoints = this.scoreRegion(region, playersInRegion, trollTokenTotals, game.age);
 
-            const regionPoints = region.values.slice(0, game.age).sort((a, b) => b - a);
-
-            for (const playerIds of Object.values(regionRankings)) {
-                if (!regionPoints.length) {
-                    continue;
-                }
-
-                const totalValue = regionPoints.splice(0, playerIds.length).reduce<number>((acc, currentValue) => acc += currentValue, 0);
-
-                const pointsPerPlayer = Math.floor(totalValue / playerIds.length);
-
-                for (const playerId of playerIds) {
-                    totalPoints[playerId] += pointsPerPlayer;
-                }
+            for (const [playerId, points] of Object.entries(regionPoints)) {
+                totalPoints[Number(playerId)] += points;
             }
         }
 

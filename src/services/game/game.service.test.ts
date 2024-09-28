@@ -20,6 +20,7 @@ import {
     userC,
     userD,
 } from '@jest.setup';
+import { createGame } from '../test-helpers';
 
 describe('GameService', () => {
 
@@ -301,6 +302,120 @@ describe('GameService', () => {
                 expect(region.values[0]).toBeLessThanOrEqual(region.values[1]);
                 expect(region.values[1]).toBeLessThanOrEqual(region.values[2]);
             }
+        });
+    });
+
+    describe('getNewAgeFirstPlayerId', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+        let prevPlayerId: number;
+        let turnOrder: number[];
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+            prevPlayerId = playerA.id;
+            turnOrder = [playerA.id, playerB.id, playerC.id, playerD.id];
+        });
+
+        afterEach(async () => await Game.truncate());
+
+
+        it('should return the ID of the player with the fewest points', () => {
+            const scoringResults = {
+                totalPoints: {
+                    [playerA.id]: 18,
+                    [playerB.id]: 12,
+                    [playerC.id]: 10,
+                    [playerD.id]: 14,
+                },
+                trollTokenTotals: {},
+            };
+
+            const playerId = GameService.getNewAgeFirstPlayerId(scoringResults, prevPlayerId, turnOrder);
+
+            expect(playerId).toBe(playerC.id);
+        });
+
+        it('should break ties between the players with the fewest points based on the greatest troll token value', () => {
+            const scoringResults = {
+                totalPoints: {
+                    [playerA.id]: 18,
+                    [playerB.id]: 10,
+                    [playerC.id]: 10,
+                    [playerD.id]: 14,
+                },
+                trollTokenTotals: {
+                    [playerA.id]: 0,
+                    [playerB.id]: 3,
+                    [playerC.id]: 1,
+                    [playerD.id]: 6,
+                },
+            };
+
+            const playerId = GameService.getNewAgeFirstPlayerId(scoringResults, prevPlayerId, turnOrder);
+
+            expect(playerId).toBe(playerB.id);
+        });
+
+        it('should assign the player who drew the last dragon if they are among the players with fewest points and players are still tied', () => {
+            const scoringResults = {
+                totalPoints: {
+                    [playerA.id]: 10,
+                    [playerB.id]: 10,
+                    [playerC.id]: 10,
+                    [playerD.id]: 14,
+                },
+                trollTokenTotals: {
+                    [playerA.id]: 0,
+                    [playerB.id]: 0,
+                    [playerC.id]: 0,
+                    [playerD.id]: 0,
+                },
+            };
+
+            turnOrder = [playerA.id, playerB.id, playerC.id, playerD.id];
+
+            const playerId = GameService.getNewAgeFirstPlayerId(scoringResults, prevPlayerId, turnOrder);
+
+            expect(playerId).toBe(playerA.id);
+        });
+
+        it('should assign the player closest in turn order to the player who drew the last dragon if players are still tied', () => {
+            const scoringResults = {
+                totalPoints: {
+                    [playerA.id]: 12,
+                    [playerB.id]: 10,
+                    [playerC.id]: 10,
+                    [playerD.id]: 14,
+                },
+                trollTokenTotals: {
+                    [playerA.id]: 0,
+                    [playerB.id]: 0,
+                    [playerC.id]: 0,
+                    [playerD.id]: 0,
+                },
+            };
+
+            turnOrder = [playerA.id, playerB.id, playerC.id, playerD.id];
+
+            const playerId = GameService.getNewAgeFirstPlayerId(scoringResults, prevPlayerId, turnOrder);
+
+            expect(playerId).toBe(playerB.id);
         });
     });
 });

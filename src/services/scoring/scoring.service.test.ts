@@ -218,6 +218,14 @@ describe('ScoringService', () => {
         });
     });
 
+    describe('scoreRegion', () => {
+
+        it('should give the player with the most tokens in a region the highest point value for that region', () => {
+
+        });
+
+    });
+
     describe('scoreMerfolkTrack', () => {
         let playerA: Player;
         let playerB: Player;

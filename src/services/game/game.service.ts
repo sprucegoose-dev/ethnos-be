@@ -469,33 +469,51 @@ export default class GameService {
         });
     }
 
-    static getNewAgeFirstPlayer = ({totalPoints, trollTokenTotals}: IScoringResults, prevActivePlayerId: number, turnOrder: number[]): number => {
-        console.log(trollTokenTotals, prevActivePlayerId, turnOrder);
-        let activePlayerId;
-
-        let lowestScore = 0;
+    static getNewAgeFirstPlayerId = ({totalPoints, trollTokenTotals}: IScoringResults, prevPlayerId: number, turnOrder: number[]): number => {
+        let lowestScore: number;
 
         for (const points of Object.values(totalPoints)) {
-            if (points <= lowestScore) {
+            if (!lowestScore || points <= lowestScore) {
                 lowestScore = points;
             }
         }
 
-        const playerIds = Object.keys(totalPoints).filter((playerId) => totalPoints[Number(playerId)] === lowestScore);
+        let playerIds: number[] = Object.keys(totalPoints)
+            .filter((playerId) => totalPoints[Number(playerId)] === lowestScore)
+            .map(playerId => Number(playerId));
 
         if (playerIds.length === 1) {
-            return Number(playerIds[0]);
+            return playerIds[0];
         }
 
-        // find players with highest troll token values
+        let tiebreaker = 0;
 
+        for (const [playerId, value] of Object.entries(trollTokenTotals)) {
+            if (playerIds.includes(Number(playerId))) {
+                if (value >= tiebreaker) {
+                    tiebreaker = value;
+                }
+            }
+        }
 
+        playerIds = playerIds.filter(playerId => trollTokenTotals[playerId] === tiebreaker);
 
-        // first player will be the player with the fewer points
-        // troll tokens break ties
-        // if still tied, player who is closest to the player who drew the dragon
+        if (playerIds.length === 1) {
+            return playerIds[0];
+        }
 
-        return activePlayerId;
+        let firstPlayerId;
+        let nextPlayerId = prevPlayerId;
+
+        while (!firstPlayerId) {
+            if (playerIds.includes(nextPlayerId)) {
+                firstPlayerId = nextPlayerId;
+            }
+
+            nextPlayerId = this.getNextPlayerId(nextPlayerId, turnOrder);
+        }
+
+        return firstPlayerId;
     }
 
     static async startNewAge(game: Game) {
@@ -512,11 +530,7 @@ export default class GameService {
             }
         });
 
-        // TODO: get active player ID - either the player with the fewest points,
-        // or in case of tie, use troll token,
-        // or use player who is after the player who drew the last dragon
-
-        const activePlayerId = this.getNewAgeFirstPlayer(scoringResults, game.activePlayerId, game.turnOrder);
+        const activePlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
 
         await game.update({
             age: game.age + 1,
