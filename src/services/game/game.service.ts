@@ -470,43 +470,29 @@ export default class GameService {
     }
 
     static getNewAgeFirstPlayerId = ({totalPoints, trollTokenTotals}: IScoringResults, prevPlayerId: number, turnOrder: number[]): number => {
-        let lowestScore: number;
+        let lowestScore: number = Math.min(...Object.values(totalPoints));
 
-        for (const points of Object.values(totalPoints)) {
-            if (!lowestScore || points <= lowestScore) {
-                lowestScore = points;
-            }
+        let tiedPlayerIds: number[] = Object.keys(totalPoints)
+            .map(Number)
+            .filter((playerId) => totalPoints[playerId] === lowestScore)
+
+        if (tiedPlayerIds.length === 1) {
+            return tiedPlayerIds[0];
         }
 
-        let playerIds: number[] = Object.keys(totalPoints)
-            .filter((playerId) => totalPoints[Number(playerId)] === lowestScore)
-            .map(playerId => Number(playerId));
+        const highestTrollToken = Math.max(...tiedPlayerIds.map(playerId => trollTokenTotals[playerId]))
 
-        if (playerIds.length === 1) {
-            return playerIds[0];
-        }
+        tiedPlayerIds = tiedPlayerIds.filter(playerId => trollTokenTotals[playerId] === highestTrollToken);
 
-        let tiebreaker = 0;
-
-        for (const [playerId, value] of Object.entries(trollTokenTotals)) {
-            if (playerIds.includes(Number(playerId))) {
-                if (value >= tiebreaker) {
-                    tiebreaker = value;
-                }
-            }
-        }
-
-        playerIds = playerIds.filter(playerId => trollTokenTotals[playerId] === tiebreaker);
-
-        if (playerIds.length === 1) {
-            return playerIds[0];
+        if (tiedPlayerIds.length === 1) {
+            return tiedPlayerIds[0];
         }
 
         let firstPlayerId;
         let nextPlayerId = prevPlayerId;
 
         while (!firstPlayerId) {
-            if (playerIds.includes(nextPlayerId)) {
+            if (tiedPlayerIds.includes(nextPlayerId)) {
                 firstPlayerId = nextPlayerId;
             }
 
