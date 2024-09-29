@@ -2,7 +2,7 @@ import Game from '@models/game.model';
 import NextAction from '@models/nextAction.model';
 import Player from '@models/player.model';
 
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 import { ActionType } from '@interfaces/action.interface';
 
 import {

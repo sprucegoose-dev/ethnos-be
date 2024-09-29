@@ -30,7 +30,7 @@ import {
     ERROR_BAD_REQUEST,
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 import ScoringService from '../scoring/scoring.service';
 import { IScoringResults } from '../../interfaces/command.interface';
 

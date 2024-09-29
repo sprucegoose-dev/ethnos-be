@@ -11,7 +11,7 @@ import { Color, IGameState } from '@interfaces/game.interface';
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import TribeHandler from './tribe.handler';
 import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/nextAction.interface';
+import { NextActionState } from '../../interfaces/next-action.interface';
 import { ActionType } from '../../interfaces/action.interface';
 import PlayBandHandler from './play-band.handler';
 

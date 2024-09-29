@@ -10,10 +10,10 @@ import PlayerService from '@services/player/player.service';
 import { TribeName } from '@interfaces/tribe.interface';
 import { Color, IGameState } from '@interfaces/game.interface';
 import { CardState } from '@interfaces/card.interface';
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 import { ActionType, IPlayBandPayload } from '@interfaces/action.interface';
 
-import { ERROR_BAD_REQUEST } from '@helpers/exception_handler';
+import { ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import {
     assignCardsToPlayer,

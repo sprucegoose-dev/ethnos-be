@@ -1,10 +1,10 @@
 import moment from 'moment';
 import { Response, Request, NextFunction } from 'express';
 
-import { exceptionHandler } from '@helpers/exception_handler.decorator';
+import { exceptionHandler } from '@helpers/exception-handler.decorator';
 import {
     CustomException, ERROR_UNAUTHORIZED
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 
 import UserService from '@services/user/user.service';
 

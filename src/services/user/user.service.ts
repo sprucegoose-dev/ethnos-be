@@ -7,7 +7,7 @@ import {
     ERROR_BAD_REQUEST,
     ERROR_NOT_FOUND,
     ERROR_UNAUTHORIZED,
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 
 import User from '@models/user.model';
 

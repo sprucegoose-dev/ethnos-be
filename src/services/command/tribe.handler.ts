@@ -12,7 +12,7 @@ import NextAction from '@models/nextAction.model';
 import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { Color } from '@interfaces/game.interface';
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 
 import DrawCardHandler from './draw-card.handler';
 

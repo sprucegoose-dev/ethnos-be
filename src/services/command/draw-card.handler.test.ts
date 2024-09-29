@@ -12,7 +12,7 @@ import {
     IGameState
 } from '@interfaces/game.interface';
 
-import { ERROR_BAD_REQUEST } from '@helpers/exception_handler';
+import { ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import {
     assignCardsToPlayer,

@@ -9,12 +9,12 @@ import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { Color } from '@interfaces/game.interface';
 import { IRemainingCardsOptions } from '@interfaces/command.interface';
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 
 import {
     CustomException,
     ERROR_BAD_REQUEST,
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 
 import Game from '@models/game.model';
 import Player from '@models/player.model';

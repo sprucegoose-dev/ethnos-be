@@ -6,7 +6,7 @@ import {
 
 import Game from './game.model';
 import Player from './player.model';
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 import { ActionType } from '@interfaces/action.interface';
 
 @Table({

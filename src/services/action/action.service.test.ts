@@ -18,7 +18,7 @@ import { ActionType } from '@interfaces/action.interface';
 import { CardState } from '@interfaces/card.interface';
 import { Color, GameState } from '@interfaces/game.interface';
 import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/nextAction.interface';
+import { NextActionState } from '../../interfaces/next-action.interface';
 
 const arrayEquals = (arrayA: any[], arrayB: any[]) => {
     return arrayA.every((value, index) => value === arrayB[index])

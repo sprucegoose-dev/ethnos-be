@@ -1,4 +1,4 @@
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 
 import NextAction from '@models/nextAction.model';
 

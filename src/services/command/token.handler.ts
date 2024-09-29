@@ -9,9 +9,9 @@ import {
     CustomException,
     ERROR_BAD_REQUEST,
     ERROR_NOT_FOUND
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/nextAction.interface';
+import { NextActionState } from '../../interfaces/next-action.interface';
 
 
 export default class TokenHandler {

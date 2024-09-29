@@ -1,7 +1,7 @@
 import {
     CustomException,
     ERROR_BAD_REQUEST,
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 
 import Game from '@models/game.model';
 import Player from '@models/player.model';

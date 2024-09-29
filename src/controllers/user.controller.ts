@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import { exceptionHandler } from '@helpers/exception_handler.decorator';
+import { exceptionHandler } from '@helpers/exception-handler.decorator';
 import { AuthRequest } from '@interfaces/index.interface';
 import UserService from '@services/user/user.service';
 

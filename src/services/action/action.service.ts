@@ -8,7 +8,7 @@ import {
 import { CardState } from '@interfaces/card.interface';
 import { GameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
-import { NextActionState } from '@interfaces/nextAction.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 
 import GameService from '@services/game/game.service';
 

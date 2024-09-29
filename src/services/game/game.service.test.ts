@@ -12,7 +12,7 @@ import { GameState, IGameSettings } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 
-import { ERROR_BAD_REQUEST } from '@helpers/exception_handler';
+import { ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import {
     userA,

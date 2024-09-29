@@ -8,7 +8,7 @@ import {
     CustomException,
     ERROR_BAD_REQUEST,
     ERROR_NOT_FOUND,
-} from '@helpers/exception_handler';
+} from '@helpers/exception-handler';
 
 import GameService from '@services/game/game.service';
 import EventService from '@services/event/event.service';
@@ -17,7 +17,7 @@ import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/nextAction.interface';
+import { NextActionState } from '../../interfaces/next-action.interface';
 import TokenHandler from './token.handler';
 import Game from '../../models/game.model';
 

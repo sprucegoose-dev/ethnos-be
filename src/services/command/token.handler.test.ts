@@ -4,7 +4,7 @@ import GameService from '@services/game/game.service';
 
 import { Color, IGameState } from '@interfaces/game.interface';
 
-import { ERROR_BAD_REQUEST, ERROR_NOT_FOUND } from '@helpers/exception_handler';
+import { ERROR_BAD_REQUEST, ERROR_NOT_FOUND } from '@helpers/exception-handler';
 
 import {
     createGame,
@@ -13,7 +13,7 @@ import {
 import TokenHandler from './token.handler';
 import { ActionType, IAddFreeTokenPayload } from '../../interfaces/action.interface';
 import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/nextAction.interface';
+import { NextActionState } from '../../interfaces/next-action.interface';
 import PlayerRegion from '../../models/player_region.model';
 import Region from '../../models/region.model';
 
