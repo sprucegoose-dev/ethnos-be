@@ -21,11 +21,15 @@ Runs the app in development mode. This will start a server on [http://localhost:
 
 #### `npm test`
 
-Runs al the tests.
+Runs all the tests.
 
 #### `npm run test -t [filename].test.ts`
 
 Runs a single test file
+
+#### `npm run test:coverage`
+
+Runs all the tests and generates a coverage report.
 
 #### `npm run migrate`
 

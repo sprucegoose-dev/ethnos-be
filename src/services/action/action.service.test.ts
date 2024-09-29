@@ -16,7 +16,9 @@ import {
 import { TribeName } from '@interfaces/tribe.interface';
 import { ActionType } from '@interfaces/action.interface';
 import { CardState } from '@interfaces/card.interface';
-import { Color } from '@interfaces/game.interface';
+import { Color, GameState } from '@interfaces/game.interface';
+import NextAction from '../../models/nextAction.model';
+import { NextActionState } from '../../interfaces/nextAction.interface';
 
 const arrayEquals = (arrayA: any[], arrayB: any[]) => {
     return arrayA.every((value, index) => value === arrayB[index])
@@ -135,6 +137,102 @@ describe('ActionService', () => {
             expect(actions.find(action => action.type === ActionType.DRAW_CARD)).toBeUndefined();
             expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeUndefined();
             expect(actions.filter(action => action.type === ActionType.PLAY_BAND).length).toBeGreaterThan(1);
+        });
+
+        it('should return an empty array if the game has already ended', async () => {
+            await Game.update({
+                state: GameState.ENDED,
+            }, {
+                where: {
+                    id: game.id
+                }
+            });
+
+            const updatedGame = await GameService.getState(game.id);
+
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
+
+
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
+
+            expect(actions).toEqual([]);
+        });
+
+        it('should return an empty array if the player is not the active player', async () => {
+            const updatedGame = await GameService.getState(game.id);
+
+            const nonActivePlayer = updatedGame.players.find(player => player.id !== updatedGame.activePlayerId);
+
+            const actions = await ActionService.getActions(
+                game.id,
+                nonActivePlayer.user.id,
+            );
+
+            expect(actions).toEqual([]);
+        });
+
+        it("should filter the actions if there is a pending 'next action' of 'play band'", async () => {
+            const updatedGame = await GameService.getState(game.id);
+
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
+
+            await NextAction.create({
+                state: NextActionState.PENDING,
+                gameId: game.id,
+                playerId: activePlayer.id,
+                type: ActionType.PLAY_BAND
+            });
+
+            const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            for (let i = 0; i < 5; i++) {
+                await Card.update(
+                    {
+                        playerId: activePlayer.id,
+                        state: CardState.IN_HAND,
+                    },
+                    {
+                        where: {
+                            id: cardsInDeck[i].id
+                        }
+                    }
+                );
+            }
+
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
+
+            expect(actions.find(action => action.type === ActionType.DRAW_CARD)).toBeUndefined();
+            expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeUndefined();
+            expect(actions.filter(action => action.type === ActionType.PLAY_BAND).length).toBeGreaterThan(1);
+        });
+
+        it("should filter the actions if there is a pending 'next action' of 'add free token'", async () => {
+            const updatedGame = await GameService.getState(game.id);
+
+            const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
+
+            await NextAction.create({
+                state: NextActionState.PENDING,
+                gameId: game.id,
+                playerId: activePlayer.id,
+                type: ActionType.ADD_FREE_TOKEN
+            });
+
+            const actions = await ActionService.getActions(
+                game.id,
+                activePlayer.user.id,
+            );
+
+            expect(actions.find(action => action.type === ActionType.PLAY_BAND)).toBeUndefined();
+            expect(actions.find(action => action.type === ActionType.DRAW_CARD)).toBeUndefined();
+            expect(actions.find(action => action.type === ActionType.PICK_UP_CARD)).toBeUndefined();
+            expect(actions.filter(action => action.type === ActionType.ADD_FREE_TOKEN).length).toBe(1);
         });
     });
 

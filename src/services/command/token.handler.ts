@@ -19,6 +19,7 @@ export default class TokenHandler {
     static async addFreeTokenToRegion(game: Game, player: Player, payload: IAddFreeTokenPayload): Promise<void> {
         const nextAction = await NextAction.findOne({
             where: {
+                playerId: player.id,
                 id: payload.nextActionId,
                 state: NextActionState.PENDING
             }
@@ -41,14 +42,15 @@ export default class TokenHandler {
             }
         });
 
-        if (!playerRegion) {
+        if (playerRegion) {
+            await playerRegion.update({ tokens: playerRegion.tokens + 1 });
+        } else {
             playerRegion = await PlayerRegion.create({
                 playerId: player.id,
                 regionId: region.id,
+                tokens: 1,
             });
         }
-
-        await playerRegion.update({ tokens: playerRegion.tokens + 1 });
 
         await nextAction.update({
             state: NextActionState.RESOLVED

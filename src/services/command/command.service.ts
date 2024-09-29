@@ -40,21 +40,17 @@ export default class CommandService {
 
         let nextActions = [];
 
-        let nextActionId;
-
         switch (payload.type) {
             case ActionType.DRAW_CARD:
                 await DrawCardHandler.handleDrawCard(game, activePlayer);
                 break;
             case ActionType.PLAY_BAND:
-                nextActionId = payload.nextActionId;
                  await PlayBandHandler.handlePlayBand(game, activePlayer, payload);
                 break;
             case ActionType.PICK_UP_CARD:
                 await PickUpCardHandler.handlePickUpCard(game, activePlayer, payload.cardId);
                 break;
             case ActionType.ADD_FREE_TOKEN:
-                nextActionId = payload.nextActionId;
                 await TokenHandler.addFreeTokenToRegion(game, activePlayer, payload);
                 break;
         }
