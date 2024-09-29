@@ -9,9 +9,75 @@ import { CardState } from '@interfaces/card.interface';
 import { IGameState } from '@interfaces/game.interface';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
-import TribeService from './tribe.handler';
+import TribeHandler from './tribe.handler';
 
-describe('TribeService', () => {
+describe('TribeHandler', () => {
+
+    describe('handleGiantBand', () => {
+        let gameId: number;
+        let playerA: Player;
+        let playerB: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            gameId = result.gameId;
+            playerA = result.playerA;
+            playerB = result.playerB;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should increment a player's 'giant token value' and give them 2 points if they've played the largest giant band so far", async () => {
+            await Player.update({
+                giantTokenValue: 2
+            }, {
+                where: {
+                    id: playerB.id
+                }
+            });
+
+            await TribeHandler.handleGiantBand(gameId, playerA, 3);
+
+            const updatedPlayer = await Player.findOne({
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            expect(updatedPlayer.giantTokenValue).toEqual(3);
+            expect(updatedPlayer.points).toEqual(2);
+        });
+
+        it("should do nothing if a player has not played the largest giant band", async () => {
+            await Player.update({
+                giantTokenValue: 4
+            }, {
+                where: {
+                    id: playerB.id
+                }
+            });
+
+            await TribeHandler.handleGiantBand(gameId, playerA, 2);
+
+            const updatedPlayer = await Player.findOne({
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            expect(updatedPlayer.giantTokenValue).toEqual(0);
+            expect(updatedPlayer.points).toEqual(0);
+        });
+    });
 
     describe('handleTrollTokens', () => {
         let gameId: number;
@@ -41,7 +107,7 @@ describe('TribeService', () => {
         it('should assign a troll token equal to the size of the band played, if available', async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            await TribeService.handleTrollTokens(gameState, player, 5);
+            await TribeHandler.handleTrollTokens(gameState, player, 5);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
@@ -61,7 +127,7 @@ describe('TribeService', () => {
 
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            await TribeService.handleTrollTokens(gameState, player, 5);
+            await TribeHandler.handleTrollTokens(gameState, player, 5);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
@@ -90,7 +156,7 @@ describe('TribeService', () => {
 
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            await TribeService.handleWizardDraw(gameState, player, 3);
+            await TribeHandler.handleWizardDraw(gameState, player, 3);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 

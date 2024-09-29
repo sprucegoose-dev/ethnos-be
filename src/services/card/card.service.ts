@@ -8,7 +8,7 @@ import { ICardFilters } from '@interfaces/card.interface';
 
 class CardService {
 
-    static async getCardsWithType(gameId: number, filters: ICardFilters): Promise<Card[]> {
+    static async getCardsWithType(gameId: number, filters: ICardFilters = {}): Promise<Card[]> {
         let where: any = {
             gameId: gameId,
         };

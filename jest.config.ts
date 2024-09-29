@@ -25,6 +25,7 @@ const config: Config.InitialOptions = {
     collectCoverageFrom: [
         '**/*.{ts,tsx}',
         '!**/*.interface.ts',
+        '!**/*.model.ts',
         '!**/*.test.ts',
         '!**/index.ts'
     ],
