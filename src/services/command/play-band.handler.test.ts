@@ -596,7 +596,7 @@ describe('PlayBandHandler', () => {
                 cardIds: cardIdsToAssign,
                 leaderId: leader.id,
                 type: ActionType.PLAY_BAND
-            }
+            };
 
             await PlayBandHandler.handlePlayBand(gameState, player, payload);
 
@@ -697,6 +697,55 @@ describe('PlayBandHandler', () => {
             expect(discardedCards.length).toBe(2);
         });
 
+        it("resolves a pending 'next action' if the payload includes a 'nextActionId'", async () => {
+            const result = await createGame();
+            const gameId = result.gameId;
+            const playerA = result.playerA;
+            let gameState = result.gameState;
+
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameId);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARF &&
+                !card.playerId
+            ).slice(0, 3);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const leader = cardsToAssign[0];
+
+            let nextAction = await NextAction.create({
+                gameId: gameId,
+                playerId: playerA.id,
+                state: NextActionState.PENDING,
+                type: ActionType.PLAY_BAND
+            });
+
+            const payload: IPlayBandPayload = {
+                cardIds: cardIdsToAssign,
+                leaderId: leader.id,
+                type: ActionType.PLAY_BAND,
+                nextActionId: nextAction.id,
+            };
+
+            await PlayBandHandler.handlePlayBand(gameState, player, payload);
+
+            nextAction = await NextAction.findOne({
+                where: {
+                    gameId: gameId,
+                    playerId: playerA.id,
+                    type: ActionType.PLAY_BAND
+                }
+            });
+
+            expect(nextAction.state).toBe(NextActionState.RESOLVED);
+        });
     });
 
     describe('validateBand', () => {
