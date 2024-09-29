@@ -26,6 +26,7 @@ import NextAction from '@models/nextAction.model';
 import { ActionService } from '@services/action/action.service';
 
 import TribeService from './tribe.handler';
+import NextActionHandler from './next-action.handler';
 
 const {
     CENTAUR,
@@ -170,20 +171,6 @@ export default class PlayBandHandler {
         return Region.findOne({ where: { gameId: game.id, color } });
     }
 
-    static async resolvePendingNextAction(nextActionId: number): Promise<void> {
-        if (!nextActionId) {
-            return;
-        }
-
-        await NextAction.update({
-            state: NextActionState.RESOLVED,
-        }, {
-            where: {
-                id: nextActionId
-            }
-        });
-    }
-
     static async handlePlayBand(game: Game, player: Player, payload: IPlayBandPayload): Promise<void> {
         const leader = player.cards.find(card => card.id === payload.leaderId);
         const band = this.getBandDetails(leader, payload.cardIds, payload.regionColor);
@@ -192,7 +179,7 @@ export default class PlayBandHandler {
 
         this.validateBand(cardsInHand, payload.cardIds, leader);
 
-        await this.resolvePendingNextAction(payload.nextActionId);
+        await NextActionHandler.resolvePendingNextAction(payload.nextActionId);
 
         await this.assignCardsToBand(player, payload.cardIds, leader.id);
 
