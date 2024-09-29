@@ -13,11 +13,11 @@ import TribeHandler from './tribe.handler';
 import NextAction from '../../models/nextAction.model';
 import { NextActionState } from '../../interfaces/nextAction.interface';
 import { ActionType } from '../../interfaces/action.interface';
+import PlayBandHandler from './play-band.handler';
 
 describe('TribeHandler', () => {
 
     describe('handleGiantBand', () => {
-        let gameId: number;
         let playerA: Player;
         let playerB: Player;
 
@@ -32,7 +32,6 @@ describe('TribeHandler', () => {
                     TribeName.TROLL,
                 ]
             });
-            gameId = result.gameId;
             playerA = result.playerA;
             playerB = result.playerB;
         });
@@ -48,7 +47,7 @@ describe('TribeHandler', () => {
                 }
             });
 
-            await TribeHandler.handleGiantBand(gameId, playerA, 3);
+            await TribeHandler.handleGiantBand(playerA, 3);
 
             const updatedPlayer = await Player.findOne({
                 where: {
@@ -69,7 +68,7 @@ describe('TribeHandler', () => {
                 }
             });
 
-            await TribeHandler.handleGiantBand(gameId, playerA, 2);
+            await TribeHandler.handleGiantBand(playerA, 2);
 
             const updatedPlayer = await Player.findOne({
                 where: {
@@ -184,6 +183,154 @@ describe('TribeHandler', () => {
             });
 
             expect(nextAction).not.toBeNull();
+        });
+    });
+
+    describe('handleTribeLogic', () => {
+        afterEach(async () => await Game.truncate());
+
+        it("should call 'handleOrcTokens' with the correct parameters", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.ORC,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+
+            const orcBand = gameState.cards.filter(card => card.tribe.name === TribeName.ORC).slice(0, 3);
+
+            const leader = orcBand[0];
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, orcBand.map(card => card.id));
+
+            const handleOrcTokenSpy = jest.spyOn(TribeHandler, 'handleOrcTokens');
+
+            await TribeHandler.handleTribeLogic(gameState, playerA, bandDetails);
+
+            expect(handleOrcTokenSpy).toHaveBeenCalledWith(playerA, leader.color)
+        });
+
+        it("should call 'handleGiantBand' with the correct parameters", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.GIANT,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+
+            const giantBand = gameState.cards.filter(card => card.tribe.name === TribeName.GIANT).slice(0, 3);
+
+            const leader = giantBand[0];
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, giantBand.map(card => card.id));
+
+            const handleGiantBandSpy = jest.spyOn(TribeHandler, 'handleGiantBand');
+
+            await TribeHandler.handleTribeLogic(gameState, playerA, bandDetails);
+
+            expect(handleGiantBandSpy).toHaveBeenCalledWith(playerA, bandDetails.bandSize);
+        });
+
+        it("should call 'handleMerfolkTrack' with the correct parameters", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.MERFOLK,
+                    TribeName.MINOTAUR,
+                    TribeName.DWARF,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+
+            const merfolkBand = gameState.cards.filter(card => card.tribe.name === TribeName.MERFOLK).slice(0, 3);
+
+            const leader = merfolkBand[0];
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, merfolkBand.map(card => card.id));
+
+            const handleMerfolkTrackSpy = jest.spyOn(TribeHandler, 'handleMerfolkTrack');
+
+            await TribeHandler.handleTribeLogic(gameState, playerA, bandDetails);
+
+            expect(handleMerfolkTrackSpy).toHaveBeenCalledWith(playerA, bandDetails.bandSize);
+        });
+
+        it("should call 'handleWizardDraw' with the correct parameters", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.WIZARD,
+                    TribeName.MINOTAUR,
+                    TribeName.DWARF,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const wizardBand = gameState.cards.filter(card => card.tribe.name === TribeName.WIZARD).slice(0, 3);
+
+            const leader = wizardBand[0];
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, wizardBand.map(card => card.id));
+
+            const handleWizardDrawSpy = jest.spyOn(TribeHandler, 'handleWizardDraw');
+
+            await TribeHandler.handleTribeLogic(gameState, updatedPlayer, bandDetails);
+
+            expect(handleWizardDrawSpy).toHaveBeenCalledWith(gameState, updatedPlayer, bandDetails.bandSize);
+        });
+
+        it("should call 'handleTrollTokens' with the correct parameters", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame({
+                tribes: [
+                    TribeName.TROLL,
+                    TribeName.WIZARD,
+                    TribeName.MINOTAUR,
+                    TribeName.DWARF,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                ]
+            });
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const trollBand = gameState.cards.filter(card => card.tribe.name === TribeName.TROLL).slice(0, 3);
+
+            const leader = trollBand[0];
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, trollBand.map(card => card.id));
+
+            const handleTrollTokensSpy = jest.spyOn(TribeHandler, 'handleTrollTokens');
+
+            await TribeHandler.handleTribeLogic(gameState, updatedPlayer, bandDetails);
+
+            expect(handleTrollTokensSpy).toHaveBeenCalledWith(gameState, updatedPlayer, bandDetails.bandSize);
         });
     });
 

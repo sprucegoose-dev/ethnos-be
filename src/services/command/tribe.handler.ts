@@ -26,10 +26,10 @@ const {
 
 export default class TribeHandler {
 
-    static async handleGiantBand(gameId: number, player: Player, bandSize: number) {
+    static async handleGiantBand(player: Player, bandSize: number) {
         const largestGiantBand = await Player.findOne({
             where: {
-                gameId,
+                gameId: player.gameId,
                 giantTokenValue: {
                     [Op.gte]: bandSize
                 }
@@ -86,7 +86,7 @@ export default class TribeHandler {
                 await this.handleOrcTokens(player, color);
                 break;
             case GIANT:
-                await this.handleGiantBand(game.id, player, bandSize);
+                await this.handleGiantBand(player, bandSize);
                 break;
             case MERFOLK:
                 await this.handleMerfolkTrack(player, bandSize);
