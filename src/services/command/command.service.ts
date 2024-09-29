@@ -67,7 +67,6 @@ export default class CommandService {
         }
 
         if (!nextActions.length) {
-            // if the age has ended, the next player should be the player with the lowest score
             const nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
 
             await Game.update({

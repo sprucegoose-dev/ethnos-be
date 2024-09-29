@@ -125,6 +125,54 @@ describe('DrawCardHandler', () => {
             expect(revealedDragons.length).toBe(1);
         });
 
+        it("should skip consecutive dragon cards until a non-dragon card is found", async () => {
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            let updatedGame = await GameService.getState(gameId);
+
+            const cardsInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
+
+            const dragonCards = updatedGame.cards
+                .filter(card =>
+                    card.state === CardState.IN_DECK &&
+                    card.tribe.name === TribeName.DRAGON
+                );
+
+            const nonDragonCard = updatedGame.cards
+                .find(card => card.state === CardState.IN_DECK &&
+                    card.tribe.name !== TribeName.DRAGON
+                );
+
+            dragonCards[0].index = 0;
+            dragonCards[1].index = 1
+            nonDragonCard.index = 2;
+            dragonCards[2].index = 3;
+
+            updatedGame.cards = [dragonCards[0], dragonCards[1], nonDragonCard, dragonCards[2]];
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(1);
+
+            await DrawCardHandler.handleDrawCard(updatedGame, player);
+
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(2);
+
+            updatedGame = await GameService.getState(gameId);
+
+            const updatedCardInDeckCount = updatedGame.cards.filter(card => card.state == CardState.IN_DECK).length;
+
+            expect(updatedCardInDeckCount).toBe(cardsInDeckCount - 3);
+
+            const revealedDragons = updatedGame.cards.filter(card =>
+                card.tribe.name === TribeName.DRAGON &&
+                card.state === CardState.REVEALED
+            );
+
+            expect(revealedDragons.length).toBe(2);
+        });
+
+
         it("should end the current 'age' and reset the cards if the last dragon is revealed", async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
