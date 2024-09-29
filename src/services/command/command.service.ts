@@ -29,7 +29,6 @@ export default class CommandService {
         if (!game) {
             throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
         }
-
         const activePlayer = game.players.find(p =>
             p.id === game.activePlayerId && p.userId === userId
         );
@@ -57,7 +56,7 @@ export default class CommandService {
 
         // TODO: update actions log
 
-        if (payload.type === ActionType.PLAY_BAND) {
+        if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
             nextActions = await NextAction.findAll({
                 where: {
                     gameId: game.id,

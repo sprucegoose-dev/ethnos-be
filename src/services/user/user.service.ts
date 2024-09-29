@@ -160,7 +160,6 @@ class UserService {
             throw new CustomException(ERROR_BAD_REQUEST, `Username cannot be more than ${USERNAME_MAX_CHARS} characters`);
         }
     }
-
 };
 
 export default UserService;
