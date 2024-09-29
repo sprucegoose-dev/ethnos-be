@@ -6,7 +6,7 @@ import PlayerService from '@services/player/player.service';
 
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
-import { IGameState } from '@interfaces/game.interface';
+import { Color, IGameState } from '@interfaces/game.interface';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import TribeHandler from './tribe.handler';
@@ -76,6 +76,64 @@ describe('TribeHandler', () => {
 
             expect(updatedPlayer.giantTokenValue).toEqual(0);
             expect(updatedPlayer.points).toEqual(0);
+        });
+    });
+
+    describe('handleOrcTokens', () => {
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should add a color to a player's orc board if they don't already have that color", async () => {
+            await TribeHandler.handleOrcTokens(playerA, Color.ORANGE);
+
+            const updatedPlayer = await Player.findOne({
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            expect(updatedPlayer.orcTokens).toEqual([Color.ORANGE]);
+        });
+
+        it("should do nothing if a player already has the specified color in their orc board", async () => {
+            await Player.update({
+                orcTokens: [Color.ORANGE, Color.BLUE, Color.PURPLE]
+            }, {
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            let updatedPlayer = await Player.findOne({
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            await TribeHandler.handleOrcTokens(updatedPlayer, Color.BLUE);
+
+            updatedPlayer = await Player.findOne({
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            expect(updatedPlayer.orcTokens).toEqual([Color.ORANGE, Color.BLUE, Color.PURPLE]);
         });
     });
 
