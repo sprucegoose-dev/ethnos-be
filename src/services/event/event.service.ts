@@ -6,7 +6,7 @@ import {
 
 import { gameSocket } from '../..';
 
-class EventService {
+export default class EventService {
 
     static emitEvent(event: IEventType) {
         switch (event.type) {
@@ -19,5 +19,3 @@ class EventService {
         }
     }
 }
-
-export default EventService;

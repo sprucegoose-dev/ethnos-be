@@ -187,28 +187,24 @@ export default class GameService {
     }
 
     static async hasActiveGames(userId: number) {
-        try {
-            const activeGames = await Game.findAll({
-                where: {
-                    state: {
-                        [Op.notIn]: [GameState.ENDED, GameState.CANCELLED]
-                    },
-                }
-            });
+        const activeGames = await Game.findAll({
+            where: {
+                state: {
+                    [Op.notIn]: [GameState.ENDED, GameState.CANCELLED]
+                },
+            }
+        });
 
-            const activePlayers = await Player.findAll({
-                where: {
-                    userId,
-                    gameId: {
-                        [Op.in]: activeGames.map(g => g.id),
-                    },
-                }
-            });
+        const activePlayers = await Player.findAll({
+            where: {
+                userId,
+                gameId: {
+                    [Op.in]: activeGames.map(g => g.id),
+                },
+            }
+        });
 
-            return activePlayers.length;
-        } catch (error) {
-            console.log(error);
-        }
+        return activePlayers.length;
     }
 
     static async join(userId: number, gameId: number): Promise<void> {
