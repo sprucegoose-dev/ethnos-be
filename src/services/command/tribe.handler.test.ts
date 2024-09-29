@@ -10,6 +10,9 @@ import { Color, IGameState } from '@interfaces/game.interface';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import TribeHandler from './tribe.handler';
+import NextAction from '../../models/nextAction.model';
+import { NextActionState } from '../../interfaces/nextAction.interface';
+import { ActionType } from '../../interfaces/action.interface';
 
 describe('TribeHandler', () => {
 
@@ -134,6 +137,53 @@ describe('TribeHandler', () => {
             });
 
             expect(updatedPlayer.orcTokens).toEqual([Color.ORANGE, Color.BLUE, Color.PURPLE]);
+        });
+    });
+
+    describe('handleMerfolkTrack', () => {
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should update a player's Merfolk Track Score", async () => {
+            await TribeHandler.handleMerfolkTrack(playerA, 2);
+
+            const updatedPlayer = await Player.findOne({
+                where: {
+                    id: playerA.id
+                }
+            });
+
+            expect(updatedPlayer.merfolkTrackScore).toBe(2);
+        });
+
+
+        it("should give a player an 'add free token' action if a player has reached a checkpoint on the Merfolk Track", async () => {
+            await TribeHandler.handleMerfolkTrack(playerA, 3);
+
+            const nextAction = await NextAction.findOne({
+                where: {
+                    playerId: playerA.id,
+                    state: NextActionState.PENDING,
+                    type: ActionType.ADD_FREE_TOKEN,
+                }
+            });
+
+            expect(nextAction).not.toBeNull();
         });
     });
 
