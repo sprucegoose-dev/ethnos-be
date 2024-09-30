@@ -4,12 +4,13 @@ import GameService from './game.service';
 
 import Game from '@models/game.model';
 import Player from '@models/player.model';
+import Card from '@models/card.model';
 
 import EventService from '@services/event/event.service';
 import PlayerService from '@services/player/player.service';
 
 import { EVENT_ACTIVE_GAMES_UPDATE } from '@interfaces/event.interface';
-import { GameState, IGameSettings } from '@interfaces/game.interface';
+import { GameState, IGameSettings, IGameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 
@@ -26,7 +27,7 @@ import {
     userC,
     userD,
 } from '@jest.setup';
-import { createGame } from '../test-helpers';
+import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 
 describe('GameService', () => {
 
@@ -434,6 +435,93 @@ describe('GameService', () => {
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid game settings');
+            }
+        });
+    });
+
+    describe('startNewAge', () => {
+        let gameId: number;
+        let gameState: IGameState;
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+            gameId = result.gameId;
+            gameState = result.gameState;
+            gameState.players.map(async player => await returnPlayerCardsToDeck(player.id));
+
+            await Card.update({
+                state: CardState.IN_DECK
+            }, {
+                where: {
+                    state: CardState.IN_MARKET
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should deal a card to each player and cards to the market based on the number of players", async () => {
+            await GameService.startNewAge(gameState);
+
+            const updatedGame = await GameService.getState(gameId);
+
+            for (const player of updatedGame.players) {
+                expect(player.cards.length).toBe(1);
+                expect(player.cards[0].state).toBe(CardState.IN_HAND);
+            }
+
+            expect(updatedGame.cards.filter(card => card.state === CardState.IN_MARKET).length).toBe(8);
+        });
+
+        it("should reset the players' 'giant token value' and 'troll tokens''", async () => {
+            await Player.update({
+                giantTokenValue: 5,
+                trollTokens: [1]
+            }, {
+                where: {
+                    id: playerA.id,
+                }
+            });
+            await Player.update({
+                giantTokenValue: 2,
+                trollTokens: [4]
+            }, {
+                where: {
+                    id: playerB.id,
+                }
+            });
+            await Player.update({
+                giantTokenValue: 3,
+                trollTokens: [5]
+            }, {
+                where: {
+                    id: playerC.id,
+                }
+            });
+            await Player.update({
+                giantTokenValue: 1,
+                trollTokens: [2, 3]
+            }, {
+                where: {
+                    id: playerD.id,
+                }
+            });
+
+            await GameService.startNewAge(gameState);
+
+            const updatedGame = await GameService.getState(gameId);
+
+            for (const player of updatedGame.players) {
+                expect(player.giantTokenValue).toBe(0);
+                expect(player.trollTokens).toEqual([]);
             }
         });
     });
