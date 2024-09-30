@@ -3,6 +3,7 @@ import {
     IActionPayload,
 } from '@interfaces/action.interface';
 import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 
 import {
     CustomException,
@@ -13,13 +14,13 @@ import {
 import GameService from '@services/game/game.service';
 import EventService from '@services/event/event.service';
 
+import NextAction from '@models/nextAction.model';
+import Game from '@models/game.model';
+
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
-import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/next-action.interface';
 import TokenHandler from './token.handler';
-import Game from '../../models/game.model';
 
 export default class CommandService {
 

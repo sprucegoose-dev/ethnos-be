@@ -3,26 +3,27 @@ import {
     ERROR_NOT_FOUND
 } from '@helpers/exception-handler';
 
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import PlayerService from '../player/player.service';
+import PlayerRegion from '@models/player_region.model';
+import Region from '@models/region.model';
+import NextAction from '@models/nextAction.model';
+
+import GameService from '@services/game/game.service';
+
+import { CardState } from '@interfaces/card.interface';
+import { Color, IGameState } from '@interfaces/game.interface';
+import { TribeName } from '@interfaces/tribe.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 import { ActionType, IActionPayload, IPlayBandPayload } from '@interfaces/action.interface';
 
-import Game from '@models/game.model';
-
 import CommandService from './command.service';
-
+import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import {
     userA,
 } from '@jest.setup';
-import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
-import Player from '../../models/player.model';
-import PlayerService from '../player/player.service';
-import PlayerRegion from '../../models/player_region.model';
-import Region from '../../models/region.model';
-import { CardState } from '../../interfaces/card.interface';
-import { Color, IGameState } from '../../interfaces/game.interface';
-import GameService from '../game/game.service';
-import { TribeName } from '../../interfaces/tribe.interface';
-import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/next-action.interface';
+
 
 describe('CommandService', () => {
 

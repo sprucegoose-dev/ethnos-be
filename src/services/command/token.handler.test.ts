@@ -1,8 +1,13 @@
 import Game from '@models/game.model';
-
-import GameService from '@services/game/game.service';
+import NextAction from '@models/nextAction.model';
+import PlayerRegion from '@models/player_region.model';
+import Region from '@models/region.model';
 
 import { Color, IGameState } from '@interfaces/game.interface';
+import { ActionType, IAddFreeTokenPayload } from '@interfaces/action.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
+
+import GameService from '@services/game/game.service';
 
 import { ERROR_BAD_REQUEST, ERROR_NOT_FOUND } from '@helpers/exception-handler';
 
@@ -11,11 +16,6 @@ import {
 } from '../test-helpers';
 
 import TokenHandler from './token.handler';
-import { ActionType, IAddFreeTokenPayload } from '../../interfaces/action.interface';
-import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/next-action.interface';
-import PlayerRegion from '../../models/player_region.model';
-import Region from '../../models/region.model';
 
 describe('TokenHandler', () => {
     describe('addFreeTokenToRegion', () => {

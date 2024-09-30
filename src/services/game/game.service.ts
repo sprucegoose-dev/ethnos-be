@@ -21,9 +21,11 @@ import {
     EVENT_ACTIVE_GAMES_UPDATE,
     EVENT_GAME_UPDATE,
 } from '@interfaces/event.interface';
+import { IScoringResults } from '@interfaces/command.interface';
 
 import PlayerService from '@services/player/player.service';
 import EventService from '@services/event/event.service';
+import ScoringService from '@services/scoring/scoring.service';
 
 import {
     CustomException,
@@ -31,8 +33,6 @@ import {
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
 } from '@helpers/exception-handler';
-import ScoringService from '../scoring/scoring.service';
-import { IScoringResults } from '../../interfaces/command.interface';
 
 export default class GameService {
 

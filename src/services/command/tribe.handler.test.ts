@@ -1,5 +1,6 @@
 import Game from '@models/game.model';
 import Player from '@models/player.model';
+import NextAction from '@models/nextAction.model';
 
 import GameService from '@services/game/game.service';
 import PlayerService from '@services/player/player.service';
@@ -7,12 +8,11 @@ import PlayerService from '@services/player/player.service';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 import { Color, IGameState } from '@interfaces/game.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
+import { ActionType } from '@interfaces/action.interface';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import TribeHandler from './tribe.handler';
-import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/next-action.interface';
-import { ActionType } from '../../interfaces/action.interface';
 import PlayBandHandler from './play-band.handler';
 
 describe('TribeHandler', () => {

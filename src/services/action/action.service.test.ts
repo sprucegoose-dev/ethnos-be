@@ -3,6 +3,7 @@ import { ActionService } from './action.service';
 import Game from '@models/game.model';
 import Card from '@models/card.model';
 import Player from '@models/player.model';
+import NextAction from '@models/nextAction.model';
 
 import PlayerService from '@services/player/player.service';
 import GameService from '@services/game/game.service';
@@ -16,9 +17,8 @@ import {
 import { TribeName } from '@interfaces/tribe.interface';
 import { ActionType } from '@interfaces/action.interface';
 import { CardState } from '@interfaces/card.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 import { Color, GameState } from '@interfaces/game.interface';
-import NextAction from '../../models/nextAction.model';
-import { NextActionState } from '../../interfaces/next-action.interface';
 
 const arrayEquals = (arrayA: any[], arrayB: any[]) => {
     return arrayA.every((value, index) => value === arrayB[index])
