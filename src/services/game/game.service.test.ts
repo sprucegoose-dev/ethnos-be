@@ -461,6 +461,7 @@ describe('GameService', () => {
                 state: CardState.IN_DECK
             }, {
                 where: {
+                    gameId,
                     state: CardState.IN_MARKET
                 }
             });
@@ -523,6 +524,39 @@ describe('GameService', () => {
                 expect(player.giantTokenValue).toBe(0);
                 expect(player.trollTokens).toEqual([]);
             }
+        });
+    });
+
+    describe('getNextPlayerId', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return the ID of the next player in turn order", () => {
+            const activePlayerId = playerA.id;
+            const turnOrder = [playerA.id, playerB.id, playerC.id, playerD.id];
+
+            const nextPlayerId = GameService.getNextPlayerId(activePlayerId, turnOrder);
+            expect(nextPlayerId).toBe(playerB.id);
+        });
+
+        it("should return the ID of the first player if the current active player is the last player", () => {
+            const activePlayerId = playerD.id;
+            const turnOrder = [playerA.id, playerB.id, playerC.id, playerD.id];
+
+            const nextPlayerId = GameService.getNextPlayerId(activePlayerId, turnOrder);
+            expect(nextPlayerId).toBe(playerA.id);
         });
     });
 
