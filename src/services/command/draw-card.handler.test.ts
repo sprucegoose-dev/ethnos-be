@@ -50,7 +50,7 @@ describe('DrawCardHandler', () => {
 
             try {
                 await DrawCardHandler.handleDrawCard(updatedGame, player);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Cannot exceed hand limit of 10 cards');

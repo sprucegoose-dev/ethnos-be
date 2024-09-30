@@ -397,7 +397,7 @@ describe('PlayBandHandler', () => {
         it("throws an error if the 'cardIdsToKeep' parameter is not an array", () => {
             try {
                 PlayBandHandler.filterOutCardsToKeep([], null, 5);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('cardIdsToKeep must be an array');
@@ -424,7 +424,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.filterOutCardsToKeep(cardsInHand, [100, 102], 3);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe("cardIdsToKeep must only include IDs of cards in a player's hand");
@@ -451,7 +451,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.filterOutCardsToKeep(cardsInHand, cardsInHand.map(card => card.id), 2);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe("cardIdsToKeep must not exceed the size of the band");
@@ -795,7 +795,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.validateBand(cardsInHand, [100, 101, 102], cardsInHand[0]);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid band');
@@ -840,7 +840,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.validateBand(cardsInHand, cardIdsToAssign, leaderToAssign);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('A Skeleton cannot be the leader of a band');

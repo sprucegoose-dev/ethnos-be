@@ -37,7 +37,7 @@ describe('exceptionHandler', () => {
 
         try {
             await service.failingMethod();
-            throw new Error('Expected error not to be thrown');
+            throw new Error('Expected this error not to be thrown');
         } catch {
             expect(consoleLogSpy).toHaveBeenCalledWith('---------------');
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));

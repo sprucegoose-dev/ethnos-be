@@ -36,7 +36,7 @@ import { IScoringResults } from '../../interfaces/command.interface';
 
 export default class GameService {
 
-    static async create(userId: number, autoAddPlayer: boolean = false): Promise<IGameState> {
+    static async create(userId: number, autoAddPlayer: boolean = true): Promise<IGameState> {
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before creating a new one.');
         }
@@ -218,7 +218,7 @@ export default class GameService {
             throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
         }
 
-        if (game.players.length >= 6) {
+        if (game.players.length >= game.maxPlayers) {
             throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
         }
 

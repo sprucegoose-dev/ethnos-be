@@ -43,7 +43,7 @@ describe('TokenHandler', () => {
 
             try {
                 await TokenHandler.addFreeTokenToRegion(gameState, player, payload);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('A free token can be added only as an additional action');
@@ -70,7 +70,7 @@ describe('TokenHandler', () => {
 
             try {
                 await TokenHandler.addFreeTokenToRegion(gameState, activePlayer, payload);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_NOT_FOUND);
                 expect(error.message).toBe('Region not found');

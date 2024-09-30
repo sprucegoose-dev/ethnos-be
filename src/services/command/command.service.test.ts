@@ -49,7 +49,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handleAction(userA.id, 2, payload);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_NOT_FOUND);
                 expect(error.message).toBe('Game not found');
@@ -71,7 +71,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handleAction(playerB.userId, gameId, payload);
-                throw new Error('Expected error not to be thrown');
+                throw new Error('Expected this error not to be thrown');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('You are not the active player');

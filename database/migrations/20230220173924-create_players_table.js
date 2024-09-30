@@ -55,7 +55,13 @@ module.exports = {
             },
         };
 
-        return queryInterface.createTable('players', schema);
+        return queryInterface.createTable('players', schema, {
+            uniqueKeys: {
+                unique_game_id_user_id: {
+                    fields: ['game_id', 'user_id']
+                }
+            }
+        });
     },
     down: (queryInterface) => {
         return queryInterface.dropTable('players');

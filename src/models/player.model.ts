@@ -15,6 +15,12 @@ import Card from './card.model';
 @Table({
     tableName: 'players',
     timestamps: false,
+    indexes: [
+        {
+            unique: true,
+            fields: ['user_id', 'game_id'],
+        },
+    ],
 })
 export default class Player extends Model {
     @Column({ primaryKey: true, autoIncrement: true })

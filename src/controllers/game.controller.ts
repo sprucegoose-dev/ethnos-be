@@ -14,7 +14,7 @@ import { IGameSettings } from '@interfaces/game.interface';
 class GamesController {
 
     async create(req: AuthRequest, res: Response): Promise<void> {
-        const game = await GameService.create(req.userId, true);
+        const game = await GameService.create(req.userId);
         res.send(game);
     }
 

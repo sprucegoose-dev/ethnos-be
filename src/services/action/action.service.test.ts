@@ -31,7 +31,6 @@ describe('ActionService', () => {
 
         beforeEach(async () => {
             game = await GameService.create(userA.id);
-            await PlayerService.create(userA.id, game.id);
             await PlayerService.create(userB.id, game.id);
             await PlayerService.create(userC.id, game.id);
             await PlayerService.create(userD.id, game.id);

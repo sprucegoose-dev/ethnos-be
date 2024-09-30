@@ -55,6 +55,18 @@ describe('GameService', () => {
                 payload: activeGames
             });
         });
+
+        it('should throw an error if the user already has an active game', async () => {
+            await GameService.create(userA.id);
+
+            try {
+                await GameService.create(userA.id);
+                throw new Error('Expected this error not to be thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Please leave your other active game(s) before creating a new one.');
+            }
+        });
     });
 
     describe('leave', () => {
@@ -68,7 +80,7 @@ describe('GameService', () => {
         });
 
         it('should delete the game if the creator has left before the game started and the room is empty', async () => {
-            const newGame = await GameService.create(userA.id, true);
+            const newGame = await GameService.create(userA.id);
 
             await GameService.leave(userA.id, newGame.id);
 
@@ -82,7 +94,7 @@ describe('GameService', () => {
         });
 
         it('should cancel the game if the creator has left before the game started and there is another player in the room', async () => {
-            const newGame = await GameService.create(userA.id, true);
+            const newGame = await GameService.create(userA.id);
             await PlayerService.create(userB.id, newGame.id);
 
             await GameService.leave(userA.id, newGame.id);
@@ -98,7 +110,7 @@ describe('GameService', () => {
 
 
         it('should prevent leaving the game if it has already ended', async () => {
-            const newGame = await GameService.create(userA.id, true);
+            const newGame = await GameService.create(userA.id);
             await PlayerService.create(userB.id, newGame.id);
 
             await Game.update({
@@ -122,7 +134,7 @@ describe('GameService', () => {
         // TODO: change logic as there are multiple players in the game
         // TODO: maybe replace the player whose left with a bot
         it('should end the game if it had already started and set the other player as winner', async () => {
-            const newGame = await GameService.create(userA.id, true);
+            const newGame = await GameService.create(userA.id);
             await PlayerService.create(userB.id, newGame.id);
 
             await Game.update({
@@ -146,7 +158,7 @@ describe('GameService', () => {
         });
 
         it('should emit an \'update active games\' websocket event', async () => {
-            const newGame = await GameService.create(userA.id, true);
+            const newGame = await GameService.create(userA.id);
             await PlayerService.create(userB.id, newGame.id);
 
             await GameService.leave(userA.id, newGame.id);
@@ -169,7 +181,7 @@ describe('GameService', () => {
         });
 
         it('should assign the user as a player in the game', async () => {
-            const newGame = await GameService.create(userA.id, true);
+            const newGame = await GameService.create(userA.id);
             await GameService.join(userB.id, newGame.id);
 
             const player = await Player.findOne({
@@ -183,8 +195,8 @@ describe('GameService', () => {
         });
 
         it('should throw an error if the user is already in another active game', async () => {
-            await GameService.create(userA.id, true);
-            const newGame2 = await GameService.create(userB.id, true);
+            await GameService.create(userA.id);
+            const newGame2 = await GameService.create(userB.id);
 
             try {
                 await GameService.join(userA.id, newGame2.id);
@@ -194,19 +206,27 @@ describe('GameService', () => {
             }
         });
 
-        // TODO: update
-        // it('should throw an error if the game is already full', async () => {
-        //     const newGame = await GameService.create(userA.id);
-        //     await PlayerService.create(userA.id, newGame.id);
-        //     await PlayerService.create(userB.id, newGame.id);
+        it('should throw an error if the game is already full', async () => {
+            const newGame = await GameService.create(userA.id);
+            await PlayerService.create(userB.id, newGame.id);
+            await PlayerService.create(userC.id, newGame.id);
 
-        //     try {
-        //         await GameService.join(userC.id, newGame.id);
-        //     } catch (error: any) {
-        //         expect(error.type).toBe(ERROR_BAD_REQUEST);
-        //         expect(error.message).toBe('This game is already full');
-        //     }
-        // });
+            await Game.update({
+                maxPlayers: 3
+            }, {
+                where: {
+                    id: newGame.id
+                }
+            });
+
+            try {
+                await GameService.join(userD.id, newGame.id);
+                throw new Error('Expected this error not to be thrown');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('This game is already full');
+            }
+        });
     });
 
     describe('start', () => {
@@ -218,7 +238,7 @@ describe('GameService', () => {
         let settings: IGameSettings;
 
         beforeEach(async () => {
-            game = await GameService.create(userA.id);
+            game = await GameService.create(userA.id, false);
             playerA = await PlayerService.create(userA.id, game.id);
             playerB = await PlayerService.create(userB.id, game.id);
             playerC = await PlayerService.create(userC.id, game.id);
@@ -333,7 +353,6 @@ describe('GameService', () => {
         });
 
         afterEach(async () => await Game.truncate());
-
 
         it('should return the ID of the player with the fewest points', () => {
             const scoringResults = {

@@ -27,7 +27,7 @@ const defaultSettings = {
 };
 
 export async function createGame(settings: IGameSettings = defaultSettings) {
-    const game = await GameService.create(userA.id);
+    const game = await GameService.create(userA.id, false);
     const playerA = await PlayerService.create(userA.id, game.id);
     const playerB = await PlayerService.create(userB.id, game.id);
     const playerC = await PlayerService.create(userC.id, game.id);
