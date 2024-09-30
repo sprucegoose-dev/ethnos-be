@@ -246,7 +246,7 @@ export default class GameService {
         });
 
         if (!game) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'Game not found');
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
         }
 
         const player = game.players.find(p => p.userId === userId);
@@ -407,7 +407,7 @@ export default class GameService {
         }
 
         if (game.state !== GameState.CREATED) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'Game has already started');
+            throw new CustomException(ERROR_BAD_REQUEST, 'The game has already started');
         }
 
         const players = game.players;
@@ -420,7 +420,8 @@ export default class GameService {
             !settings.tribes ||
             !Array.isArray(settings.tribes) ||
             Object.keys(settings).length > 1 ||
-            settings.tribes.filter((tribe) => !TRIBES.includes(tribe)).length
+            settings.tribes.filter((tribe) => !TRIBES.includes(tribe)).length ||
+            settings.tribes.length !== 6
         ) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Invalid game settings');
         }

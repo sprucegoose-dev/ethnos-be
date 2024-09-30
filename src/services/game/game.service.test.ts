@@ -1,6 +1,7 @@
+import { Op } from 'sequelize';
+
 import GameService from './game.service';
 
-import Card from '@models/card.model';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
@@ -12,7 +13,11 @@ import { GameState, IGameSettings } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 
-import { ERROR_BAD_REQUEST, ERROR_NOT_FOUND } from '@helpers/exception-handler';
+import {
+    ERROR_BAD_REQUEST,
+    ERROR_FORBIDDEN,
+    ERROR_NOT_FOUND,
+} from '@helpers/exception-handler';
 
 import {
     UNEXPECTED_ERROR_MSG,
@@ -27,9 +32,7 @@ describe('GameService', () => {
 
     describe('create', () => {
 
-        afterEach(async () => {
-            await Game.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should create a new game', async () => {
             const newGame = await GameService.create(userA.id);
@@ -72,13 +75,7 @@ describe('GameService', () => {
 
     describe('leave', () => {
 
-        afterEach(async () => {
-            await Game.truncate();
-        });
-
-        afterEach(async () => {
-            await Game.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should delete the game if the creator has left before the game started and the room is empty', async () => {
             const newGame = await GameService.create(userA.id);
@@ -109,7 +106,6 @@ describe('GameService', () => {
             expect(existingGame.state).toBe(GameState.CANCELLED);
         });
 
-
         it('should prevent leaving the game if it has already ended', async () => {
             const newGame = await GameService.create(userA.id);
             await PlayerService.create(userB.id, newGame.id);
@@ -130,7 +126,6 @@ describe('GameService', () => {
 
             }
         });
-
 
         // TODO: change logic as there are multiple players in the game
         // TODO: maybe replace the player whose left with a bot
@@ -173,13 +168,33 @@ describe('GameService', () => {
                 payload: activeGames
             });
         });
+
+        it('should throw an error if the game is not found', async () => {
+            try {
+                await GameService.leave(userA.id, 1);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
+            }
+        });
+
+        it('should throw an error if the user is not in the game', async () => {
+            const newGame = await GameService.create(userA.id);
+
+            try {
+                await GameService.leave(userB.id, newGame.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('You are not in this game');
+            }
+        });
     });
 
     describe('join', () => {
 
-        afterEach(async () => {
-            await Game.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it('should assign the user as a player in the game', async () => {
             const newGame = await GameService.create(userA.id);
@@ -231,7 +246,7 @@ describe('GameService', () => {
 
         it('should throw an error if the game is not found', async () => {
             try {
-                await GameService.join(userD.id, 1);
+                await GameService.join(userA.id, 1);
                 throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_NOT_FOUND);
@@ -267,11 +282,7 @@ describe('GameService', () => {
             };
         });
 
-        afterEach(async () => {
-            await Card.truncate();
-            await Player.truncate();
-            await Game.truncate();
-        });
+        afterEach(async () => await Game.truncate());
 
         it("should set the game state to 'started'", async () => {
             await GameService.start(userA.id, game.id, settings);
@@ -332,6 +343,97 @@ describe('GameService', () => {
                 expect(region.values.length).toBe(3);
                 expect(region.values[0]).toBeLessThanOrEqual(region.values[1]);
                 expect(region.values[1]).toBeLessThanOrEqual(region.values[2]);
+            }
+        });
+
+        it('should throw an error if the game is not found', async () => {
+            try {
+                await GameService.start(userA.id, 1, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
+            }
+        });
+
+        it("should throw an error if the user starting the game isn't the room creator", async () => {
+            try {
+                await GameService.start(userB.id, game.id, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_FORBIDDEN);
+                expect(error.message).toBe('Only the game creator can start the game');
+            }
+        });
+
+        it("should throw an error if the game has already started", async () => {
+            await Game.update({
+                state: GameState.STARTED,
+            }, {
+                where: {
+                    id: game.id,
+                }
+            });
+
+            try {
+                await GameService.start(userA.id, game.id, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('The game has already started');
+            }
+        });
+
+        it("should throw an error if the game has fewer than 2 players", async () => {
+            await Player.destroy({
+                where: {
+                    userId: {
+                        [Op.not]: userA.id
+                    }
+                }
+            });
+
+            try {
+                await GameService.start(userA.id, game.id, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('The game must have at least two players');
+            }
+        });
+
+        it.each([
+            null,
+            {},
+            { tribes: 'not an array' },
+            { tribes: [], invalidOption: {} },
+            {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                    TribeName.WINGFOLK,
+                    TribeName.ORC,
+                    'invalid tribe'
+                ]
+            },
+            {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                    TribeName.WINGFOLK,
+                    TribeName.ORC,
+                ]
+            },
+        ])('should throw an error when the game settings are invalid: %s', async (settings) => {
+
+            try {
+                await GameService.start(userA.id, game.id, settings as IGameSettings);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Invalid game settings');
             }
         });
     });
