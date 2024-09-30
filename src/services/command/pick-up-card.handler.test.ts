@@ -11,11 +11,14 @@ import { IGameState } from '@interfaces/game.interface';
 import { ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import {
+    UNEXPECTED_ERROR_MSG,
+} from '@jest.setup';
+
+import {
     assignCardsToPlayer,
     createGame,
     getCardsFromDeck
 } from '../test-helpers';
-
 import PickUpCardHandler from './pick-up-card.handler';
 
 describe('PickUpCardHandler', () => {
@@ -50,7 +53,7 @@ describe('PickUpCardHandler', () => {
 
             try {
                 await PickUpCardHandler.handlePickUpCard(updatedGame, player, cardToPickUp.id);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Cannot exceed hand limit of 10 cards');
@@ -71,7 +74,7 @@ describe('PickUpCardHandler', () => {
 
             try {
                 await PickUpCardHandler.handlePickUpCard(updatedGame, player, cardToPickUp.id);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid card');

@@ -1,3 +1,5 @@
+import { Op } from 'sequelize';
+
 import Game from '@models/game.model';
 import PlayerRegion from '@models/player_region.model';
 import NextAction from '@models/nextAction.model';
@@ -16,13 +18,16 @@ import { ActionType, IPlayBandPayload } from '@interfaces/action.interface';
 import { ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import {
+    UNEXPECTED_ERROR_MSG,
+} from '@jest.setup';
+
+import {
     assignCardsToPlayer,
     createGame,
     getCardsFromDeck,
     returnPlayerCardsToDeck
 } from '../test-helpers';
 import PlayBandHandler from './play-band.handler';
-import { Op } from 'sequelize';
 
 describe('PlayBandHandler', () => {
 
@@ -397,7 +402,7 @@ describe('PlayBandHandler', () => {
         it("throws an error if the 'cardIdsToKeep' parameter is not an array", () => {
             try {
                 PlayBandHandler.filterOutCardsToKeep([], null, 5);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('cardIdsToKeep must be an array');
@@ -424,7 +429,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.filterOutCardsToKeep(cardsInHand, [100, 102], 3);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe("cardIdsToKeep must only include IDs of cards in a player's hand");
@@ -451,7 +456,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.filterOutCardsToKeep(cardsInHand, cardsInHand.map(card => card.id), 2);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe("cardIdsToKeep must not exceed the size of the band");
@@ -795,7 +800,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.validateBand(cardsInHand, [100, 101, 102], cardsInHand[0]);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid band');
@@ -840,7 +845,7 @@ describe('PlayBandHandler', () => {
 
             try {
                 PlayBandHandler.validateBand(cardsInHand, cardIdsToAssign, leaderToAssign);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('A Skeleton cannot be the leader of a band');

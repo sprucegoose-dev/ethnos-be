@@ -21,6 +21,7 @@ import { ActionType, IActionPayload, IPlayBandPayload } from '@interfaces/action
 import CommandService from './command.service';
 import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import {
+    UNEXPECTED_ERROR_MSG,
     userA,
 } from '@jest.setup';
 
@@ -50,7 +51,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handleAction(userA.id, 2, payload);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_NOT_FOUND);
                 expect(error.message).toBe('Game not found');
@@ -72,7 +73,7 @@ describe('CommandService', () => {
 
             try {
                 await CommandService.handleAction(playerB.userId, gameId, payload);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('You are not the active player');

@@ -32,6 +32,8 @@ let userB: IUserResponse;
 let userC: IUserResponse;
 let userD: IUserResponse;
 
+const UNEXPECTED_ERROR_MSG = 'Expected this error not to be thrown';
+
 beforeAll(async () => {
     const migrations = glob.sync('database/migrations/*.js');
     const seeders = glob.sync('database/seeders/*.js');
@@ -60,4 +62,4 @@ jest.mock('./src/services/event/event.service.ts', () => {
     }
 });
 
-export { userA, userB, userC, userD };
+export { UNEXPECTED_ERROR_MSG, userA, userB, userC, userD };

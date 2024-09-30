@@ -12,9 +12,10 @@ import { GameState, IGameSettings } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 
-import { ERROR_BAD_REQUEST } from '@helpers/exception-handler';
+import { ERROR_BAD_REQUEST, ERROR_NOT_FOUND } from '@helpers/exception-handler';
 
 import {
+    UNEXPECTED_ERROR_MSG,
     userA,
     userB,
     userC,
@@ -61,7 +62,7 @@ describe('GameService', () => {
 
             try {
                 await GameService.create(userA.id);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Please leave your other active game(s) before creating a new one.');
@@ -221,10 +222,20 @@ describe('GameService', () => {
 
             try {
                 await GameService.join(userD.id, newGame.id);
-                throw new Error('Expected this error not to be thrown');
+                throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('This game is already full');
+            }
+        });
+
+        it('should throw an error if the game is not found', async () => {
+            try {
+                await GameService.join(userD.id, 1);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
             }
         });
     });

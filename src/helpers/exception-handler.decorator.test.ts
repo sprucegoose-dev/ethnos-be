@@ -1,6 +1,10 @@
 import ExceptionHandler from './exception-handler';
 import { exceptionHandler } from './exception-handler.decorator';
 
+import {
+    UNEXPECTED_ERROR_MSG,
+} from '@jest.setup';
+
 @exceptionHandler()
 class MockService {
     async successfulMethod() {
@@ -37,7 +41,7 @@ describe('exceptionHandler', () => {
 
         try {
             await service.failingMethod();
-            throw new Error('Expected this error not to be thrown');
+            throw new Error(UNEXPECTED_ERROR_MSG);
         } catch {
             expect(consoleLogSpy).toHaveBeenCalledWith('---------------');
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
