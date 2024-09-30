@@ -123,7 +123,7 @@ describe('ScoringService', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it("returns the total points for a player's bands", async () => {
+        it("should return the total points for a player's bands", async () => {
             await returnPlayerCardsToDeck(playerA.id);
 
             gameState = await GameService.getState(gameId);
@@ -171,6 +171,29 @@ describe('ScoringService', () => {
 
             expect(points).toBe(19);
         });
+
+        it("should score a maximum of 15 points for bands with 6 cards or more", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameId);
+
+            const bandA = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.MINOTAUR &&
+                !card.playerId
+            ).slice(0, 7);
+
+            bandA.map(card => {
+                card.leaderId = bandA[0].id;
+                card.state = CardState.IN_BAND;
+                card.playerId = playerA.id;
+            });
+
+            playerA.cards = bandA;
+
+            const points = ScoringService.scoreBands(playerA);
+
+            expect(points).toBe(15);
+        });
     });
 
     describe('scoreGiantToken', () => {
@@ -198,7 +221,7 @@ describe('ScoringService', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it('it should return the points for the player with the largest giant band', () => {
+        it('should return the points for the player with the largest giant band', () => {
             playerA.giantTokenValue = 4;
             playerB.giantTokenValue = 5;
             playerC.giantTokenValue = 3;
@@ -760,7 +783,7 @@ describe('ScoringService', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it('it should return the points for the player with the largest giant band', () => {
+        it('should return the points for the player farthest on the Merfolk track (4+ player game)', () => {
             playerA.merfolkTrackScore = 2;
             playerB.merfolkTrackScore = 8;
             playerC.merfolkTrackScore = 5;
@@ -770,6 +793,17 @@ describe('ScoringService', () => {
             const trollTokenTotals = ScoringService.getTrollTokenTotals(gameState.players);
             const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
             expect(merfolkScore).toEqual({ [playerB.id]: 1 });
+        });
+
+        it('should return the points for the player farthest on the Merfolk track (2-3 player game)', () => {
+            playerA.merfolkTrackScore = 2;
+            playerB.merfolkTrackScore = 8;
+            playerC.merfolkTrackScore = 5;
+            gameState.players = [playerA, playerB, playerC];
+            gameState.age = 2;
+            const trollTokenTotals = ScoringService.getTrollTokenTotals(gameState.players);
+            const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
+            expect(merfolkScore).toEqual({ [playerB.id]: 3 });
         });
 
         it('should break ties based on troll tokens', () => {
@@ -816,5 +850,154 @@ describe('ScoringService', () => {
             const merfolkScore = ScoringService.scoreMerfolkTrack(gameState, trollTokenTotals);
             expect(merfolkScore).toBe(null);
         });
+    });
+
+    describe('scoreOrcBoard', () => {
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.ORC,
+                    TribeName.MINOTAUR,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should return the points for the player with the largest giant band', () => {
+            playerA.orcTokens = [Color.RED, Color.BLUE];
+            const points = ScoringService.scoreOrcBoard(playerA);
+            expect(points).toEqual(3);
+        });
+    });
+
+    describe('handleScoring', () => {
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.ORC,
+                    TribeName.MINOTAUR,
+                    TribeName.DWARF,
+                    TribeName.CENTAUR,
+                    TribeName.ELF,
+                    TribeName.TROLL,
+                ]
+            });
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should give points to the player with the most giant tokens in the final age of the game", async () => {
+            playerA.giantTokenValue = 5
+            playerA.cards = [];
+            playerB.giantTokenValue = 3;
+            playerB.cards = [];
+            playerC.giantTokenValue = 4;
+            playerC.cards = [];
+            playerD.giantTokenValue = 2;
+            playerD.cards = [];
+
+            gameState.players = [playerA, playerB, playerC, playerD];
+
+            const scoringResults = await ScoringService.handleScoring(gameState);
+
+            expect(scoringResults.totalPoints[playerA.id]).toBe(2);
+        });
+
+        it("should give points to the player farthest on the Merfolk board", async () => {
+            await Game.update({
+                settings: {
+                    tribes: [
+                        TribeName.ORC,
+                        TribeName.MERFOLK,
+                        TribeName.DWARF,
+                        TribeName.CENTAUR,
+                        TribeName.ELF,
+                        TribeName.TROLL,
+                    ]
+                }
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            playerA.merfolkTrackScore = 10;
+            playerA.cards = [];
+            playerB.merfolkTrackScore = 7;
+            playerB.cards = [];
+            playerC.merfolkTrackScore = 3;
+            playerC.cards = [];
+            playerD.merfolkTrackScore = 3;
+            playerD.cards = [];
+
+            gameState = await GameService.getState(gameState.id);
+
+            gameState.players = [playerA, playerB, playerC, playerD];
+
+            const scoringResults = await ScoringService.handleScoring(gameState);
+
+            expect(scoringResults.totalPoints[playerA.id]).toBe(1);
+        });
+
+        it("should score all player's 'orc boards' in the final age of the game (4+ player game)", async () => {
+            gameState.age = 3;
+            playerA.orcTokens = [Color.RED, Color.BLUE];
+            playerA.cards = [];
+            playerB.orcTokens = [Color.RED, Color.BLUE, Color.ORANGE];
+            playerB.cards = [];
+            playerC.orcTokens = [Color.RED, Color.BLUE, Color.ORANGE, Color.ORANGE];
+            playerC.cards = [];
+            playerD.orcTokens = [Color.RED, Color.BLUE, Color.ORANGE, Color.ORANGE, Color.GRAY, Color.GREEN];
+            playerD.cards = [];
+
+            gameState.players = [playerA, playerB, playerC, playerD];
+
+            const scoringResults = await ScoringService.handleScoring(gameState);
+
+            expect(scoringResults.totalPoints[playerA.id]).toBe(3);
+            expect(scoringResults.totalPoints[playerB.id]).toBe(6);
+            expect(scoringResults.totalPoints[playerC.id]).toBe(10);
+            expect(scoringResults.totalPoints[playerD.id]).toBe(20);
+        });
+
+        it("should score all player's 'orc boards' in the final age of the game (2-3 player game)", async () => {
+            gameState.age = 2;
+            playerA.orcTokens = [Color.RED, Color.BLUE];
+            playerA.cards = [];
+            playerB.orcTokens = [Color.RED, Color.BLUE, Color.ORANGE];
+            playerB.cards = [];
+            playerC.orcTokens = [Color.RED, Color.BLUE, Color.ORANGE, Color.ORANGE];
+            playerC.cards = [];
+            playerD.orcTokens = [Color.RED, Color.BLUE, Color.ORANGE, Color.ORANGE, Color.GRAY, Color.GREEN];
+            playerD.cards = [];
+
+            gameState.players = [playerA, playerB, playerC];
+
+            const scoringResults = await ScoringService.handleScoring(gameState);
+
+            expect(scoringResults.totalPoints[playerA.id]).toBe(3);
+            expect(scoringResults.totalPoints[playerB.id]).toBe(6);
+            expect(scoringResults.totalPoints[playerC.id]).toBe(10);
+        });
+
     });
 });
