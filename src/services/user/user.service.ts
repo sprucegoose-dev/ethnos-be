@@ -32,26 +32,20 @@ class UserService {
 
         const sessionId = uuid();
         const sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
+        const user = await User.create({
+            username,
+            email,
+            password: await bcrypt.hash(password, 10),
+            sessionId,
+            sessionExp,
+        });
 
-        try {
-            const user = await User.create({
-                username,
-                email,
-                password: await bcrypt.hash(password, 10),
-                sessionId,
-                sessionExp,
-            });
-
-            return {
-                id: user.id,
-                username,
-                sessionId,
-                sessionExp,
-            };
-        } catch (error) {
-            console.log(error);
-        }
-
+        return {
+            id: user.id,
+            username,
+            sessionId,
+            sessionExp,
+        };
     }
 
     static async login(email: string, password: string): Promise<IUserResponse> {
@@ -122,9 +116,7 @@ class UserService {
     }
 
     static async getAll(): Promise<User[]> {
-        const users = await User.findAll();
-
-        return users.map(user => user.toJSON());
+        return (await User.findAll()).map(user => user.toJSON());
     }
 
     static async findBySessionId(sessionId: string, asJson: boolean = true): Promise<User> {

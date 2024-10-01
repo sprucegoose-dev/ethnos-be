@@ -15,15 +15,23 @@ import {
 } from '@interfaces/user.interface';
 
 import UserService from './user.service';
+import { UNEXPECTED_ERROR_MSG } from '../../../jest.setup';
 
 describe('UserService', () => {
     let userData: any;
+    let userData2: any;
 
     beforeEach(async () => {
         userData = {
             username: 'SpruceGoose',
-            email: 'spruce.goose@antinomy.com',
+            email: 'spruce.goose@ethnos-online.com',
             password: 'alrighty.then',
+        };
+
+        userData2 = {
+            username: 'SecondUser',
+            email: 'second.user@ethnos-online.com',
+            password: 'alrighty.then.2',
         };
 
         await User.truncate();
@@ -75,6 +83,30 @@ describe('UserService', () => {
             expect(existingUser).toBeDefined();
         });
 
+        it('should throw an error if the user was not found', async () => {
+            try {
+                await UserService.getOne(10);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('User not found');
+            }
+        });
+
+    });
+    describe('getAll', () => {
+
+        it('should retrieve an existing user from the database', async () => {
+            await UserService.create(userData);
+            await UserService.create(userData2);
+            const users = await UserService.getAll();
+
+            expect(users.length).toBe(2);
+            expect(users[0].email).toEqual(userData.email);
+            expect(users[0].username).toEqual(userData.username);
+            expect(users[1].email).toEqual(userData2.email);
+            expect(users[1].username).toEqual(userData2.username);
+        });
     });
 
     describe('delete', () => {
