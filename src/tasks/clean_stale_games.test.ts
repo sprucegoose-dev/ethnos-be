@@ -16,6 +16,7 @@ const {
 } = GameState;
 
 describe('StaleGamesCleaner', () => {
+
     describe('cleanUp', () => {
 
         beforeEach(async () => {
