@@ -80,7 +80,12 @@ describe('UserService', () => {
         it('should retrieve an existing user from the database', async () => {
             const newUser = await UserService.create(userData);
             const existingUser = await UserService.getOne(newUser.id);
-            expect(existingUser).toBeDefined();
+            expect(existingUser).toEqual(expect.objectContaining({
+                id: newUser.id,
+                username: newUser.username,
+                sessionId: expect.any(String),
+                sessionExp: expect.any(String),
+            }));
         });
 
         it('should throw an error if the user was not found', async () => {
