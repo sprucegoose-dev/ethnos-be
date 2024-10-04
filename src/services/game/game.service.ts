@@ -144,7 +144,7 @@ export default class GameService {
     }
 
     static async getState(gameId: number): Promise<IGameState> {
-        return await Game.findOne({
+        const game = await Game.findOne({
             where: {
                 id: gameId,
             },
@@ -184,6 +184,8 @@ export default class GameService {
                 }
             ]
         });
+
+        return game?.toJSON();
     }
 
     static async hasActiveGames(userId: number) {
@@ -515,10 +517,13 @@ export default class GameService {
 
         const activePlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
 
-        await game.update({
+        await Game.update({
             age: game.age + 1,
             activePlayerId,
+        }, {
+            where: {
+                id: game.id,
+            }
         });
-
     };
 }

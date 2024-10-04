@@ -411,7 +411,9 @@ describe('TribeHandler', () => {
 
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            await TribeHandler.handleWizardDraw(gameState, player, 3);
+            const bandSize = 3;
+
+            await TribeHandler.handleWizardDraw(gameState, player, bandSize);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 

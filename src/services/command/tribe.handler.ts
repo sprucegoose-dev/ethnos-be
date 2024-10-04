@@ -15,6 +15,7 @@ import { Color } from '@interfaces/game.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 
 import DrawCardHandler from './draw-card.handler';
+import GameService from '../game/game.service';
 
 const {
     GIANT,
@@ -127,6 +128,8 @@ export default class TribeHandler {
 
         for (let i = 0; i < maxDrawSize; i++) {
             await DrawCardHandler.handleDrawCard(game, player);
+            game = await GameService.getState(game.id);
+            player = game.players.find(p => p.id === player.id);
         }
     }
 }

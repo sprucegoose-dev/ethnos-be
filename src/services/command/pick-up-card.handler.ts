@@ -7,6 +7,7 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 
 import { CardState } from '@interfaces/card.interface';
+import Card from '../../models/card.model';
 
 export default class PickUpCardHandler {
 
@@ -23,10 +24,14 @@ export default class PickUpCardHandler {
             throw new CustomException(ERROR_BAD_REQUEST, 'Invalid card');
         }
 
-        await card.update({
+        await Card.update({
             state: CardState.IN_HAND,
             playerId: player.id,
             index: null,
+        }, {
+            where: {
+                id: card.id
+            }
         });
     }
 

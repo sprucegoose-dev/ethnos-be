@@ -17,6 +17,11 @@ import Region from './region.model';
 @Table({
     tableName: 'games',
     timestamps: true,
+    defaultScope: {
+        attributes: {
+            exclude: ['password'],
+        },
+    },
 })
 export default class Game extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
