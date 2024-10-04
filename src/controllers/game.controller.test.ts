@@ -9,6 +9,8 @@ import GameController from './game.controller';
 import { createGame } from '@services/test-helpers';
 import { ActionType } from '../interfaces/action.interface';
 import GameService from '../services/game/game.service';
+import CommandService from '../services/command/command.service';
+import { TribeName } from '../interfaces/tribe.interface';
 
 describe('GameController', () => {
 
@@ -274,7 +276,6 @@ describe('GameController', () => {
             await GameService.join(userC.id, gameState.id);
             await GameService.join(userD.id, gameState.id);
 
-
             gameState = await GameService.getState(gameState.id);
 
             expect(gameState.players.length).toBe(4);
@@ -295,4 +296,94 @@ describe('GameController', () => {
         });
     });
 
+    describe('handleAction', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should perform the user's action", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame();
+
+            await Game.update({
+                activePlayerId: playerA.id
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id,
+                },
+                body: {
+                    type: ActionType.DRAW_CARD
+                }
+            };
+
+            const handleActionSpy = jest.spyOn(CommandService, 'handleAction');
+
+            await GameController.handleAction(request, response);
+
+            expect(handleActionSpy).toHaveBeenCalledWith(userA.id, gameState.id, request.body);
+        });
+    });
+
+    describe('start', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should start the game", async () => {
+            let gameState = await GameService.create(userA.id);
+
+            await GameService.join(userB.id, gameState.id);
+            await GameService.join(userC.id, gameState.id);
+            await GameService.join(userD.id, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            expect(gameState.state).toBe(GameState.CREATED);
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id
+                },
+                body: {
+                    tribes: [
+                        TribeName.DWARF,
+                        TribeName.MINOTAUR,
+                        TribeName.MERFOLK,
+                        TribeName.CENTAUR,
+                        TribeName.ELF,
+                        TribeName.WIZARD,
+                    ]
+                }
+            };
+
+            await GameController.start(request, response);
+
+            gameState = await GameService.getState(gameState.id);
+
+            expect(gameState.state).toBe(GameState.STARTED);
+            expect(gameState.cards.length).toBe(75);
+        });
+    });
 });
