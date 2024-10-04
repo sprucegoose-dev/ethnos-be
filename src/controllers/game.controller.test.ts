@@ -1,7 +1,7 @@
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
-import { userA, userB } from '@jest.setup';
+import { userA, userB, userC, userD } from '@jest.setup';
 import { GameState } from '@interfaces/game.interface';
 
 import GameController from './game.controller';
@@ -169,6 +169,31 @@ describe('GameController', () => {
         });
     });
 
+    describe('getActiveGames', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return all active games", async () => {
+            const {
+                gameState,
+            } = await createGame();
+
+            const request: any = {};
+
+            await GameController.getActiveGames(request, response);
+
+            expect(response.send).toHaveBeenCalledWith([
+                expect.objectContaining({ id: gameState.id })
+            ]);
+        });
+    });
 
     describe('getState', () => {
         let response: any;
@@ -210,7 +235,7 @@ describe('GameController', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it("add a player to the game", async () => {
+        it("should add a player to a game", async () => {
             const game = await GameService.create(userA.id);
 
             expect(game.players.length).toBe(1);
@@ -230,4 +255,44 @@ describe('GameController', () => {
             expect(updatedGame.players[1].userId).toBe(userB.id);
         });
     });
+
+    describe('leave', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should remove a player from a game", async () => {
+            let gameState = await GameService.create(userA.id);
+
+            await GameService.join(userB.id, gameState.id);
+            await GameService.join(userC.id, gameState.id);
+            await GameService.join(userD.id, gameState.id);
+
+
+            gameState = await GameService.getState(gameState.id);
+
+            expect(gameState.players.length).toBe(4);
+
+            const request: any = {
+                userId: userD.id,
+                params: {
+                    id: gameState.id
+                }
+            };
+
+            await GameController.leave(request, response);
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            expect(updatedGame.players.length).toBe(3);
+            expect(updatedGame.players.find(player => player.userId === userD.id)).toBe(undefined);
+        });
+    });
+
 });
