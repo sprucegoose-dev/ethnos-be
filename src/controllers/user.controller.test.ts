@@ -150,7 +150,7 @@ describe('UserController', () => {
             expect(originalUser.password).not.toEqual(updatedUser.password);
         });
 
-        it("should return the updated user data", async () => {
+        it('should return the updated user data', async () => {
             const newUser = await UserService.create({
                 username: 'test-user-name',
                 email: 'test-user-email@gmail.com',
@@ -187,7 +187,7 @@ describe('UserController', () => {
 
         afterEach(async () => await User.truncate());
 
-        it("should delete a user", async () => {
+        it('should delete a user', async () => {
             const newUser = await UserService.create({
                 username: 'test-user-name',
                 email: 'test-user-email@gmail.com',

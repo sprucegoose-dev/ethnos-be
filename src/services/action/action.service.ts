@@ -16,6 +16,10 @@ import NextAction from '@models/nextAction.model';
 
 export class ActionService {
 
+    static arrayEquals = (arrayA: any[], arrayB: any[]) => {
+        return arrayA.every((value, index) => value === arrayB[index])
+    }
+
     static async getActions(gameId: number, userId: number): Promise<IActionPayload[]> {
         const game = await GameService.getState(gameId);
 
@@ -89,16 +93,20 @@ export class ActionService {
 
             const sameColorBand = cardsInHand.filter(card => !card.color || card.color === leader.color);
             const sameTribeBand = cardsInHand.filter(card => !card.color || card.tribe.name === leader.tribe.name);
+
             playBandActions.push({
                 leaderId: leader.id,
                 cardIds: sameColorBand.map(card => card.id),
                 type: ActionType.PLAY_BAND
             });
-            playBandActions.push({
-                leaderId: leader.id,
-                cardIds: sameTribeBand.map(card => card.id),
-                type: ActionType.PLAY_BAND
-            });
+
+            if (!this.arrayEquals(sameColorBand, sameTribeBand)) {
+                playBandActions.push({
+                    leaderId: leader.id,
+                    cardIds: sameTribeBand.map(card => card.id),
+                    type: ActionType.PLAY_BAND
+                });
+            }
         }
 
         return playBandActions;

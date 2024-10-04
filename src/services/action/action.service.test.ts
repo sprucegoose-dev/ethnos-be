@@ -20,10 +20,6 @@ import { CardState } from '@interfaces/card.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 import { Color, GameState } from '@interfaces/game.interface';
 
-const arrayEquals = (arrayA: any[], arrayB: any[]) => {
-    return arrayA.every((value, index) => value === arrayB[index])
-}
-
 describe('ActionService', () => {
 
     describe('getActions', () => {
@@ -293,19 +289,19 @@ describe('ActionService', () => {
             const actions = ActionService.getPlayBandActions(cardsInHand);
 
             // Centaur (Blue) + Troll (Blue) + Skeleton
-            expect(actions.find(action => arrayEquals(action.cardIds, [1, 4, 7]))).toBeDefined();
+            expect(actions.find(action => ActionService.arrayEquals(action.cardIds, [1, 4, 7]))).toBeDefined();
 
             // Centaur (Blue) + Centaur (Gray) + Skeleton
-            expect(actions.find(action => arrayEquals(action.cardIds, [1, 2, 7]))).toBeDefined();
+            expect(actions.find(action => ActionService.arrayEquals(action.cardIds, [1, 2, 7]))).toBeDefined();
 
             // Elf (Orange) + Troll (Orange) + Skeleton
-            expect(actions.find(action => arrayEquals(action.cardIds, [3, 6, 7]))).toBeDefined();
+            expect(actions.find(action => ActionService.arrayEquals(action.cardIds, [3, 6, 7]))).toBeDefined();
 
             // Troll (Blue) + Troll (Green) + Troll (Orange) + Skeleton
-            expect(actions.find(action => arrayEquals(action.cardIds, [4, 5, 6, 7]))).toBeDefined();
+            expect(actions.find(action => ActionService.arrayEquals(action.cardIds, [4, 5, 6, 7]))).toBeDefined();
 
             // (INVALID) Elf (Orange) + Troll (Blue)
-            expect(actions.find(action => arrayEquals(action.cardIds, [3, 4]))).not.toBeDefined();
+            expect(actions.find(action => ActionService.arrayEquals(action.cardIds, [3, 4]))).not.toBeDefined();
         });
     });
 });

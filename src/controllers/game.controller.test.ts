@@ -1,10 +1,14 @@
 import Game from '@models/game.model';
+import Player from '@models/player.model';
 
-import { userA } from '@jest.setup';
+import { userA, userB } from '@jest.setup';
+import { GameState } from '@interfaces/game.interface';
 
 import GameController from './game.controller';
-import { GameState } from '../interfaces/game.interface';
-import Player from '../models/player.model';
+
+import { createGame } from '@services/test-helpers';
+import { ActionType } from '../interfaces/action.interface';
+import GameService from '../services/game/game.service';
 
 describe('GameController', () => {
 
@@ -19,7 +23,7 @@ describe('GameController', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it("should create a new user", async () => {
+        it('should create a new game', async () => {
             const request: any = {
                 userId: userA.id
             };
@@ -36,7 +40,7 @@ describe('GameController', () => {
             expect(game).not.toBeNull();
         });
 
-        it("should return the new user", async () => {
+        it("should return the game state", async () => {
             const request: any = {
                 userId: userA.id
             };
@@ -82,6 +86,148 @@ describe('GameController', () => {
                 updatedAt: game.updatedAt,
                 winnerId: null,
             });
+        });
+    });
+
+    describe('getActions', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should fetch a user's actions", async () => {
+            const {
+                gameState,
+                playerA,
+            } = await createGame();
+
+            await Game.update({
+                activePlayerId: playerA.id
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id
+                }
+            };
+
+            await GameController.getActions(request, response);
+
+            expect(response.send).toHaveBeenCalledWith([
+                {
+                    type: ActionType.DRAW_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardId: expect.any(Number),
+                    type: ActionType.PICK_UP_CARD
+                },
+                {
+                    cardIds: expect.arrayContaining([expect.any(Number)]),
+                    leaderId: expect.any(Number),
+                    type: ActionType.PLAY_BAND
+                }
+            ]);
+
+        });
+    });
+
+
+    describe('getState', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return the game state", async () => {
+            const {
+                gameState,
+            } = await createGame();
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id
+                }
+            };
+
+            await GameController.getState(request, response);
+
+            expect(response.send).toHaveBeenCalledWith(gameState);
+        });
+    });
+
+    describe('join', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("add a player to the game", async () => {
+            const game = await GameService.create(userA.id);
+
+            expect(game.players.length).toBe(1);
+
+            const request: any = {
+                userId: userB.id,
+                params: {
+                    id: game.id
+                }
+            };
+
+            await GameController.join(request, response);
+
+            const updatedGame = await GameService.getState(game.id);
+
+            expect(updatedGame.players.length).toBe(2);
+            expect(updatedGame.players[1].userId).toBe(userB.id);
         });
     });
 });
