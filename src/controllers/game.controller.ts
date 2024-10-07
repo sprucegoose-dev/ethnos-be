@@ -8,13 +8,14 @@ import GameService from '@services/game/game.service';
 
 import { IActionRequest } from '@interfaces/action.interface';
 import { AuthRequest } from '@interfaces/index.interface';
-import { IGameSettings } from '@interfaces/game.interface';
+import { ICreateGamePayload, IGameSettings } from '@interfaces/game.interface';
 
 @exceptionHandler()
 class GamesController {
 
     async create(req: AuthRequest, res: Response): Promise<void> {
-        const game = await GameService.create(req.userId);
+        const payload = req.body as ICreateGamePayload;
+        const game = await GameService.create(req.userId, true, payload?.password);
         res.send(game);
     }
 

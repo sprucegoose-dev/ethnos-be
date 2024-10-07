@@ -78,10 +78,11 @@ export default class Game extends Model {
     age: number;
 
     @Column
-    password: String;
+    password: string;
 
     @Column({
-        type: DataType.JSON
+        type: DataType.JSON,
+        defaultValue: { tribes: [] }
     })
     settings: IGameSettings;
 

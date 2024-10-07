@@ -1,16 +1,18 @@
+import bcrypt from 'bcrypt';
+
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
-import { userA, userB, userC, userD } from '@jest.setup';
 import { GameState } from '@interfaces/game.interface';
-
+import { ActionType } from '@interfaces/action.interface';
+import { TribeName } from '@interfaces/tribe.interface';
 import GameController from './game.controller';
 
+import GameService from '@services/game/game.service';
+import CommandService from '@services/command/command.service';
 import { createGame } from '@services/test-helpers';
-import { ActionType } from '../interfaces/action.interface';
-import GameService from '../services/game/game.service';
-import CommandService from '../services/command/command.service';
-import { TribeName } from '../interfaces/tribe.interface';
+
+import { userA, userB, userC, userD } from '@jest.setup';
 
 describe('GameController', () => {
 
@@ -27,7 +29,7 @@ describe('GameController', () => {
 
         it('should create a new game', async () => {
             const request: any = {
-                userId: userA.id
+                userId: userA.id,
             };
 
             await GameController.create(request, response);
@@ -40,6 +42,27 @@ describe('GameController', () => {
             });
 
             expect(game).not.toBeNull();
+        });
+
+        it('should set a password for the room when sent in the request', async () => {
+            const password = 'some-password';
+            const request: any = {
+                userId: userA.id,
+                body: {
+                    password,
+                }
+            };
+
+            await GameController.create(request, response);
+
+            const game = await Game.unscoped().findOne({
+                where: {
+                    state: GameState.CREATED,
+                    creatorId: userA.id
+                }
+            });
+
+            expect(await bcrypt.compare(password, game.password)).toBe(true);
         });
 
         it("should return the game state", async () => {
@@ -64,10 +87,16 @@ describe('GameController', () => {
             });
 
             expect(response.send).toHaveBeenCalledWith({
-                id: game.id,
-                creatorId: userA.id,
                 activePlayerId: null,
                 age: 1,
+                cards: [],
+                createdAt: game.createdAt,
+                creator: {
+                    id: userA.id,
+                    username: userA.username,
+                },
+                creatorId: userA.id,
+                id: game.id,
                 maxPlayers: 6,
                 players: [
                     {
@@ -80,13 +109,13 @@ describe('GameController', () => {
                     }
                 ],
                 regions: [],
-                cards: [],
-                settings: null,
+                settings: {
+                    tribes: []
+                },
                 state: GameState.CREATED,
                 turnOrder: [],
-                createdAt: game.createdAt,
                 updatedAt: game.updatedAt,
-                winnerId: null,
+                winnerId: null
             });
         });
     });
@@ -192,7 +221,7 @@ describe('GameController', () => {
             await GameController.getActiveGames(request, response);
 
             expect(response.send).toHaveBeenCalledWith([
-                expect.objectContaining({ id: gameState.id })
+                expect.objectContaining({ id: gameState.id }),
             ]);
         });
     });

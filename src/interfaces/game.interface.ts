@@ -37,6 +37,7 @@ export enum GameState {
 
 export interface IGameState extends Game {
     cards: Card[];
+    hasPassword?: number;
     players: Player[];
 }
 
@@ -48,4 +49,8 @@ export interface ITribeCard {
     color: Color;
     name: TribeName;
     tribeId: number;
+}
+
+export interface ICreateGamePayload {
+    password?: string;
 }

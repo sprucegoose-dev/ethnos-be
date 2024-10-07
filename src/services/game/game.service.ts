@@ -1,5 +1,6 @@
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import shuffle from 'lodash.shuffle';
+import bcrypt from 'bcrypt';
 
 import Card from '@models/card.model';
 import Tribe from '@models/tribe.model';
@@ -36,14 +37,17 @@ import {
 
 export default class GameService {
 
-    static async create(userId: number, autoAddPlayer: boolean = true): Promise<IGameState> {
+    static async create(userId: number, autoAddPlayer: boolean = true, password: string = null): Promise<IGameState> {
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before creating a new one.');
         }
 
+        const passwordProtected = typeof password === 'string' && password.trim().length;
+
         const game = await Game.create({
             creatorId: userId,
             state: GameState.CREATED,
+            password: passwordProtected ? await bcrypt.hash(password, 10) : null,
         });
 
         if (autoAddPlayer) {
@@ -119,6 +123,11 @@ export default class GameService {
                     [Op.not]: [GameState.ENDED, GameState.CANCELLED]
                 },
             },
+            attributes: {
+                include: [
+                    [Sequelize.literal('CASE WHEN game.password IS NOT NULL THEN true ELSE false END'), 'hasPassword']
+                ]
+            },
             include: [
                 {
                     model: Player,
@@ -134,6 +143,14 @@ export default class GameService {
                         }
                     ],
                 },
+                {
+                    model: User,
+                    as: 'creator',
+                    attributes: [
+                        'id',
+                        'username'
+                    ]
+                }
             ]
         });
     }
@@ -143,7 +160,7 @@ export default class GameService {
         return turnIndex === turnOrder.length - 1 ? turnOrder[0] : turnOrder[turnIndex + 1];
     }
 
-    static async getState(gameId: number): Promise<IGameState> {
+    static async getState(gameId: number, inclAttributes: string[] = []): Promise<IGameState> {
         const game = await Game.findOne({
             where: {
                 id: gameId,
@@ -171,6 +188,14 @@ export default class GameService {
                     ],
                 },
                 {
+                    model: User,
+                    as: 'creator',
+                    attributes: [
+                        'id',
+                        'username',
+                    ],
+                },
+                {
                     model: Region,
                     as: 'regions',
                     required: false,
@@ -182,7 +207,10 @@ export default class GameService {
                     ],
                     required: false,
                 }
-            ]
+            ],
+            attributes: {
+                include: inclAttributes
+            }
         });
 
         return game?.toJSON();
@@ -209,12 +237,12 @@ export default class GameService {
         return activePlayers.length;
     }
 
-    static async join(userId: number, gameId: number): Promise<void> {
+    static async join(userId: number, gameId: number, password: string = null): Promise<void> {
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before joining a new one.')
         }
 
-        const game = await this.getState(gameId);
+        const game = await this.getState(gameId, ['password']);
 
         if (!game) {
             throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
@@ -222,6 +250,12 @@ export default class GameService {
 
         if (game.players.length >= game.maxPlayers) {
             throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
+        }
+
+        if (game.password) {
+            if (!password || !await bcrypt.compare(game.password, password)) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'Incorrect room password');
+            }
         }
 
         await PlayerService.create(userId, gameId);

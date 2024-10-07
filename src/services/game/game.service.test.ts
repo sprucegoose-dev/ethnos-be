@@ -74,6 +74,37 @@ describe('GameService', () => {
         });
     });
 
+    describe('getActiveGames', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should return all active games', async () => {
+            const activeGames = await GameService.getActiveGames();
+            expect(activeGames[0].id).toBe(gameState.id);
+        });
+
+        it("should return a game with a 'hasPassword' value of 1 if the active game has a password", async () => {
+            await Game.update({
+                password: 'some-password'
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            const activeGames = await GameService.getActiveGames();
+
+            expect(activeGames[0].id).toBe(gameState.id);
+            expect(activeGames[0].toJSON().hasPassword).toBe(1);
+        });
+    });
+
     describe('leave', () => {
 
         afterEach(async () => await Game.truncate());
@@ -252,6 +283,34 @@ describe('GameService', () => {
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_NOT_FOUND);
                 expect(error.message).toBe('Game not found');
+            }
+        });
+
+        it('should throw an error if the game has a password and an incorrect password is provided', async () => {
+            const newGame = await GameService.create(userA.id, true, 'some-password');
+            await PlayerService.create(userB.id, newGame.id);
+            await PlayerService.create(userC.id, newGame.id);
+
+            try {
+                await GameService.join(userD.id, newGame.id, 'incorrect-password');
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Incorrect room password');
+            }
+        });
+
+        it('should throw an error if the game has a password and no password is provided', async () => {
+            const newGame = await GameService.create(userA.id, true, 'some-password');
+            await PlayerService.create(userB.id, newGame.id);
+            await PlayerService.create(userC.id, newGame.id);
+
+            try {
+                await GameService.join(userD.id, newGame.id, null);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Incorrect room password');
             }
         });
     });
