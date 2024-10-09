@@ -2,6 +2,7 @@ import { Socket } from 'socket.io';
 
 import UsersController from './controllers/user.controller';
 import GamesController from './controllers/game.controller';
+import TribesController from './controllers/tribe.controller';
 import AuthMiddleware from './middleware/auth.middleware';
 import {
     EVENT_JOIN_GAME,
@@ -43,6 +44,8 @@ app.post('/game/:id/action', GamesController.handleAction);
 app.post('/game/:id/leave', GamesController.leave);
 app.get('/game/:id', GamesController.getState);
 app.post('/game/create', GamesController.create);
+
+app.get('/tribe/all', TribesController.getAll);
 
 export const gameSocket = socket;
 

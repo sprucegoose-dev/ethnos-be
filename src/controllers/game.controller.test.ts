@@ -6,7 +6,7 @@ import Player from '@models/player.model';
 import { GameState } from '@interfaces/game.interface';
 import { ActionType } from '@interfaces/action.interface';
 import { TribeName } from '@interfaces/tribe.interface';
-import GameController from './game.controller';
+import GamesController from './game.controller';
 
 import GameService from '@services/game/game.service';
 import CommandService from '@services/command/command.service';
@@ -14,7 +14,7 @@ import { createGame } from '@services/test-helpers';
 
 import { userA, userB, userC, userD } from '@jest.setup';
 
-describe('GameController', () => {
+describe('GamesController', () => {
 
     describe('create', () => {
         let response: any;
@@ -32,7 +32,7 @@ describe('GameController', () => {
                 userId: userA.id,
             };
 
-            await GameController.create(request, response);
+            await GamesController.create(request, response);
 
             const game = await Game.findOne({
                 where: {
@@ -53,7 +53,7 @@ describe('GameController', () => {
                 }
             };
 
-            await GameController.create(request, response);
+            await GamesController.create(request, response);
 
             const game = await Game.unscoped().findOne({
                 where: {
@@ -70,7 +70,7 @@ describe('GameController', () => {
                 userId: userA.id
             };
 
-            await GameController.create(request, response);
+            await GamesController.create(request, response);
 
             const game = await Game.findOne({
                 where: {
@@ -152,7 +152,7 @@ describe('GameController', () => {
                 }
             };
 
-            await GameController.getActions(request, response);
+            await GamesController.getActions(request, response);
 
             expect(response.send).toHaveBeenCalledWith([
                 {
@@ -218,7 +218,7 @@ describe('GameController', () => {
 
             const request: any = {};
 
-            await GameController.getActiveGames(request, response);
+            await GamesController.getActiveGames(request, response);
 
             expect(response.send).toHaveBeenCalledWith([
                 expect.objectContaining({ id: gameState.id }),
@@ -249,7 +249,7 @@ describe('GameController', () => {
                 }
             };
 
-            await GameController.getState(request, response);
+            await GamesController.getState(request, response);
 
             expect(response.send).toHaveBeenCalledWith(gameState);
         });
@@ -278,7 +278,7 @@ describe('GameController', () => {
                 }
             };
 
-            await GameController.join(request, response);
+            await GamesController.join(request, response);
 
             const updatedGame = await GameService.getState(game.id);
 
@@ -316,7 +316,7 @@ describe('GameController', () => {
                 }
             };
 
-            await GameController.leave(request, response);
+            await GamesController.leave(request, response);
 
             const updatedGame = await GameService.getState(gameState.id);
 
@@ -362,7 +362,7 @@ describe('GameController', () => {
 
             const handleActionSpy = jest.spyOn(CommandService, 'handleAction');
 
-            await GameController.handleAction(request, response);
+            await GamesController.handleAction(request, response);
 
             expect(handleActionSpy).toHaveBeenCalledWith(userA.id, gameState.id, request.body);
         });
@@ -407,7 +407,7 @@ describe('GameController', () => {
                 }
             };
 
-            await GameController.start(request, response);
+            await GamesController.start(request, response);
 
             gameState = await GameService.getState(gameState.id);
 

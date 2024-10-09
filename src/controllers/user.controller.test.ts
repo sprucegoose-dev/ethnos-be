@@ -1,9 +1,9 @@
 import User from '@models/user.model';
 
-import UserController from './user.controller';
+import UsersController from './user.controller';
 import UserService from '../services/user/user.service';
 
-describe('UserController', () => {
+describe('UsersController', () => {
 
     describe('create', () => {
         let response: any;
@@ -25,13 +25,13 @@ describe('UserController', () => {
                 }
             };
 
-            await UserController.create(request, response);
+            await UsersController.create(request, response);
 
             const user = await User.findOne({
                 where: {
                     username: 'test-user-name'
                 }
-            })
+            });
 
             expect(user).not.toBeNull();
         });
@@ -45,7 +45,7 @@ describe('UserController', () => {
                 }
             };
 
-            await UserController.create(request, response);
+            await UsersController.create(request, response);
 
             const user = await User.findOne({
                 where: {
@@ -87,7 +87,7 @@ describe('UserController', () => {
                 }
             };
 
-            await UserController.login(request, response);
+            await UsersController.login(request, response);
 
             expect(response.send).toHaveBeenCalledWith({
                 id: newUser.id,
@@ -134,7 +134,7 @@ describe('UserController', () => {
                 }
             });
 
-            await UserController.update(request, response);
+            await UsersController.update(request, response);
 
             const updatedUser = await User.findOne({
                 where: {
@@ -166,7 +166,7 @@ describe('UserController', () => {
                 }
             };
 
-            await UserController.update(request, response);
+            await UsersController.update(request, response);
 
             expect(response.send).toHaveBeenCalledWith(expect.objectContaining({
                 id: newUser.id,
@@ -198,7 +198,7 @@ describe('UserController', () => {
                 userId: newUser.id,
             };
 
-            await UserController.delete(request, response);
+            await UsersController.delete(request, response);
 
             const deletedUser = await User.findOne({
                 where: {
@@ -232,7 +232,7 @@ describe('UserController', () => {
                 userId: newUser.id,
             };
 
-            await UserController.getDetails(request, response);
+            await UsersController.getDetails(request, response);
 
             expect(response.send).toHaveBeenCalledWith(expect.objectContaining({
                 id: newUser.id,

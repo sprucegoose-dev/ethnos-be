@@ -144,6 +144,8 @@ class UserService {
             throw new CustomException(ERROR_BAD_REQUEST, `Password must be at least ${PASSWORD_MIN_CHARS} characters`);
         }
 
+        // TODO: add bad words validation to the usernam
+
         if (payload.username.length < USERNAME_MIN_CHARS) {
             throw new CustomException(ERROR_BAD_REQUEST, `Username must be at least ${USERNAME_MIN_CHARS} characters`);
         }

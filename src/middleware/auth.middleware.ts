@@ -17,6 +17,7 @@ class AuthMiddleware {
             '/user/create',
             '/user/login',
             '/game/all',
+            '/tribe/all',
             '/socket.io/',
         ];
         const { path, headers: { authorization } } = req;
