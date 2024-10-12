@@ -415,4 +415,44 @@ describe('GamesController', () => {
             expect(gameState.cards.length).toBe(75);
         });
     });
+
+    describe('updateSttings', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should update the game settings", async () => {
+            const gameState = await GameService.create(userA.id);
+
+            const settings = {
+                tribes: [
+                    TribeName.ORC,
+                    TribeName.ELF,
+                    TribeName.SKELETON
+                ]
+            };
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id
+                },
+                body: settings,
+            };
+
+            await GamesController.updateSettings(request, response);
+
+            const updatedGameState = await Game.findOne({ where: {
+                id: gameState.id }
+            });
+
+            expect(updatedGameState.settings).toEqual(settings);
+        });
+    });
 });

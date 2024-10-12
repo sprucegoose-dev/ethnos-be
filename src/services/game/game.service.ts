@@ -155,9 +155,132 @@ export default class GameService {
         });
     }
 
+    static async generateCards(gameId: number, tribes: Tribe[]): Promise<Card[]> {
+        const cards = [];
+        let card;
+
+        const colors = [
+            Color.BLUE,
+            Color.GRAY,
+            Color.GREEN,
+            Color.ORANGE,
+            Color.PURPLE,
+            Color.RED
+        ];
+
+        for (const tribe of tribes) {
+            if (tribe.name === TribeName.DRAGON) {
+                for (let i = 0; i < 3; i++) {
+                    card = await Card.create({
+                        color: null,
+                        gameId,
+                        tribeId: tribe.id,
+                        state: CardState.IN_DECK,
+                    });
+                    card.tribe = tribe;
+                    cards.push(card);
+                }
+            } else {
+                const quantityInEachColor = tribe.name === TribeName.HALFLING ? 4 : 2;
+
+                for (let i = 0; i < quantityInEachColor; i++) {
+                    for (let j = 0; j < colors.length; j++) {
+                        card = await Card.create({
+                            color: tribe.name === TribeName.SKELETON ? null : colors[j],
+                            gameId,
+                            tribeId: tribe.id,
+                            state: CardState.IN_DECK,
+                        });
+                        card.tribe = tribe;
+                        cards.push(card);
+                    }
+                }
+            }
+        }
+
+        return cards;
+    }
+
+    static async generateRegions(gameId: number) {
+        const colors = [
+            Color.BLUE,
+            Color.GRAY,
+            Color.GREEN,
+            Color.ORANGE,
+            Color.PURPLE,
+            Color.RED
+        ];
+
+        const values = shuffle([
+            0, 0,
+            2, 2,
+            4, 4, 4, 4,
+            6, 6, 6, 6, 6,
+            8, 8, 8,
+            10, 10
+        ]);
+
+        const valueSets = [];
+
+        let setCount = 0;
+        let set = [];
+
+        for (const value of values) {
+            set.push(value);
+            setCount++;
+
+            if (setCount === 3) {
+                valueSets.push(set.sort((a, b) => a - b));
+                set = [];
+                setCount = 0;
+            }
+        }
+
+        for (let i = 0; i < colors.length; i++) {
+            await Region.create({
+                gameId,
+                color: colors[i],
+                values: valueSets[i],
+            });
+        }
+    }
+
     static getNextPlayerId(activePlayerId: number, turnOrder: number[]): number {
         const turnIndex = turnOrder.indexOf(activePlayerId);
         return turnIndex === turnOrder.length - 1 ? turnOrder[0] : turnOrder[turnIndex + 1];
+    }
+
+    static getNewAgeFirstPlayerId = ({totalPoints, trollTokenTotals}: IScoringResults, prevPlayerId: number, turnOrder: number[]): number => {
+        let lowestScore: number = Math.min(...Object.values(totalPoints));
+
+        let tiedPlayerIds: number[] = Object.keys(totalPoints)
+            .map(Number)
+            .filter((playerId) => totalPoints[playerId] === lowestScore)
+
+        if (tiedPlayerIds.length === 1) {
+            return tiedPlayerIds[0];
+        }
+
+        const highestTrollToken = Math.max(...tiedPlayerIds.map(playerId => trollTokenTotals[playerId]))
+
+        tiedPlayerIds = tiedPlayerIds.filter(playerId => trollTokenTotals[playerId] === highestTrollToken);
+
+        if (tiedPlayerIds.length === 1) {
+            return tiedPlayerIds[0];
+        }
+
+        let firstPlayerId;
+        let nextPlayerId = prevPlayerId;
+
+        while (!firstPlayerId) {
+            if (tiedPlayerIds.includes(nextPlayerId)) {
+                firstPlayerId = nextPlayerId;
+            }
+
+            nextPlayerId = this.getNextPlayerId(nextPlayerId, turnOrder);
+        }
+
+        return firstPlayerId;
     }
 
     static async getState(gameId: number, inclAttributes: string[] = []): Promise<IGameState> {
@@ -327,96 +450,6 @@ export default class GameService {
         });
     }
 
-    static async generateRegions(gameId: number) {
-        const colors = [
-            Color.BLUE,
-            Color.GRAY,
-            Color.GREEN,
-            Color.ORANGE,
-            Color.PURPLE,
-            Color.RED
-        ];
-
-        const values = shuffle([
-            0, 0,
-            2, 2,
-            4, 4, 4, 4,
-            6, 6, 6, 6, 6,
-            8, 8, 8,
-            10, 10
-        ]);
-
-        const valueSets = [];
-
-        let setCount = 0;
-        let set = [];
-
-        for (const value of values) {
-            set.push(value);
-            setCount++;
-
-            if (setCount === 3) {
-                valueSets.push(set.sort((a, b) => a - b));
-                set = [];
-                setCount = 0;
-            }
-        }
-
-        for (let i = 0; i < colors.length; i++) {
-            await Region.create({
-                gameId,
-                color: colors[i],
-                values: valueSets[i],
-            });
-        }
-    }
-
-    static async generateCards(gameId: number, tribes: Tribe[]): Promise<Card[]> {
-        const cards = [];
-        let card;
-
-        const colors = [
-            Color.BLUE,
-            Color.GRAY,
-            Color.GREEN,
-            Color.ORANGE,
-            Color.PURPLE,
-            Color.RED
-        ];
-
-        for (const tribe of tribes) {
-            if (tribe.name === TribeName.DRAGON) {
-                for (let i = 0; i < 3; i++) {
-                    card = await Card.create({
-                        color: null,
-                        gameId,
-                        tribeId: tribe.id,
-                        state: CardState.IN_DECK,
-                    });
-                    card.tribe = tribe;
-                    cards.push(card);
-                }
-            } else {
-                const quantityInEachColor = tribe.name === TribeName.HALFLING ? 4 : 2;
-
-                for (let i = 0; i < quantityInEachColor; i++) {
-                    for (let j = 0; j < colors.length; j++) {
-                        card = await Card.create({
-                            color: tribe.name === TribeName.SKELETON ? null : colors[j],
-                            gameId,
-                            tribeId: tribe.id,
-                            state: CardState.IN_DECK,
-                        });
-                        card.tribe = tribe;
-                        cards.push(card);
-                    }
-                }
-            }
-        }
-
-        return cards;
-    }
-
     static setTurnOrder(players: Player[]): number[] {
         return shuffle(players).map(player => player.id);
     }
@@ -452,13 +485,7 @@ export default class GameService {
             throw new CustomException(ERROR_BAD_REQUEST, 'The game must have at least two players');
         }
 
-        if (!settings ||
-            !settings.tribes ||
-            !Array.isArray(settings.tribes) ||
-            Object.keys(settings).length > 1 ||
-            settings.tribes.filter((tribe) => !TRIBES.includes(tribe)).length ||
-            settings.tribes.length !== 6
-        ) {
+        if (!this.validateSettings(settings)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Invalid game settings');
         }
 
@@ -494,45 +521,19 @@ export default class GameService {
             }
         );
 
+        const gameState = await this.getState(game.id);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: gameState
+        });
+
         const activeGames = await this.getActiveGames();
 
         EventService.emitEvent({
             type: EVENT_ACTIVE_GAMES_UPDATE,
             payload: activeGames
         });
-    }
-
-    static getNewAgeFirstPlayerId = ({totalPoints, trollTokenTotals}: IScoringResults, prevPlayerId: number, turnOrder: number[]): number => {
-        let lowestScore: number = Math.min(...Object.values(totalPoints));
-
-        let tiedPlayerIds: number[] = Object.keys(totalPoints)
-            .map(Number)
-            .filter((playerId) => totalPoints[playerId] === lowestScore)
-
-        if (tiedPlayerIds.length === 1) {
-            return tiedPlayerIds[0];
-        }
-
-        const highestTrollToken = Math.max(...tiedPlayerIds.map(playerId => trollTokenTotals[playerId]))
-
-        tiedPlayerIds = tiedPlayerIds.filter(playerId => trollTokenTotals[playerId] === highestTrollToken);
-
-        if (tiedPlayerIds.length === 1) {
-            return tiedPlayerIds[0];
-        }
-
-        let firstPlayerId;
-        let nextPlayerId = prevPlayerId;
-
-        while (!firstPlayerId) {
-            if (tiedPlayerIds.includes(nextPlayerId)) {
-                firstPlayerId = nextPlayerId;
-            }
-
-            nextPlayerId = this.getNextPlayerId(nextPlayerId, turnOrder);
-        }
-
-        return firstPlayerId;
     }
 
     static async startNewAge(game: Game) {
@@ -560,4 +561,67 @@ export default class GameService {
             }
         });
     };
+
+    static async updateSettings(userId: number, gameId: number, settings: IGameSettings): Promise<void> {
+        const game = await Game.findOne({
+            where: {
+                id: gameId,
+            },
+        });
+
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
+        if (game.creatorId !== userId) {
+            throw new CustomException(ERROR_FORBIDDEN, 'Only the game creator can update the settings');
+        }
+
+        if (game.state !== GameState.CREATED) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'The game has already started');
+        }
+
+        if (!this.validateSettings(settings, settings?.tribes?.length)) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid game settings');
+        }
+
+        await Game.update(
+            {
+                settings,
+            },
+            {
+                where: {
+                    id: gameId,
+                }
+            }
+        );
+
+        const gameState = await this.getState(game.id);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: gameState
+        });
+
+        const activeGames = await this.getActiveGames();
+
+        EventService.emitEvent({
+            type: EVENT_ACTIVE_GAMES_UPDATE,
+            payload: activeGames
+        });
+    }
+
+    static validateSettings(settings: IGameSettings, tribeLimit = 6) {
+        if (!settings ||
+            !settings.tribes ||
+            !Array.isArray(settings.tribes) ||
+            Object.keys(settings).length > 1 ||
+            settings.tribes.filter((tribe) => !TRIBES.includes(tribe)).length ||
+            settings.tribes.length !== tribeLimit
+        ) {
+            return false;
+        }
+
+        return true;
+    }
 }

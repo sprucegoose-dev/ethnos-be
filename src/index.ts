@@ -39,6 +39,7 @@ app.delete('/user', UsersController.delete);
 app.get('/game/all', GamesController.getActiveGames);
 app.get('/game/:id/actions', GamesController.getActions);
 app.post('/game/:id/start', GamesController.start);
+app.post('/game/:id/updateSettings', GamesController.updateSettings);
 app.post('/game/:id/join', GamesController.join);
 app.post('/game/:id/action', GamesController.handleAction);
 app.post('/game/:id/leave', GamesController.leave);

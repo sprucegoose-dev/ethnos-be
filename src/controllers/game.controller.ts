@@ -19,6 +19,14 @@ class GamesController {
         res.send(game);
     }
 
+    async handleAction(req: IActionRequest, res: Response): Promise<void> {
+        const userId = req.userId;
+        const gameId = req.params.id;
+        const payload = req.body;
+        await CommandService.handleAction(userId, parseInt(gameId, 10), payload);
+        res.send();
+    }
+
     async getActions(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
@@ -51,19 +59,19 @@ class GamesController {
         res.send();
     }
 
-    async handleAction(req: IActionRequest, res: Response): Promise<void> {
-        const userId = req.userId;
-        const gameId = req.params.id;
-        const payload = req.body;
-        await CommandService.handleAction(userId, parseInt(gameId, 10), payload);
-        res.send();
-    }
-
     async start(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
         const settings = req.body as IGameSettings;
         await GameService.start(userId, parseInt(gameId, 10), settings);
+        res.send();
+    }
+
+    async updateSettings(req: AuthRequest, res: Response): Promise<void> {
+        const userId = req.userId;
+        const gameId = req.params.id;
+        const settings = req.body as IGameSettings;
+        await GameService.updateSettings(userId, parseInt(gameId, 10), settings);
         res.send();
     }
 }

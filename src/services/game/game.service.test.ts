@@ -745,4 +745,130 @@ describe('GameService', () => {
             expect(playerId).toBe(playerB.id);
         });
     });
+
+    describe('validateSettings', () => {
+        it.each([
+            null,
+            {},
+            { tribes: 'not an array' },
+            { tribes: [], invalidOption: {} },
+            {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                    TribeName.WINGFOLK,
+                    TribeName.ORC,
+                    'invalid tribe'
+                ]
+            },
+            {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                    TribeName.WINGFOLK,
+                    TribeName.ORC,
+                ]
+            },
+        ])('should return false when the game settings are invalid: %s', (settings) => {
+            expect(GameService.validateSettings(settings as IGameSettings)).toEqual(false);
+        });
+
+        it('should return true when the game settings are valid: %s', () => {
+            const settings = {
+                tribes: [
+                    TribeName.DWARF,
+                    TribeName.ELF,
+                    TribeName.WIZARD,
+                    TribeName.WINGFOLK,
+                    TribeName.ORC,
+                    TribeName.MERFOLK,
+                ]
+            };
+            expect(GameService.validateSettings(settings)).toEqual(true);
+        });
+    });
+
+    describe('updateSettings', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            gameState = await GameService.create(userA.id, false);
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should update the game settings', async () => {
+            const settings = {
+                tribes: [
+                    TribeName.ORC,
+                    TribeName.ELF,
+                    TribeName.SKELETON
+                ]
+            }
+            await GameService.updateSettings(userA.id, gameState.id, settings);
+
+            const updatedGameState = await Game.findOne({ where: {
+                id: gameState.id }
+            });
+
+            expect(updatedGameState.settings).toEqual(settings);
+        });
+
+        it('should throw an error if the game is not found', async () => {
+            try {
+                await Game.truncate();
+                await GameService.updateSettings(userA.id, 1, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
+            }
+        });
+
+        it("should throw an error if the user updating the game isn't the room creator", async () => {
+            try {
+                await GameService.updateSettings(userB.id, gameState.id, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_FORBIDDEN);
+                expect(error.message).toBe('Only the game creator can update the settings');
+            }
+        });
+
+        it("should throw an error if the game has already started", async () => {
+            await Game.update({
+                state: GameState.STARTED,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+
+            try {
+                await GameService.updateSettings(userA.id, gameState.id, { tribes: []});
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('The game has already started');
+            }
+        });
+
+        it.each([
+            null,
+            {},
+            { tribes: 'not an array' },
+        ])('should throw an error when the game settings are invalid: %s', async (settings) => {
+
+            try {
+                await GameService.updateSettings(userA.id, gameState.id, settings as IGameSettings);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Invalid game settings');
+            }
+        });
+
+    });
 });
