@@ -18,11 +18,11 @@ import DrawCardHandler from './draw-card.handler';
 import GameService from '../game/game.service';
 
 const {
-    GIANT,
+    GIANTS,
     MERFOLK,
-    ORC,
-    TROLL,
-    WIZARD,
+    ORCS,
+    TROLLS,
+    WIZARDS,
 } = TribeName;
 
 export default class TribeHandler {
@@ -83,19 +83,19 @@ export default class TribeHandler {
         } = band;
 
         switch (tribe) {
-            case ORC:
+            case ORCS:
                 await this.handleOrcTokens(player, color);
                 break;
-            case GIANT:
+            case GIANTS:
                 await this.handleGiantBand(player, bandSize);
                 break;
             case MERFOLK:
                 await this.handleMerfolkTrack(player, bandSize);
                 break;
-            case WIZARD:
+            case WIZARDS:
                 await this.handleWizardDraw(game, player, bandSize);
                 break;
-            case TROLL:
+            case TROLLS:
                 await this.handleTrollTokens(game, player, bandSize);
                 break;
         }

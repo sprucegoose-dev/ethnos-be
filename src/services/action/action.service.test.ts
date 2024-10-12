@@ -33,12 +33,12 @@ describe('ActionService', () => {
 
             const settings = {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                 ]
             };
 
@@ -238,49 +238,49 @@ describe('ActionService', () => {
                 {
                     id: 1,
                     tribe: {
-                        name: TribeName.CENTAUR,
+                        name: TribeName.CENTAURS,
                     },
                     color: Color.BLUE,
                 },
                 {
                     id: 2,
                     tribe: {
-                        name: TribeName.CENTAUR,
+                        name: TribeName.CENTAURS,
                     },
                     color: Color.GRAY,
                 },
                 {
                     id: 3,
                     tribe: {
-                        name: TribeName.ELF,
+                        name: TribeName.ELVES,
                     },
                     color: Color.ORANGE,
                 },
                 {
                     id: 4,
                     tribe: {
-                        name: TribeName.TROLL,
+                        name: TribeName.TROLLS,
                     },
                     color: Color.BLUE,
                 },
                 {
                     id: 5,
                     tribe: {
-                        name: TribeName.TROLL,
+                        name: TribeName.TROLLS,
                     },
                     color: Color.GREEN,
                 },
                 {
                     id: 6,
                     tribe: {
-                        name: TribeName.TROLL,
+                        name: TribeName.TROLLS,
                     },
                     color: Color.ORANGE,
                 },
                 {
                     id: 7,
                     tribe: {
-                        name: TribeName.SKELETON,
+                        name: TribeName.SKELETONS,
                     },
                     color: null,
                 }

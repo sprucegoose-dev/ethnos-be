@@ -397,12 +397,12 @@ describe('GamesController', () => {
                 },
                 body: {
                     tribes: [
-                        TribeName.DWARF,
-                        TribeName.MINOTAUR,
+                        TribeName.DWARVES,
+                        TribeName.MINOTAURS,
                         TribeName.MERFOLK,
-                        TribeName.CENTAUR,
-                        TribeName.ELF,
-                        TribeName.WIZARD,
+                        TribeName.CENTAURS,
+                        TribeName.ELVES,
+                        TribeName.WIZARDS,
                     ]
                 }
             };
@@ -432,9 +432,9 @@ describe('GamesController', () => {
 
             const settings = {
                 tribes: [
-                    TribeName.ORC,
-                    TribeName.ELF,
-                    TribeName.SKELETON
+                    TribeName.ORCS,
+                    TribeName.ELVES,
+                    TribeName.SKELETONS
                 ]
             };
 

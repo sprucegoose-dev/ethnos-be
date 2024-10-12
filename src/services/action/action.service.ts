@@ -87,7 +87,7 @@ export class ActionService {
         const playBandActions: IPlayBandPayload[] = [];
 
         for (const leader of cardsInHand) {
-            if (leader.tribe.name === TribeName.SKELETON) {
+            if (leader.tribe.name === TribeName.SKELETONS) {
                 continue;
             }
 

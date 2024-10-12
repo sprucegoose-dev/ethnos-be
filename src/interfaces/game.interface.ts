@@ -5,18 +5,18 @@ import Player from '@models/player.model';
 import { TribeName } from './tribe.interface';
 
 export const TRIBES = [
-    TribeName.CENTAUR,
-    TribeName.DWARF,
-    TribeName.ELF,
-    TribeName.GIANT,
-    TribeName.HALFLING,
+    TribeName.CENTAURS,
+    TribeName.DWARVES,
+    TribeName.ELVES,
+    TribeName.GIANTS,
+    TribeName.HALFLINGS,
     TribeName.MERFOLK,
-    TribeName.MINOTAUR,
-    TribeName.ORC,
-    TribeName.SKELETON,
-    TribeName.TROLL,
+    TribeName.MINOTAURS,
+    TribeName.ORCS,
+    TribeName.SKELETONS,
+    TribeName.TROLLS,
     TribeName.WINGFOLK,
-    TribeName.WIZARD,
+    TribeName.WIZARDS,
 ];
 
 export enum Color {

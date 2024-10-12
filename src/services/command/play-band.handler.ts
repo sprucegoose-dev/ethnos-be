@@ -29,11 +29,11 @@ import TribeService from './tribe.handler';
 import NextActionHandler from './next-action.handler';
 
 const {
-    CENTAUR,
-    ELF,
-    HALFLING,
-    MINOTAUR,
-    SKELETON,
+    CENTAURS,
+    ELVES,
+    HALFLINGS,
+    MINOTAURS,
+    SKELETONS,
     WINGFOLK,
 } = TribeName;
 
@@ -57,12 +57,12 @@ export default class PlayBandHandler {
             });
         }
 
-        if (tribe !== HALFLING && bandSize > playerRegion.tokens) {
+        if (tribe !== HALFLINGS && bandSize > playerRegion.tokens) {
             await playerRegion.update({ tokens: playerRegion.tokens + 1 });
 
             tokenAdded = true;
 
-            if (tribe === CENTAUR && remainingCards.length) {
+            if (tribe === CENTAURS && remainingCards.length) {
                 await NextAction.create({
                     gameId: game.id,
                     playerId: player.id,
@@ -97,11 +97,11 @@ export default class PlayBandHandler {
         cardIdsToKeep,
         band,
     }: IRemainingCardsOptions) {
-        if (band.tribe === ELF) {
+        if (band.tribe === ELVES) {
             remainingCards = this.filterOutCardsToKeep(remainingCards, cardIdsToKeep, band.bandSize);
         }
 
-        if (band.tribe === CENTAUR && tokenAdded) {
+        if (band.tribe === CENTAURS && tokenAdded) {
             return;
         }
 
@@ -143,7 +143,7 @@ export default class PlayBandHandler {
         let color = leader.color;
         let bandSize = bandCardIds.length;
 
-        if (tribe === MINOTAUR) {
+        if (tribe === MINOTAURS) {
             bandSize++;
         }
 
@@ -208,7 +208,7 @@ export default class PlayBandHandler {
     }
 
     static validateBand(cardsInHand: Card[], bandCardIds: number[], leader: Card): boolean {
-        if (leader.tribe.name === SKELETON) {
+        if (leader.tribe.name === SKELETONS) {
             throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
         }
 

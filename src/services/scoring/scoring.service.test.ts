@@ -22,12 +22,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             gameId = result.gameId;
@@ -43,7 +43,7 @@ describe('ScoringService', () => {
             gameState = await GameService.getState(gameId);
 
             const bandA = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.CENTAUR &&
+                card.tribe.name === TribeName.CENTAURS &&
                 card.color !== Color.ORANGE &&
                 !card.playerId
             ).slice(0, 3);
@@ -72,12 +72,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -108,12 +108,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -130,7 +130,7 @@ describe('ScoringService', () => {
 
             // 3 points
             const bandA = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.CENTAUR &&
+                card.tribe.name === TribeName.CENTAURS &&
                 card.color !== Color.ORANGE &&
                 !card.playerId
             ).slice(0, 3);
@@ -138,13 +138,13 @@ describe('ScoringService', () => {
             // 10 points
             const bandB = gameState.cards.filter(card =>
                 card.color === Color.ORANGE &&
-                card.tribe.name !== TribeName.DWARF &&
+                card.tribe.name !== TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 5);
 
             // 6 points (dwarfs are +1 band size)
             const bandC = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 card.color !== Color.ORANGE &&
                 !card.playerId
             ).slice(0, 3);
@@ -178,7 +178,7 @@ describe('ScoringService', () => {
             gameState = await GameService.getState(gameId);
 
             const bandA = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.MINOTAUR &&
+                card.tribe.name === TribeName.MINOTAURS &&
                 !card.playerId
             ).slice(0, 7);
 
@@ -205,12 +205,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -258,12 +258,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -540,12 +540,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -766,12 +766,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -837,12 +837,12 @@ describe('ScoringService', () => {
         it("should return 'null' if Merfolk are not in the game", () => {
             gameState.settings = {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
-                    TribeName.SKELETON,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
+                    TribeName.SKELETONS,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             }
             gameState.age = 3;
@@ -858,12 +858,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.ORC,
-                    TribeName.MINOTAUR,
+                    TribeName.ORCS,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -888,12 +888,12 @@ describe('ScoringService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.ORC,
-                    TribeName.MINOTAUR,
-                    TribeName.DWARF,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.ORCS,
+                    TribeName.MINOTAURS,
+                    TribeName.DWARVES,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -926,12 +926,12 @@ describe('ScoringService', () => {
             await Game.update({
                 settings: {
                     tribes: [
-                        TribeName.ORC,
+                        TribeName.ORCS,
                         TribeName.MERFOLK,
-                        TribeName.DWARF,
-                        TribeName.CENTAUR,
-                        TribeName.ELF,
-                        TribeName.TROLL,
+                        TribeName.DWARVES,
+                        TribeName.CENTAURS,
+                        TribeName.ELVES,
+                        TribeName.TROLLS,
                     ]
                 }
             }, {

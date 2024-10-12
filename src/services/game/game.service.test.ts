@@ -346,12 +346,12 @@ describe('GameService', () => {
 
             settings = {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                 ]
             };
         });
@@ -483,21 +483,21 @@ describe('GameService', () => {
             { tribes: [], invalidOption: {} },
             {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.DWARVES,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                     TribeName.WINGFOLK,
-                    TribeName.ORC,
+                    TribeName.ORCS,
                     'invalid tribe'
                 ]
             },
             {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.DWARVES,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                     TribeName.WINGFOLK,
-                    TribeName.ORC,
+                    TribeName.ORCS,
                 ]
             },
         ])('should throw an error when the game settings are invalid: %s', async (settings) => {
@@ -644,12 +644,12 @@ describe('GameService', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -754,21 +754,21 @@ describe('GameService', () => {
             { tribes: [], invalidOption: {} },
             {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.DWARVES,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                     TribeName.WINGFOLK,
-                    TribeName.ORC,
+                    TribeName.ORCS,
                     'invalid tribe'
                 ]
             },
             {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.DWARVES,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                     TribeName.WINGFOLK,
-                    TribeName.ORC,
+                    TribeName.ORCS,
                 ]
             },
         ])('should return false when the game settings are invalid: %s', (settings) => {
@@ -778,11 +778,11 @@ describe('GameService', () => {
         it('should return true when the game settings are valid: %s', () => {
             const settings = {
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.ELF,
-                    TribeName.WIZARD,
+                    TribeName.DWARVES,
+                    TribeName.ELVES,
+                    TribeName.WIZARDS,
                     TribeName.WINGFOLK,
-                    TribeName.ORC,
+                    TribeName.ORCS,
                     TribeName.MERFOLK,
                 ]
             };
@@ -802,9 +802,9 @@ describe('GameService', () => {
         it('should update the game settings', async () => {
             const settings = {
                 tribes: [
-                    TribeName.ORC,
-                    TribeName.ELF,
-                    TribeName.SKELETON
+                    TribeName.ORCS,
+                    TribeName.ELVES,
+                    TribeName.SKELETONS
                 ]
             }
             await GameService.updateSettings(userA.id, gameState.id, settings);

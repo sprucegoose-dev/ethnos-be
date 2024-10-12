@@ -17,12 +17,12 @@ import {
 
 const defaultSettings = {
     tribes: [
-        TribeName.DWARF,
-        TribeName.MINOTAUR,
+        TribeName.DWARVES,
+        TribeName.MINOTAURS,
         TribeName.MERFOLK,
-        TribeName.CENTAUR,
-        TribeName.ELF,
-        TribeName.WIZARD,
+        TribeName.CENTAURS,
+        TribeName.ELVES,
+        TribeName.WIZARDS,
     ]
 };
 

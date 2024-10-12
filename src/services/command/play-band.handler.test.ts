@@ -45,7 +45,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 3);
 
@@ -78,7 +78,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.CENTAUR &&
+                card.tribe.name === TribeName.CENTAURS &&
                 !card.playerId
             ).slice(0, 5);
 
@@ -119,7 +119,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -150,12 +150,12 @@ describe('PlayBandHandler', () => {
         it("should NOT add a token to a the target region if the band leader is a Halfling", async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.HALFLING,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.HALFLINGS,
                 ]
             });
             const gameId = result.gameId;
@@ -167,7 +167,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.HALFLING
+                card.tribe.name === TribeName.HALFLINGS
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -208,7 +208,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 5);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -268,7 +268,7 @@ describe('PlayBandHandler', () => {
                 player,
                 cardIdsToKeep: [],
                 band: {
-                    tribe: TribeName.MINOTAUR,
+                    tribe: TribeName.MINOTAURS,
                     color: Color.BLUE,
                     bandSize: 3,
                 }
@@ -309,7 +309,7 @@ describe('PlayBandHandler', () => {
                 player,
                 cardIdsToKeep,
                 band: {
-                    tribe: TribeName.ELF,
+                    tribe: TribeName.ELVES,
                     color: Color.ORANGE,
                     bandSize: 3,
                 }
@@ -350,7 +350,7 @@ describe('PlayBandHandler', () => {
                 player,
                 cardIdsToKeep: [],
                 band: {
-                    tribe: TribeName.CENTAUR,
+                    tribe: TribeName.CENTAURS,
                     color: Color.BLUE,
                     bandSize: 3,
                 }
@@ -380,7 +380,7 @@ describe('PlayBandHandler', () => {
             await returnPlayerCardsToDeck(playerA.id);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -416,7 +416,7 @@ describe('PlayBandHandler', () => {
             } = await createGame();
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -443,7 +443,7 @@ describe('PlayBandHandler', () => {
             } = await createGame();
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -473,7 +473,7 @@ describe('PlayBandHandler', () => {
                 gameState,
             } = await createGame();
 
-            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.DWARF).slice(0, 3);
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.DWARVES).slice(0, 3);
 
             const leader = bandCards[0];
 
@@ -491,7 +491,7 @@ describe('PlayBandHandler', () => {
                 gameState,
             } = await createGame();
 
-            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.MINOTAUR).slice(0, 3);
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.MINOTAURS).slice(0, 3);
 
             const leader = bandCards[0];
 
@@ -509,11 +509,11 @@ describe('PlayBandHandler', () => {
                 gameState
             } = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
                     TribeName.WINGFOLK,
                 ]
             });
@@ -550,7 +550,7 @@ describe('PlayBandHandler', () => {
             await returnPlayerCardsToDeck(playerA.id);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -585,7 +585,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 3);
 
@@ -622,7 +622,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 3);
 
@@ -664,7 +664,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 5);
 
@@ -713,7 +713,7 @@ describe('PlayBandHandler', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 3);
 
@@ -764,7 +764,7 @@ describe('PlayBandHandler', () => {
             } = await createGame();
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -787,7 +787,7 @@ describe('PlayBandHandler', () => {
             } = await createGame();
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF
+                card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const cardIdsToAssign = cardsToAssign.map(card => card.id);
@@ -813,22 +813,22 @@ describe('PlayBandHandler', () => {
                 playerA,
             } = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.SKELETON,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.SKELETONS,
                 ]
             });
 
             const leaderToAssign =  gameState.cards.find(card =>
-                card.tribe.name === TribeName.SKELETON &&
+                card.tribe.name === TribeName.SKELETONS &&
                 !card.playerId
             );
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             ).slice(0, 2);
 

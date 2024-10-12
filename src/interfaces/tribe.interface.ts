@@ -1,17 +1,17 @@
 export enum TribeName {
-    CENTAUR = 'Centaur',
-    DWARF = 'Dwarf',
+    CENTAURS = 'Centaurs',
+    DWARVES = 'Dwarves',
     DRAGON = 'Dragon',
-    ELF = 'Elf',
-    GIANT = 'Giant',
-    HALFLING = 'Halfling',
+    ELVES = 'Elves',
+    GIANTS = 'Giants',
+    HALFLINGS = 'Halflings',
     MERFOLK = 'Merfolk',
-    MINOTAUR = 'Minotaur',
-    ORC = 'Orc',
-    SKELETON = 'Skeleton',
-    TROLL = 'Troll',
+    MINOTAURS = 'Minotaurs',
+    ORCS = 'Orcs',
+    SKELETONS = 'Skeletons',
+    TROLLS = 'Trolls',
     WINGFOLK = 'Wingfolk',
-    WIZARD = 'Wizard',
+    WIZARDS = 'Wizards',
 }
 
 export interface ITribe {

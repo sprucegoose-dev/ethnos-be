@@ -117,7 +117,7 @@ export default class ScoringService {
             leader = bandCards.find(card => card.id === Number(leaderId));
             bandSize = bandCards.length;
 
-            if (leader.tribe.name === TribeName.DWARF) {
+            if (leader.tribe.name === TribeName.DWARVES) {
                 bandSize++;
             }
 

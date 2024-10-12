@@ -2,18 +2,18 @@
 function generateTribeSeeds() {
     const tribes = [];
     const tribeNames = [
-        'Centaur',
-        'Dwarf',
-        'Elf',
-        'Giant',
-        'Halfling',
+        'Centaurs',
+        'Dwarves',
+        'Elves',
+        'Giants',
+        'Halflings',
         'Merfolk',
-        'Minotaur',
-        'Orc',
-        'Skeleton',
-        'Troll',
+        'Minotaurs',
+        'Orcs',
+        'Skeletons',
+        'Trolls',
         'Wingfolk',
-        'Wizard',
+        'Wizards',
     ];
     const descriptions = [
         'If you place a marker on the board, you may play another band of allies immediately.',

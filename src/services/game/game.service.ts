@@ -181,12 +181,12 @@ export default class GameService {
                     cards.push(card);
                 }
             } else {
-                const quantityInEachColor = tribe.name === TribeName.HALFLING ? 4 : 2;
+                const quantityInEachColor = tribe.name === TribeName.HALFLINGS ? 4 : 2;
 
                 for (let i = 0; i < quantityInEachColor; i++) {
                     for (let j = 0; j < colors.length; j++) {
                         card = await Card.create({
-                            color: tribe.name === TribeName.SKELETON ? null : colors[j],
+                            color: tribe.name === TribeName.SKELETONS ? null : colors[j],
                             gameId,
                             tribeId: tribe.id,
                             state: CardState.IN_DECK,

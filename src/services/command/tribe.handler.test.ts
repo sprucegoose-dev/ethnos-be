@@ -24,12 +24,12 @@ describe('TribeHandler', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -87,12 +87,12 @@ describe('TribeHandler', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -145,12 +145,12 @@ describe('TribeHandler', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             playerA = result.playerA;
@@ -195,16 +195,16 @@ describe('TribeHandler', () => {
                 playerA,
             } = await createGame({
                 tribes: [
-                    TribeName.ORC,
-                    TribeName.MINOTAUR,
+                    TribeName.ORCS,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
 
-            const orcBand = gameState.cards.filter(card => card.tribe.name === TribeName.ORC).slice(0, 3);
+            const orcBand = gameState.cards.filter(card => card.tribe.name === TribeName.ORCS).slice(0, 3);
 
             const leader = orcBand[0];
 
@@ -223,16 +223,16 @@ describe('TribeHandler', () => {
                 playerA,
             } = await createGame({
                 tribes: [
-                    TribeName.GIANT,
-                    TribeName.MINOTAUR,
+                    TribeName.GIANTS,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
 
-            const giantBand = gameState.cards.filter(card => card.tribe.name === TribeName.GIANT).slice(0, 3);
+            const giantBand = gameState.cards.filter(card => card.tribe.name === TribeName.GIANTS).slice(0, 3);
 
             const leader = giantBand[0];
 
@@ -252,11 +252,11 @@ describe('TribeHandler', () => {
             } = await createGame({
                 tribes: [
                     TribeName.MERFOLK,
-                    TribeName.MINOTAUR,
-                    TribeName.DWARF,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.MINOTAURS,
+                    TribeName.DWARVES,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
 
@@ -279,18 +279,18 @@ describe('TribeHandler', () => {
                 playerA,
             } = await createGame({
                 tribes: [
-                    TribeName.WIZARD,
-                    TribeName.MINOTAUR,
-                    TribeName.DWARF,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.WIZARDS,
+                    TribeName.MINOTAURS,
+                    TribeName.DWARVES,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
 
             const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
 
-            const wizardBand = gameState.cards.filter(card => card.tribe.name === TribeName.WIZARD).slice(0, 3);
+            const wizardBand = gameState.cards.filter(card => card.tribe.name === TribeName.WIZARDS).slice(0, 3);
 
             const leader = wizardBand[0];
 
@@ -309,18 +309,18 @@ describe('TribeHandler', () => {
                 playerA,
             } = await createGame({
                 tribes: [
-                    TribeName.TROLL,
-                    TribeName.WIZARD,
-                    TribeName.MINOTAUR,
-                    TribeName.DWARF,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
+                    TribeName.TROLLS,
+                    TribeName.WIZARDS,
+                    TribeName.MINOTAURS,
+                    TribeName.DWARVES,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
                 ]
             });
 
             const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
 
-            const trollBand = gameState.cards.filter(card => card.tribe.name === TribeName.TROLL).slice(0, 3);
+            const trollBand = gameState.cards.filter(card => card.tribe.name === TribeName.TROLLS).slice(0, 3);
 
             const leader = trollBand[0];
 
@@ -343,12 +343,12 @@ describe('TribeHandler', () => {
         beforeEach(async () => {
             const result = await createGame({
                 tribes: [
-                    TribeName.DWARF,
-                    TribeName.MINOTAUR,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
                     TribeName.MERFOLK,
-                    TribeName.CENTAUR,
-                    TribeName.ELF,
-                    TribeName.TROLL,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.TROLLS,
                 ]
             });
             gameId = result.gameId;

@@ -110,7 +110,7 @@ describe('CommandService', () => {
             gameState = await GameService.getState(gameId);
 
             const cardToAssign = gameState.cards.find(card =>
-                card.tribe.name === TribeName.DWARF &&
+                card.tribe.name === TribeName.DWARVES &&
                 !card.playerId
             );
 
@@ -256,7 +256,7 @@ describe('CommandService', () => {
             gameState = await GameService.getState(gameId);
 
             const cardsToAssign = gameState.cards.filter(card =>
-                card.tribe.name === TribeName.CENTAUR &&
+                card.tribe.name === TribeName.CENTAURS &&
                 !card.playerId
             ).slice(0, 5);
 
