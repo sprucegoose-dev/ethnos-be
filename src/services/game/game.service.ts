@@ -383,6 +383,13 @@ export default class GameService {
 
         await PlayerService.create(userId, gameId);
 
+        const updatedGameState = await this.getState(gameId);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: updatedGameState
+        });
+
         const activeGames = await this.getActiveGames();
 
         EventService.emitEvent({
