@@ -295,7 +295,7 @@ describe('GameService', () => {
                 await GameService.join(userD.id, newGame.id, 'incorrect-password');
                 throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
-                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.type).toBe(ERROR_FORBIDDEN);
                 expect(error.message).toBe('Incorrect room password');
             }
         });
@@ -309,21 +309,7 @@ describe('GameService', () => {
                 await GameService.join(userD.id, newGame.id, null);
                 throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
-                expect(error.type).toBe(ERROR_BAD_REQUEST);
-                expect(error.message).toBe('Incorrect room password');
-            }
-        });
-
-        it('should not require a password if the user joining', async () => {
-            const newGame = await GameService.create(userA.id, true, 'some-password');
-            await PlayerService.create(userB.id, newGame.id);
-            await PlayerService.create(userC.id, newGame.id);
-
-            try {
-                await GameService.join(userD.id, newGame.id, null);
-                throw new Error(UNEXPECTED_ERROR_MSG);
-            } catch (error: any) {
-                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.type).toBe(ERROR_FORBIDDEN);
                 expect(error.message).toBe('Incorrect room password');
             }
         });
