@@ -376,7 +376,7 @@ export default class GameService {
         }
 
         if (game.password) {
-            if (!password || !await bcrypt.compare(game.password, password)) {
+            if (!password || !await bcrypt.compare(password, game.password)) {
                 throw new CustomException(ERROR_FORBIDDEN, 'Incorrect room password');
             }
         }

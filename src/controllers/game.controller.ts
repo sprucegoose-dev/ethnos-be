@@ -48,7 +48,8 @@ class GamesController {
     async join(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
-        await GameService.join(userId, parseInt(gameId, 10));
+        const password = req.body.password;
+        await GameService.join(userId, parseInt(gameId, 10), password);
         res.send();
     }
 
