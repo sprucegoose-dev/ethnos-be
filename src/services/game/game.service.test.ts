@@ -27,7 +27,7 @@ import {
     userC,
     userD,
 } from '@jest.setup';
-import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
+import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
 
 describe('GameService', () => {
 
@@ -102,6 +102,50 @@ describe('GameService', () => {
 
             expect(activeGames[0].id).toBe(gameState.id);
             expect(activeGames[0].toJSON().hasPassword).toBe(1);
+        });
+    });
+
+    describe('getCardsInHand', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return all cards in a player's hand", async () => {
+
+            await returnPlayerCardsToDeck(playerA.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            const cardsToAssign = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARVES &&
+                card.index !== null
+            ).slice(0, 3)
+            .sort((cardA, cardB) => cardA.index - cardB.index);
+
+            const cardIdsToAssign = cardsToAssign.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const cardsInHand = await GameService.getCardsInHand(playerA.userId, gameState.id);
+
+            expect(cardsInHand.length).toBe(3);
+
+            for (let i = 0; i < cardsInHand.length; i++) {
+                expect(cardsInHand[i]).toEqual( expect.objectContaining({
+                    id: cardsToAssign[i].id,
+                    color: cardsToAssign[i].color,
+                    index: cardsToAssign[i].index,
+                    state: CardState.IN_HAND,
+                    tribeId: cardsToAssign[i].tribeId,
+                }));
+            }
         });
     });
 

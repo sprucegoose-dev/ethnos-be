@@ -116,45 +116,6 @@ export default class GameService {
         }
     }
 
-    static async getActiveGames(): Promise<Omit<IGameState, 'cards'>[]> {
-        return await Game.findAll({
-            where: {
-                state: {
-                    [Op.not]: [GameState.ENDED, GameState.CANCELLED]
-                },
-            },
-            attributes: {
-                include: [
-                    [Sequelize.literal('CASE WHEN game.password IS NOT NULL THEN true ELSE false END'), 'hasPassword']
-                ]
-            },
-            include: [
-                {
-                    model: Player,
-                    as: 'players',
-                    include: [
-                        {
-                            model: User,
-                            as: 'user',
-                            attributes: [
-                                'id',
-                                'username',
-                            ],
-                        }
-                    ],
-                },
-                {
-                    model: User,
-                    as: 'creator',
-                    attributes: [
-                        'id',
-                        'username'
-                    ]
-                }
-            ]
-        });
-    }
-
     static async generateCards(gameId: number, tribes: Tribe[]): Promise<Card[]> {
         const cards = [];
         let card;
@@ -243,6 +204,65 @@ export default class GameService {
                 values: valueSets[i],
             });
         }
+    }
+
+    static async getActiveGames(): Promise<Omit<IGameState, 'cards'>[]> {
+        return await Game.findAll({
+            where: {
+                state: {
+                    [Op.not]: [GameState.ENDED, GameState.CANCELLED]
+                },
+            },
+            attributes: {
+                include: [
+                    [Sequelize.literal('CASE WHEN game.password IS NOT NULL THEN true ELSE false END'), 'hasPassword']
+                ]
+            },
+            include: [
+                {
+                    model: Player,
+                    as: 'players',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: [
+                                'id',
+                                'username',
+                            ],
+                        }
+                    ],
+                },
+                {
+                    model: User,
+                    as: 'creator',
+                    attributes: [
+                        'id',
+                        'username'
+                    ]
+                }
+            ]
+        });
+    }
+
+    static async getCardsInHand(userId: number, gameId: number): Promise<Card[]> {
+        const player = await Player.findOne({
+            where: {
+                userId,
+                gameId,
+            },
+        });
+
+        return await Card.findAll({
+            where: {
+                playerId: player.id,
+                state: CardState.IN_HAND
+            },
+            include: [
+                Tribe,
+            ],
+            order: [['index', 'asc']]
+        });
     }
 
     static getNextPlayerId(activePlayerId: number, turnOrder: number[]): number {

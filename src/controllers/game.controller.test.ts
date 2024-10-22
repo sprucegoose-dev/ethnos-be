@@ -275,7 +275,8 @@ describe('GamesController', () => {
                 userId: userB.id,
                 params: {
                     id: game.id
-                }
+                },
+                body: {}
             };
 
             await GamesController.join(request, response);
