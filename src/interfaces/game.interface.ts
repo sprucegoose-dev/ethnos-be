@@ -40,6 +40,9 @@ export interface IGameState extends Game {
     hasPassword?: number;
     players: Player[];
 }
+export interface IGameStateResponse extends IGameState {
+    cardsInDeckCount: number;
+}
 
 export interface IGameSettings {
    tribes: TribeName[];

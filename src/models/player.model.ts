@@ -51,15 +51,15 @@ export default class Player extends Model {
         defaultValue: [],
         field: 'orc_tokens',
         type: DataType.JSON,
-      })
-      orcTokens: Color[];
+    })
+    orcTokens: Color[];
 
-      @Column({
+    @Column({
         defaultValue: [],
         field: 'troll_tokens',
         type: DataType.JSON,
-      })
-      trollTokens: number[];
+    })
+    trollTokens: number[];
 
     @Column({
         field: 'merfolk_track_score',

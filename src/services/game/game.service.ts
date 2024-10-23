@@ -16,6 +16,7 @@ import {
     GameState,
     IGameSettings,
     IGameState,
+    IGameStateResponse,
     TRIBES,
 } from '@interfaces/game.interface';
 import {
@@ -37,7 +38,7 @@ import {
 
 export default class GameService {
 
-    static async create(userId: number, autoAddPlayer: boolean = true, password: string = null): Promise<IGameState> {
+    static async create(userId: number, autoAddPlayer: boolean = true, password: string = null): Promise<IGameStateResponse> {
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before creating a new one.');
         }
@@ -61,7 +62,7 @@ export default class GameService {
             payload: activeGames
         });
 
-        return await this.getState(game.id);
+        return await this.getStateResponse(game.id);
     }
 
     static async dealCards(gameId: number, players: Player[], allCards: Card[]) {
@@ -265,6 +266,54 @@ export default class GameService {
         });
     }
 
+    static async getPlayerHands(userId: number, gameId: number): Promise<{[playerId: number]: Card[]}> {
+        const player = await Player.findOne({
+            where: {
+                userId,
+                gameId,
+            },
+        });
+
+        const ownCards = await Card.findAll({
+            where: {
+                playerId: player.id,
+                state: CardState.IN_HAND
+            },
+            include: [
+                Tribe,
+            ],
+            order: [['index', 'asc']]
+        });
+
+        const otherPlayers = await Player.findAll({
+            where: {
+                gameId,
+                id: {
+                    [Op.not]: player.id
+                },
+            },
+            include: [
+                {
+                    model: Card,
+                    where: {
+                        state: CardState.IN_HAND
+                    },
+                    attributes: ['id'],
+                }
+            ],
+        });
+
+        const cardsByPlayerId = otherPlayers.reduce<{ [playerId: number]: Card[] }>((acc, player) => {
+            acc[player.id] = player.cards;
+            return acc;
+        }, {});
+
+        return {
+            [player.id]: ownCards,
+            ...cardsByPlayerId,
+        };
+    }
+
     static getNextPlayerId(activePlayerId: number, turnOrder: number[]): number {
         const turnIndex = turnOrder.indexOf(activePlayerId);
         return turnIndex === turnOrder.length - 1 ? turnOrder[0] : turnOrder[turnIndex + 1];
@@ -359,6 +408,79 @@ export default class GameService {
         return game?.toJSON();
     }
 
+    static async getStateResponse(gameId: number): Promise<IGameStateResponse> {
+        const game = await Game.findOne({
+            where: {
+                id: gameId,
+            },
+            include: [
+                {
+                    model: Player,
+                    as: 'players',
+                    include: [
+                        {
+                            model: User,
+                            attributes: [
+                                'id',
+                                'username',
+                            ],
+                        },
+                        {
+                            model: Card,
+                            required: false,
+                            include: [
+                                Tribe,
+                            ],
+                            where: {
+                                state: CardState.IN_BAND
+                            },
+                            order: [['index', 'asc']]
+                        },
+                    ],
+                },
+                {
+                    model: User,
+                    as: 'creator',
+                    attributes: [
+                        'id',
+                        'username',
+                    ],
+                },
+                {
+                    model: Region,
+                    as: 'regions',
+                    required: false,
+                },
+                {
+                    model: Card,
+                    include: [
+                        Tribe,
+                    ],
+                    where: {
+                        state: {
+                            [Op.in]: [ CardState.IN_MARKET, CardState.REVEALED ]
+                        }
+                    },
+                    required: false,
+                }
+            ]
+        });
+
+        const cardsInDeckCount = await Card.count({
+            where: {
+                gameId,
+                state: CardState.IN_DECK
+            }
+        });
+
+        const gameState = game?.toJSON();
+
+        return {
+            ...gameState,
+            cardsInDeckCount,
+        }
+    }
+
     static async hasActiveGames(userId: number) {
         const activeGames = await Game.findAll({
             where: {
@@ -403,7 +525,7 @@ export default class GameService {
 
         await PlayerService.create(userId, gameId);
 
-        const updatedGameState = await this.getState(gameId);
+        const updatedGameState = await this.getStateResponse(gameId);
 
         EventService.emitEvent({
             type: EVENT_GAME_UPDATE,
@@ -461,7 +583,7 @@ export default class GameService {
         if (game.players.length - 1 === 0) {
             await game.destroy();
         } else {
-            const updatedGameState = await this.getState(gameId);
+            const updatedGameState = await this.getStateResponse(gameId);
 
             EventService.emitEvent({
                 type: EVENT_GAME_UPDATE,
@@ -548,7 +670,7 @@ export default class GameService {
             }
         );
 
-        const gameState = await this.getState(game.id);
+        const gameState = await this.getStateResponse(game.id);
 
         EventService.emitEvent({
             type: EVENT_GAME_UPDATE,
@@ -623,7 +745,7 @@ export default class GameService {
             }
         );
 
-        const gameState = await this.getState(game.id);
+        const gameState = await this.getStateResponse(game.id);
 
         EventService.emitEvent({
             type: EVENT_GAME_UPDATE,

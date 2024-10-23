@@ -79,7 +79,7 @@ export default class CommandService {
             });
         }
 
-        const updatedGameState = await GameService.getState(gameId);
+        const updatedGameState = await GameService.getStateResponse(gameId);
 
         EventService.emitEvent({
             type: EVENT_GAME_UPDATE,

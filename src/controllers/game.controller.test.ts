@@ -90,6 +90,7 @@ describe('GamesController', () => {
                 activePlayerId: null,
                 age: 1,
                 cards: [],
+                cardsInDeckCount: 0,
                 createdAt: game.createdAt,
                 creator: {
                     id: userA.id,
@@ -249,9 +250,11 @@ describe('GamesController', () => {
                 }
             };
 
+            const gameStateResponse = await GameService.getStateResponse(gameState.id);
+
             await GamesController.getState(request, response);
 
-            expect(response.send).toHaveBeenCalledWith(gameState);
+            expect(response.send).toHaveBeenCalledWith(gameStateResponse);
         });
     });
 
@@ -300,13 +303,13 @@ describe('GamesController', () => {
         afterEach(async () => await Game.truncate());
 
         it("should remove a player from a game", async () => {
-            let gameState = await GameService.create(userA.id);
+            const gameStateResponse = await GameService.create(userA.id);
 
-            await GameService.join(userB.id, gameState.id);
-            await GameService.join(userC.id, gameState.id);
-            await GameService.join(userD.id, gameState.id);
+            await GameService.join(userB.id, gameStateResponse.id);
+            await GameService.join(userC.id, gameStateResponse.id);
+            await GameService.join(userD.id, gameStateResponse.id);
 
-            gameState = await GameService.getState(gameState.id);
+            let gameState = await GameService.getState(gameStateResponse.id);
 
             expect(gameState.players.length).toBe(4);
 
@@ -319,10 +322,10 @@ describe('GamesController', () => {
 
             await GamesController.leave(request, response);
 
-            const updatedGame = await GameService.getState(gameState.id);
+            gameState = await GameService.getState(gameState.id);
 
-            expect(updatedGame.players.length).toBe(3);
-            expect(updatedGame.players.find(player => player.userId === userD.id)).toBe(undefined);
+            expect(gameState.players.length).toBe(3);
+            expect(gameState.players.find(player => player.userId === userD.id)).toBe(undefined);
         });
     });
 
@@ -381,13 +384,13 @@ describe('GamesController', () => {
         afterEach(async () => await Game.truncate());
 
         it("should start the game", async () => {
-            let gameState = await GameService.create(userA.id);
+            const gameStateResponse = await GameService.create(userA.id);
 
-            await GameService.join(userB.id, gameState.id);
-            await GameService.join(userC.id, gameState.id);
-            await GameService.join(userD.id, gameState.id);
+            await GameService.join(userB.id, gameStateResponse.id);
+            await GameService.join(userC.id, gameStateResponse.id);
+            await GameService.join(userD.id, gameStateResponse.id);
 
-            gameState = await GameService.getState(gameState.id);
+            let gameState = await GameService.getState(gameStateResponse.id);
 
             expect(gameState.state).toBe(GameState.CREATED);
 
