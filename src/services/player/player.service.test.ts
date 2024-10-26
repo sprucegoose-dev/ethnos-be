@@ -12,7 +12,7 @@ import {
 } from '@jest.setup';
 import PlayerService from './player.service';
 import { createGame } from '../test-helpers';
-import { IGameState } from '../../interfaces/game.interface';
+import { GameState, IGameState } from '../../interfaces/game.interface';
 import { PlayerColor } from '../../interfaces/player.interface';
 import { ERROR_BAD_REQUEST } from '../../helpers/exception-handler';
 
@@ -21,7 +21,6 @@ describe('create', () => {
 
     beforeEach(async () => {
         game = await GameService.create(userA.id);
-
         await Player.truncate();
     });
 
@@ -44,6 +43,14 @@ describe('assignColor', () => {
         const result = await createGame();
         gameState = result.gameState;
 
+        await Game.update({
+            state: GameState.CREATED,
+        }, {
+            where: {
+                id: gameState.id
+            }
+        });
+
         await Player.update({
             color: null,
         }, {
@@ -58,10 +65,37 @@ describe('assignColor', () => {
     it('should assign a color to a player', async () => {
         await PlayerService.assignColor(userA.id, gameState.id, PlayerColor.BLUE);
 
-        gameState = await GameService.getState(gameState.id);
-
-        const updatedPlayer = gameState.players.find(player => player.userId === userA.id);
+        const updatedPlayer = await Player.findOne({
+            where: {
+                gameId: gameState.id,
+                userId: userA.id,
+            }
+        });
         expect(updatedPlayer.color).toBe(PlayerColor.BLUE);
+    });
+
+    it('should allow resetting the color by providing a null value', async () => {
+        await PlayerService.assignColor(userA.id, gameState.id, PlayerColor.BLUE);
+
+        let updatedPlayer = await Player.findOne({
+            where: {
+                gameId: gameState.id,
+                userId: userA.id,
+            }
+        });
+
+        expect(updatedPlayer.color).toBe(PlayerColor.BLUE);
+
+        await PlayerService.assignColor(userA.id, gameState.id, null);
+
+        updatedPlayer = await Player.findOne({
+            where: {
+                gameId: gameState.id,
+                userId: userA.id,
+            }
+        });
+
+        expect(updatedPlayer.color).toBe(null);
     });
 
     it("should throw an error when trying to assign a color that's already taken", async () => {
@@ -76,7 +110,6 @@ describe('assignColor', () => {
         }
     });
 
-
     it('should throw an error if the color is invalid', async () => {
         try {
             await PlayerService.assignColor(userB.id, gameState.id, 'invalid-color' as PlayerColor);
@@ -84,6 +117,24 @@ describe('assignColor', () => {
         } catch (error: any) {
             expect(error.type).toBe(ERROR_BAD_REQUEST);
             expect(error.message).toBe('Invalid color');
+        }
+    });
+
+    it('should throw an error if the game had already started', async () => {
+        await Game.update({
+            state: GameState.STARTED,
+        }, {
+            where: {
+                id: gameState.id
+            }
+        });
+
+        try {
+            await PlayerService.assignColor(userB.id, gameState.id, PlayerColor.BLUE);
+            throw new Error(UNEXPECTED_ERROR_MSG);
+        } catch (error: any) {
+            expect(error.type).toBe(ERROR_BAD_REQUEST);
+            expect(error.message).toBe("You can't change a player's color after the game had started");
         }
     });
 });
