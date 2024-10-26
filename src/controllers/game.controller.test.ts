@@ -51,6 +51,14 @@ describe('GamesController', () => {
                 }
             };
 
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
             await GamesController.assignPlayerColor(request, response);
 
             gameState = await GameService.getState(gameState.id);
@@ -65,6 +73,7 @@ describe('GamesController', () => {
 
         beforeEach(() => {
             response = {
+                status: jest.fn(),
                 send: jest.fn()
             };
         });

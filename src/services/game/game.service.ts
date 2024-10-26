@@ -35,8 +35,65 @@ import {
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
 } from '@helpers/exception-handler';
+import { PLAYER_COLORS, PlayerColor } from '../../interfaces/player.interface';
 
 export default class GameService {
+
+    static async assignPlayerColor(userId: number, gameId: number, color: PlayerColor) {
+        const game = await Game.findOne({
+            where: {
+                id: gameId,
+            },
+            attributes: ['state']
+        });
+
+        if (game.state !== GameState.CREATED) {
+            throw new CustomException(ERROR_BAD_REQUEST, "You can't change a player's color after the game had started");
+        }
+
+        if (color === null) {
+            await Player.update({
+                color: null
+            }, {
+                where: {
+                    gameId,
+                    userId,
+                }
+            });
+            return;
+        } else {
+            if (!PLAYER_COLORS.includes(color)) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'Invalid color');
+            }
+
+            const players = await Player.findAll({
+                where: {
+                    gameId,
+                }
+            });
+
+            const availableColors = PlayerService.filterAvailableColors(players);
+
+            if (!availableColors.includes(color)) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'This color is already assigned to another player');
+            }
+            await Player.update({
+                color
+            }, {
+                where: {
+                    gameId,
+                    userId,
+                }
+            });
+        }
+
+        const updatedGameState = await GameService.getStateResponse(gameId);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: updatedGameState
+        });
+    }
 
     static async assignPlayerColors(players: Player[]) {
         const availableColors = shuffle(PlayerService.filterAvailableColors(players));

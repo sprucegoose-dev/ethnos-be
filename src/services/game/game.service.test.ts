@@ -13,7 +13,7 @@ import { EVENT_ACTIVE_GAMES_UPDATE } from '@interfaces/event.interface';
 import { GameState, IGameSettings, IGameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
-import { PLAYER_COLORS } from '@interfaces/player.interface';
+import { PLAYER_COLORS, PlayerColor } from '@interfaces/player.interface';
 
 import {
     ERROR_BAD_REQUEST,
@@ -31,6 +31,109 @@ import {
 import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
 
 describe('GameService', () => {
+
+    describe('assignPlayerColor', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await Player.update({
+                color: null,
+            }, {
+                where: {
+                    gameId: gameState.id
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should assign a color to a player', async () => {
+            await GameService.assignPlayerColor(userA.id, gameState.id, PlayerColor.BLUE);
+
+            const updatedPlayer = await Player.findOne({
+                where: {
+                    gameId: gameState.id,
+                    userId: userA.id,
+                }
+            });
+            expect(updatedPlayer.color).toBe(PlayerColor.BLUE);
+        });
+
+        it('should allow resetting the color by providing a null value', async () => {
+            await GameService.assignPlayerColor(userA.id, gameState.id, PlayerColor.BLUE);
+
+            let updatedPlayer = await Player.findOne({
+                where: {
+                    gameId: gameState.id,
+                    userId: userA.id,
+                }
+            });
+
+            expect(updatedPlayer.color).toBe(PlayerColor.BLUE);
+
+            await GameService.assignPlayerColor(userA.id, gameState.id, null);
+
+            updatedPlayer = await Player.findOne({
+                where: {
+                    gameId: gameState.id,
+                    userId: userA.id,
+                }
+            });
+
+            expect(updatedPlayer.color).toBe(null);
+        });
+
+        it("should throw an error when trying to assign a color that's already taken", async () => {
+            await GameService.assignPlayerColor(userA.id, gameState.id, PlayerColor.BLUE);
+
+            try {
+                await GameService.assignPlayerColor(userB.id, gameState.id, PlayerColor.BLUE);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('This color is already assigned to another player');
+            }
+        });
+
+        it('should throw an error if the color is invalid', async () => {
+            try {
+                await GameService.assignPlayerColor(userB.id, gameState.id, 'invalid-color' as PlayerColor);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Invalid color');
+            }
+        });
+
+        it('should throw an error if the game had already started', async () => {
+            await Game.update({
+                state: GameState.STARTED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            try {
+                await GameService.assignPlayerColor(userB.id, gameState.id, PlayerColor.BLUE);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe("You can't change a player's color after the game had started");
+            }
+        });
+    });
 
     describe('assignPlayerColors', () => {
         let gameState: IGameState;

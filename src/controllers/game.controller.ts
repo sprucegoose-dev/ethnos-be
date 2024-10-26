@@ -9,7 +9,6 @@ import GameService from '@services/game/game.service';
 import { IActionRequest } from '@interfaces/action.interface';
 import { AuthRequest } from '@interfaces/index.interface';
 import { ICreateGamePayload, IGameSettings } from '@interfaces/game.interface';
-import PlayerService from '../services/player/player.service';
 
 @exceptionHandler()
 class GamesController {
@@ -17,7 +16,7 @@ class GamesController {
     async assignPlayerColor(req: AuthRequest, res: Response): Promise<void> {
         const payload = req.body;
         const gameId = req.params.id;
-        const game = await PlayerService.assignColor(req.userId, parseInt(gameId, 10), payload?.color);
+        const game = await GameService.assignPlayerColor(req.userId, parseInt(gameId, 10), payload?.color);
         res.send(game);
     }
 
