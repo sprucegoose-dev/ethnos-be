@@ -27,7 +27,7 @@ export default class PickUpCardHandler {
         await Card.update({
             state: CardState.IN_HAND,
             playerId: player.id,
-            index: null,
+            index: cardsInHand.length,
         }, {
             where: {
                 id: card.id

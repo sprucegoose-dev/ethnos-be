@@ -69,7 +69,7 @@ export default class DrawCardHandler {
             await Card.update({
                 state: CardState.IN_HAND,
                 playerId: player.id,
-                index: null,
+                index: cardsInHand.length,
             }, {
                 where: {
                     id: nextCard.id

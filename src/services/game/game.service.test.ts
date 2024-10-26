@@ -28,7 +28,7 @@ import {
     userC,
     userD,
 } from '@jest.setup';
-import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
+import { assignCardsToPlayer, createGame, getCardsFromDeck, returnPlayerCardsToDeck } from '../test-helpers';
 
 describe('GameService', () => {
 
@@ -498,6 +498,76 @@ describe('GameService', () => {
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_FORBIDDEN);
                 expect(error.message).toBe('Incorrect room password');
+            }
+        });
+    });
+
+    describe('rearrangeCards', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            playerA = result.playerA;
+            gameState = result.gameState;
+            gameState.players.map(async player => await returnPlayerCardsToDeck(player.id));
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should rearrange the cards in a player's hand", async () => {
+            const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const rearrangedCardIds = [
+                cardIdsToAssign[3],
+                cardIdsToAssign[2],
+                cardIdsToAssign[4],
+                cardIdsToAssign[0],
+                cardIdsToAssign[1],
+            ]
+
+            await GameService.rearrangeCards(playerA.userId, gameState.id, rearrangedCardIds);
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardInHand = updatedPlayer
+                .cards
+                .filter(card => card.state === CardState.IN_HAND)
+                .sort((cardA, cardB) => cardA.index - cardB.index);
+
+
+            expect(cardInHand[0].id).toBe(cardIdsToAssign[3]);
+            expect(cardInHand[1].id).toBe(cardIdsToAssign[2]);
+            expect(cardInHand[2].id).toBe(cardIdsToAssign[4]);
+            expect(cardInHand[3].id).toBe(cardIdsToAssign[0]);
+            expect(cardInHand[4].id).toBe(cardIdsToAssign[1]);
+            expect(cardInHand[0].index).toBe(0);
+            expect(cardInHand[1].index).toBe(1);
+            expect(cardInHand[2].index).toBe(2);
+            expect(cardInHand[3].index).toBe(3);
+            expect(cardInHand[4].index).toBe(4);
+        });
+
+        it("should throw an error if a card ID that is not in the player's hand is provided", async () => {
+            const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const rearrangedCardIds = [
+                cardIdsToAssign[3],
+                cardIdsToAssign[2],
+                cardIdsToAssign[4],
+                cardIdsToAssign[0],
+                0
+            ]
+
+
+            try {
+                await GameService.rearrangeCards(playerA.userId, gameState.id, rearrangedCardIds);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Card not found');
             }
         });
     });

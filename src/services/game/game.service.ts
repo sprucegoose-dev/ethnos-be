@@ -60,8 +60,8 @@ export default class GameService {
                     userId,
                 }
             });
-            return;
         } else {
+
             if (!PLAYER_COLORS.includes(color)) {
                 throw new CustomException(ERROR_BAD_REQUEST, 'Invalid color');
             }
@@ -147,7 +147,7 @@ export default class GameService {
         for (let i = 0; i < players.length; i++) {
             await Card.update({
                 state: CardState.IN_HAND,
-                index: null,
+                index: 0,
                 playerId: players[i].id,
                 gameId,
             }, {
@@ -670,6 +670,37 @@ export default class GameService {
             type: EVENT_ACTIVE_GAMES_UPDATE,
             payload: activeGames
         });
+    }
+
+    static async rearrangeCards(userId: number, gameId: number, cardIds: number[]): Promise<void> {
+        const player = await Player.findOne({
+            where: {
+                gameId,
+                userId,
+            },
+            include: [
+                {
+                    model: Card,
+                    where: {
+                        state: CardState.IN_HAND
+                    }
+                },
+            ]
+        });
+
+        let index;
+
+        for (const card of player.cards) {
+            index = cardIds.indexOf(card.id);
+
+            if (index === -1) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'Card not found');
+            }
+
+            await card.update({
+                index,
+            });
+        }
     }
 
     static setTurnOrder(players: Player[]): number[] {

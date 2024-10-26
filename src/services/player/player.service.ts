@@ -14,7 +14,7 @@ class PlayerService {
     }
 
     static filterAvailableColors(players: Player[]): PlayerColor[] {
-        const availableColors = PLAYER_COLORS;
+        const availableColors = [...PLAYER_COLORS];
 
         players.map(player => {
             const colorIndex = availableColors.indexOf(player.color);
