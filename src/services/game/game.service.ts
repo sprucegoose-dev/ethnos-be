@@ -38,6 +38,22 @@ import {
 
 export default class GameService {
 
+    static async assignPlayerColors(players: Player[]) {
+        const availableColors = shuffle(PlayerService.filterAvailableColors(players));
+
+        const filteredPlayers = players.filter(player => !player.color);
+
+        for (let i = 0; i < filteredPlayers.length; i++) {
+            await Player.update({
+                color: availableColors[i],
+            }, {
+                where: {
+                    id: filteredPlayers[i].id
+                }
+            });
+        }
+    }
+
     static async create(userId: number, autoAddPlayer: boolean = true, password: string = null): Promise<IGameStateResponse> {
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before creating a new one.');
@@ -655,6 +671,8 @@ export default class GameService {
         const startingPlayerId = turnOrder[0];
 
         await this.generateRegions(gameId);
+
+        await this.assignPlayerColors(players);
 
         await Game.update(
             {

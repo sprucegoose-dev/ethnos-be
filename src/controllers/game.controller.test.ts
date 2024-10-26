@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
-import { GameState } from '@interfaces/game.interface';
+import { GameState, IGameState } from '@interfaces/game.interface';
 import { ActionType } from '@interfaces/action.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import GamesController from './game.controller';
@@ -13,8 +13,52 @@ import CommandService from '@services/command/command.service';
 import { createGame } from '@services/test-helpers';
 
 import { userA, userB, userC, userD } from '@jest.setup';
+import { PlayerColor } from '../interfaces/player.interface';
 
 describe('GamesController', () => {
+
+    describe('assignPlayerColor', () => {
+        let gameState: IGameState;
+        let response: any;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+
+            await Player.update({
+                color: null,
+            }, {
+                where: {
+                    gameId: gameState.id
+                }
+            });
+
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should assign a color to a player', async () => {
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id,
+                },
+                body: {
+                    color: PlayerColor.BLUE
+                }
+            };
+
+            await GamesController.assignPlayerColor(request, response);
+
+            gameState = await GameService.getState(gameState.id);
+
+            const updatedPlayer = gameState.players.find(player => player.userId === userA.id);
+            expect(updatedPlayer.color).toBe(PlayerColor.BLUE);
+        });
+    });
 
     describe('create', () => {
         let response: any;

@@ -36,6 +36,7 @@ app.get('/user', UsersController.getDetails);
 app.patch('/user', UsersController.update);
 app.delete('/user', UsersController.delete);
 
+app.get('/game/assignColor', GamesController.assignPlayerColor);
 app.get('/game/all', GamesController.getActiveGames);
 app.get('/game/:id/actions', GamesController.getActions);
 app.post('/game/:id/start', GamesController.start);

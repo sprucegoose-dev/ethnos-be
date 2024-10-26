@@ -11,6 +11,7 @@ import Game from './game.model';
 import User from './user.model';
 import { Color } from '@interfaces/game.interface';
 import Card from './card.model';
+import { PlayerColor } from '../interfaces/player.interface';
 
 @Table({
     tableName: 'players',
@@ -43,6 +44,11 @@ export default class Player extends Model {
         }
     })
     gameId: number;
+
+    @Column({
+        defaultValue: null
+    })
+    color: PlayerColor;
 
     @Column({ field: 'giant_token_value' })
     giantTokenValue: number;

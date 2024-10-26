@@ -13,6 +13,7 @@ import { EVENT_ACTIVE_GAMES_UPDATE } from '@interfaces/event.interface';
 import { GameState, IGameSettings, IGameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
+import { PLAYER_COLORS } from '@interfaces/player.interface';
 
 import {
     ERROR_BAD_REQUEST,
@@ -30,6 +31,45 @@ import {
 import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '../test-helpers';
 
 describe('GameService', () => {
+
+    describe('assignPlayerColors', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+
+            await Player.update({
+                color: null,
+            }, {
+                where: {
+                    gameId: gameState.id
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('automatically assigns colors to players in a game', async () => {
+            const players = await Player.findAll({
+                where: {
+                    gameId: gameState.id
+                }
+            });
+
+            for (const player of players) {
+                expect(player.color).toBe(null);
+            }
+
+            await GameService.assignPlayerColors(players);
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            for (const player of updatedGame.players) {
+                expect(PLAYER_COLORS.includes(player.color)).toBe(true);
+            }
+        });
+    });
 
     describe('create', () => {
 
@@ -538,6 +578,26 @@ describe('GameService', () => {
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
                 expect(error.message).toBe('Invalid game settings');
+            }
+        });
+
+        it("automatically assigns a color to players who don't have one assigned yet", async () => {
+            const players = await Player.findAll({
+                where: {
+                    gameId: game.id
+                }
+            });
+
+            for (const player of players) {
+                expect(player.color).toBe(null);
+            }
+
+            await GameService.start(userA.id, game.id, settings);
+
+            const updatedGame = await GameService.getState(game.id);
+
+            for (const player of updatedGame.players) {
+                expect(PLAYER_COLORS.includes(player.color)).toBe(true);
             }
         });
     });

@@ -33,6 +33,18 @@ module.exports = {
                     key: 'id',
                 },
             },
+            color: {
+                type: Sequelize.ENUM,
+                allowNull: true,
+                values: [
+                    'black',
+                    'blue',
+                    'green',
+                    'pink',
+                    'white',
+                    'yellow',
+                ],
+            },
             giant_token_value: {
                 type: Sequelize.INTEGER,
                 defaultValue: 0,
