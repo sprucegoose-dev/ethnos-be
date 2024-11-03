@@ -2,11 +2,13 @@ import {
     BelongsTo,
     Column,
     DataType,
+    HasMany,
     Model,
     Table,
 } from 'sequelize-typescript';
 import Game from './game.model';
 import { Color } from '@interfaces/game.interface';
+import PlayerRegion from './player_region.model';
 
 @Table({
     tableName: 'regions',
@@ -35,4 +37,7 @@ export default class Region extends Model {
 
     @BelongsTo(() => Game, 'gameId')
     game: Game;
+
+    @HasMany(() => PlayerRegion, 'regionId')
+    playerTokens: PlayerRegion;
 }

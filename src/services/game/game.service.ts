@@ -36,6 +36,7 @@ import {
     ERROR_NOT_FOUND,
 } from '@helpers/exception-handler';
 import { PLAYER_COLORS, PlayerColor } from '../../interfaces/player.interface';
+import PlayerRegion from '../../models/player_region.model';
 
 export default class GameService {
 
@@ -464,6 +465,11 @@ export default class GameService {
                     model: Region,
                     as: 'regions',
                     required: false,
+                    include: [
+                        {
+                            model: PlayerRegion,
+                        }
+                    ],
                 },
                 {
                     model: Card,
@@ -523,6 +529,15 @@ export default class GameService {
                     model: Region,
                     as: 'regions',
                     required: false,
+                    include: [
+                        {
+                            model: PlayerRegion,
+                            attributes: [
+                                'playerId',
+                                'tokens',
+                            ],
+                        }
+                    ]
                 },
                 {
                     model: Card,

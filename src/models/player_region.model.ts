@@ -40,3 +40,4 @@ export default class PlayerRegion extends Model {
     })
     tokens: number;
 }
+
