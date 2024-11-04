@@ -156,19 +156,6 @@ describe('ActionService', () => {
             expect(actions).toEqual([]);
         });
 
-        it('should return an empty array if the player is not the active player', async () => {
-            const updatedGame = await GameService.getState(game.id);
-
-            const nonActivePlayer = updatedGame.players.find(player => player.id !== updatedGame.activePlayerId);
-
-            const actions = await ActionService.getActions(
-                game.id,
-                nonActivePlayer.user.id,
-            );
-
-            expect(actions).toEqual([]);
-        });
-
         it("should filter the actions if there is a pending 'next action' of 'play band'", async () => {
             const updatedGame = await GameService.getState(game.id);
 

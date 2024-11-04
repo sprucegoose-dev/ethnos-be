@@ -26,10 +26,10 @@ export class ActionService {
         let actions: IActionPayload[] = [];
 
         const activePlayer = game.players.find(p =>
-            p.id === game.activePlayerId && p.userId === userId
+            p.userId === userId
         );
 
-        if (!activePlayer || game.state === GameState.ENDED) {
+        if (game.state === GameState.ENDED) {
             return actions;
         }
 
