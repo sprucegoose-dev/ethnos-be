@@ -81,11 +81,11 @@ class GamesController {
         res.send();
     }
 
-    async rearrangeCards(req: AuthRequest, res: Response): Promise<void> {
+    async orderCards(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
         const cardIds = req.body.cardIds;
-        await GameService.rearrangeCards(userId, parseInt(gameId, 10), cardIds);
+        await GameService.orderCards(userId, parseInt(gameId, 10), cardIds);
         res.send();
     }
 

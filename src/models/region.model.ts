@@ -39,5 +39,5 @@ export default class Region extends Model {
     game: Game;
 
     @HasMany(() => PlayerRegion, 'regionId')
-    playerTokens: PlayerRegion;
+    playerTokens: PlayerRegion[];
 }

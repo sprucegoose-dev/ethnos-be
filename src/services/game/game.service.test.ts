@@ -502,7 +502,7 @@ describe('GameService', () => {
         });
     });
 
-    describe('rearrangeCards', () => {
+    describe('orderCards', () => {
         let gameState: IGameState;
         let playerA: Player;
 
@@ -527,7 +527,7 @@ describe('GameService', () => {
                 cardIdsToAssign[1],
             ]
 
-            await GameService.rearrangeCards(playerA.userId, gameState.id, rearrangedCardIds);
+            await GameService.orderCards(playerA.userId, gameState.id, rearrangedCardIds);
 
             const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
 
@@ -563,7 +563,7 @@ describe('GameService', () => {
 
 
             try {
-                await GameService.rearrangeCards(playerA.userId, gameState.id, rearrangedCardIds);
+                await GameService.orderCards(playerA.userId, gameState.id, rearrangedCardIds);
                 throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);

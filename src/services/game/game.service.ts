@@ -687,7 +687,7 @@ export default class GameService {
         });
     }
 
-    static async rearrangeCards(userId: number, gameId: number, cardIds: number[]): Promise<void> {
+    static async orderCards(userId: number, gameId: number, cardIds: number[]): Promise<void> {
         const player = await Player.findOne({
             where: {
                 gameId,
