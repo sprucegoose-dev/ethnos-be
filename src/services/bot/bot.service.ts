@@ -1,17 +1,25 @@
-import { ActionType, IActionPayload, IAddFreeTokenPayload, IBandDetails, IPlayBandPayload } from '../../interfaces/action.interface';
-import { CardState } from '../../interfaces/card.interface';
-import { Color } from '../../interfaces/game.interface';
-import { TribeName } from '../../interfaces/tribe.interface';
-import Card from '../../models/card.model';
-import Player from '../../models/player.model';
-import PlayerRegion from '../../models/player_region.model';
-import Region from '../../models/region.model';
-import ActionService from '../action/action.service';
-import CommandService from '../command/command.service';
-import PlayBandHandler from '../command/play-band.handler';
-import GameService from '../game/game.service';
+import shuffle from 'lodash.shuffle';
 
-class BotService {
+import { CardState } from '@interfaces/card.interface';
+import { Color } from '@interfaces/game.interface';
+import { TribeName } from '@interfaces/tribe.interface';
+import {
+    ActionType,
+    IAddFreeTokenPayload,
+    IBandDetails,
+    IPlayBandPayload
+} from '@interfaces/action.interface';
+
+import Card from '@models/card.model';
+import Player from '@models/player.model';
+import Region from '@models/region.model';
+
+import ActionService from '@services/action/action.service';
+import CommandService from '@services/command/command.service';
+import PlayBandHandler from '@services/command/play-band.handler';
+import GameService from '@services/game/game.service';
+
+export default class BotService {
 
     async addTokenToRegion(regions: Region[], player: Player, nextActionId: number) {
         // sort regions by the regions player has the most tokens in
@@ -49,8 +57,17 @@ class BotService {
         const actions = await ActionService.getActions(gameId, player.userId);
         const regions = gameState.regions;
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+        const cardsInMarket = gameState.cards.filter(card => card.state === CardState.IN_MARKET);
 
         if (!cardsInHand.length) {
+
+            if (cardsInMarket.length) {
+                await CommandService.handleAction(player.userId, player.gameId, {
+                    type: ActionType.PICK_UP_CARD,
+                    cardId: shuffle(cardsInMarket)[0].id
+                });
+            }
+
             await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
             return;
         }
@@ -99,11 +116,10 @@ class BotService {
             await CommandService.handleAction(
                 player.userId,
                 player.gameId,
-                {...bestPlayBandAction, regionColor: targetRegion.color
-            });
+                {...bestPlayBandAction, regionColor: targetRegion.color}
+            );
             return;
         }
-
 
         let highValuePlayBandAction;
 
@@ -117,12 +133,105 @@ class BotService {
                 player.gameId,
                 highValuePlayBandAction
             );
-            return
+            return;
         }
 
+        let cardToPickUpId = this.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+
+        if (cardToPickUpId) {
+            await CommandService.handleAction(
+                player.userId,
+                player.gameId,
+                {
+                    type: ActionType.PICK_UP_CARD,
+                    cardId: cardToPickUpId
+                }
+            );
+            return;
+        }
+
+        if (!cardToPickUpId && cardsInHand.length < 10) {
+            await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
+            return;
+        }
+
+        const fallbackPlayAction = playBandActions.sort((actionA, actionB) => actionB.cardIds.length - actionA.cardIds.length)[0];
+
+        await CommandService.handleAction(
+            player.userId,
+            player.gameId,
+            fallbackPlayAction
+        );
     }
 
-    async shouldPickCardForFutureBand(cardsInHand: Card[], regions: Region[]) {
+    shouldPickUpMarketCard(cardsInHand: Card[], cardsInMarket: Card[]): number {
+        let cardToPickUpId: number;
+
+        const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
+
+        for (const card of cardsInMarket) {
+            if (card.color === mostFrequentColor.color) {
+                cardToPickUpId = card.id;
+            }
+        }
+
+        const mostFrequentTribe = this.getMostFrequentTribeInHand(cardsInHand);
+
+        if (!cardToPickUpId || mostFrequentTribe.maxCount > mostFrequentColor.maxCount) {
+            for (const card of cardsInMarket) {
+                if (card.tribe.name === mostFrequentTribe.tribeName) {
+                    cardToPickUpId = card.id;
+                }
+            }
+        }
+
+        return cardToPickUpId;
+    }
+
+    getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, maxCount: number } {
+        const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
+            const key = card.tribe.name;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        let mostFrequent: TribeName = null;
+        let maxCount = 0;
+
+        for (const [value, count] of Object.entries(counts)) {
+            if (count > maxCount) {
+                mostFrequent = value as TribeName;
+                maxCount = count;
+            }
+        }
+
+        return {
+            tribeName: mostFrequent,
+            maxCount,
+        };
+    }
+
+    getMostFrequentColorInHand(cards: Card[]): { color: Color, maxCount: number } {
+        const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
+            const key = card.color;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        let mostFrequent: Color = null;
+        let maxCount = 0;
+
+        for (const [value, count] of Object.entries(counts)) {
+            if (count > maxCount) {
+                mostFrequent = value as Color;
+                maxCount = count;
+            }
+        }
+
+        return {
+            color: mostFrequent,
+            maxCount,
+        };
     }
 
     getPlayerTokensInRegion(region: Region, player: Player): number {
