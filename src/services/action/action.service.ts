@@ -14,7 +14,7 @@ import GameService from '@services/game/game.service';
 
 import NextAction from '@models/nextAction.model';
 
-export class ActionService {
+export default class ActionService {
 
     static arrayEquals = (arrayA: any[], arrayB: any[]) => {
         return arrayA.every((value, index) => value === arrayB[index])

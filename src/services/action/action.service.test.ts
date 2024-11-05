@@ -1,4 +1,4 @@
-import { ActionService } from './action.service';
+import ActionService from './action.service';
 
 import Game from '@models/game.model';
 import Card from '@models/card.model';

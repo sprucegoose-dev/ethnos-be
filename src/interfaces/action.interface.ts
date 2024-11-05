@@ -50,7 +50,8 @@ export interface IActionRequest extends AuthRequest {
 }
 
 export interface IBandDetails {
-    color: Color;
-    tribe: TribeName;
     bandSize: number;
+    color: Color;
+    points: number;
+    tribe: TribeName;
 }

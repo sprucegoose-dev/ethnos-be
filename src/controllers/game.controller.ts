@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 
 import { exceptionHandler } from '@helpers/exception-handler.decorator';
 
-import { ActionService } from '@services/action/action.service';
+import ActionService from '@services/action/action.service';
 import CommandService from '@services/command/command.service';
 import GameService from '@services/game/game.service';
 

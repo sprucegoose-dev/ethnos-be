@@ -1,34 +1,179 @@
+import { ActionType, IActionPayload, IAddFreeTokenPayload, IBandDetails, IPlayBandPayload } from '../../interfaces/action.interface';
+import { CardState } from '../../interfaces/card.interface';
+import { Color } from '../../interfaces/game.interface';
+import { TribeName } from '../../interfaces/tribe.interface';
 import Card from '../../models/card.model';
 import Player from '../../models/player.model';
+import PlayerRegion from '../../models/player_region.model';
 import Region from '../../models/region.model';
-import { ActionService } from '../action/action.service';
+import ActionService from '../action/action.service';
+import CommandService from '../command/command.service';
+import PlayBandHandler from '../command/play-band.handler';
+import GameService from '../game/game.service';
 
 class BotService {
 
-    evaluateRegions() {
+    async addTokenToRegion(regions: Region[], player: Player, nextActionId: number) {
+        // sort regions by the regions player has the most tokens in
+        const sortedRegions = regions.sort((regionA, regionB) => {
+            const ownPlayerATokens = regionA.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
+            const ownPlayerBTokens = regionB.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
+            return ownPlayerBTokens - ownPlayerATokens;
+        });
+
+        let highestValue = 0;
+        let regionColor: Color;
+
+        // out of those regions, find the most valuable one
+        for (const region of sortedRegions) {
+
+            const regionTotalValue = region.values.reduce((acc, num) => acc + num, 0);
+
+            if (regionTotalValue > highestValue) {
+                highestValue = regionTotalValue;
+                regionColor = region.color;
+            }
+        }
+
+        const action: IAddFreeTokenPayload = {
+            type: ActionType.ADD_FREE_TOKEN,
+            nextActionId,
+            regionColor
+        };
+
+        await CommandService.handleAction(player.userId, player.gameId, action);
+    }
+
+    async takeTurn(gameId: number, player: Player) {
+        const gameState = await GameService.getState(gameId);
+        const actions = await ActionService.getActions(gameId, player.userId);
+        const regions = gameState.regions;
+        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
+
+        if (!cardsInHand.length) {
+            await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
+            return;
+        }
+
+        const freeTokenAction = actions.find(action => action.type === ActionType.ADD_FREE_TOKEN);
+
+        if (freeTokenAction) {
+            await this.addTokenToRegion(regions, player, freeTokenAction.nextActionId);
+            return;
+        }
+
+
+        const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
+
+        let centaurBandActions = [];
+        let otherBandActions = [];
+
+        for (const action of playBandActions) {
+            const leader = cardsInHand.find(card => card.id === action.leaderId);
+
+            if (leader.tribe.name === TribeName.CENTAURS) {
+                centaurBandActions.push(action);
+            } else {
+                otherBandActions.push(action);
+            }
+        }
+
+        centaurBandActions = centaurBandActions.sort((actionA, actionB) => actionB.cardIds.length - actionA.cardIds.length);
+        otherBandActions = otherBandActions.sort((actionA, actionB) => actionB.cardIds.length - actionA.cardIds.length);
+
+        const sortedPlayBandActions = [...centaurBandActions, ...otherBandActions];
+
+        let targetRegion;
+        let bestPlayBandAction;
+
+        for (const action of sortedPlayBandActions) {
+            targetRegion = this.canAddTokenWithBand(action, cardsInHand, regions, player);
+
+            if (targetRegion) {
+                bestPlayBandAction = action;
+                break;
+            }
+        }
+
+        if (bestPlayBandAction && targetRegion) {
+            await CommandService.handleAction(
+                player.userId,
+                player.gameId,
+                {...bestPlayBandAction, regionColor: targetRegion.color
+            });
+            return;
+        }
+
+
+        let highValuePlayBandAction;
+
+        if (!targetRegion && cardsInHand.length >= 5) {
+            highValuePlayBandAction = this.getHighValuePlayBandAction(playBandActions, cardsInHand);
+        }
+
+        if (highValuePlayBandAction) {
+            await CommandService.handleAction(
+                player.userId,
+                player.gameId,
+                highValuePlayBandAction
+            );
+            return
+        }
 
     }
 
-    evaluateBands(cardsInHand: Card[], regions: Region[], age: number) {
-
-        // value of band + points from region
-
-        // will action add token to region?
-
-        // long term investment in region
-
+    async shouldPickCardForFutureBand(cardsInHand: Card[], regions: Region[]) {
     }
 
-    takeTurn(gameId: number, player: Player) {
-        const actions = ActionService.getActions(gameId, player.userId);
+    getPlayerTokensInRegion(region: Region, player: Player): number {
+        return region.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
+    }
 
-        // if free token action, go from region with highest tokens to lowest tokens, and see which
-        // region would be worth the most victory points
+    canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
+        return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
+    }
 
-        // if not enough cards to add token to region:
-        // try to draw card from market to increase band either by tribe or color
+    getTotalRegionValue(region: Region): number {
+        return region.values.reduce((total, value) => total + value, 0);
+    }
 
+    canAddTokenWithBand(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
+        const leader = cardsInHand.find(card => card.id === action.leaderId);
+        const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
+        let region = regions.find(region => region.color === leader.color);
+        let canAddToken = this.canAddTokenToRegion(region, bandDetails, player);
 
+        if (leader.tribe.name === TribeName.WINGFOLK) {
+            const upgradeableRegions: Region[] = [];
 
+            for (const region of regions) {
+                canAddToken = this.canAddTokenToRegion(region, bandDetails, player);
+
+                if (canAddToken) {
+                    upgradeableRegions.push(region);
+                }
+            }
+
+            region = upgradeableRegions.sort((regionA, regionB) => this.getTotalRegionValue(regionB) - this.getTotalRegionValue(regionA))[0];
+        }
+
+        return region;
+    }
+
+    getHighValuePlayBandAction(actions: IPlayBandPayload[], cardsInHand: Card[]): IPlayBandPayload {
+        let highValueAction;
+        let highestPointValue = 0;
+
+        for (const action of actions) {
+            const leader = cardsInHand.find(card => card.id === action.leaderId);
+            const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
+
+            if (bandDetails.points >= 10 && bandDetails.points > highestPointValue) {
+                highValueAction = action;
+                highestPointValue = bandDetails.points;
+            }
+        }
+
+        return highValueAction;
     }
 }

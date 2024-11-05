@@ -23,13 +23,15 @@ import Region from '@models/region.model';
 import PlayerRegion from '@models/player_region.model';
 import NextAction from '@models/nextAction.model';
 
-import { ActionService } from '@services/action/action.service';
+import ActionService from '@services/action/action.service';
+import ScoringService from '@services/scoring/scoring.service';
 
 import TribeService from './tribe.handler';
 import NextActionHandler from './next-action.handler';
 
 const {
     CENTAURS,
+    DWARVES,
     ELVES,
     HALFLINGS,
     MINOTAURS,
@@ -142,16 +144,21 @@ export default class PlayBandHandler {
         let tribe = leader.tribe.name;
         let color = leader.color;
         let bandSize = bandCardIds.length;
+        let points = ScoringService.getBandPoints(bandSize);
 
         if (tribe === MINOTAURS) {
             bandSize++;
+        }
+
+        if (tribe === DWARVES) {
+            points = ScoringService.getBandPoints(bandSize + 1);
         }
 
         if (tribe === WINGFOLK && regionColor) {
             color = regionColor;
         }
 
-        return { tribe, color, bandSize };
+        return { bandSize, color, points, tribe };
     }
 
     static getRemainingCards(cardsInHand: Card[], bandCardIds: number[]): Card[] {

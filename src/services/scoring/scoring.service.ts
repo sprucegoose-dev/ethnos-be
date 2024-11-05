@@ -90,7 +90,7 @@ export default class ScoringService {
         }
     }
 
-    static scoreBands(player: Player): number {
+    static getBandPoints(bandSize: number) {
         const BAND_VALUES: { [key: number]: number } = {
             1: 0,
             2: 1,
@@ -100,12 +100,17 @@ export default class ScoringService {
             6: 15
         };
 
+        if (bandSize >= 6) {
+            return 15;
+        } else {
+            return BAND_VALUES[bandSize];
+        }
+    }
+
+    static scoreBands(player: Player): number {
         const cardsInBands = player.cards.filter(card => card.state === CardState.IN_BAND);
-
         const bands = this.groupCardsByLeader(cardsInBands);
-
         let points = 0;
-
         let leader;
         let bandSize;
 
@@ -121,11 +126,7 @@ export default class ScoringService {
                 bandSize++;
             }
 
-            if (bandSize >= 6) {
-                points += 15;
-            } else {
-                points += BAND_VALUES[bandSize];
-            }
+            points += this.getBandPoints(bandSize);
         }
 
         return points;
