@@ -5,6 +5,7 @@ import { Color } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import {
     ActionType,
+    IActionPayload,
     IAddFreeTokenPayload,
     IBandDetails,
     IPlayBandPayload
@@ -18,6 +19,7 @@ import ActionService from '@services/action/action.service';
 import CommandService from '@services/command/command.service';
 import PlayBandHandler from '@services/command/play-band.handler';
 import GameService from '@services/game/game.service';
+import Game from '../../models/game.model';
 
 export default class BotService {
 
@@ -52,42 +54,145 @@ export default class BotService {
         await CommandService.handleAction(player.userId, player.gameId, action);
     }
 
-    async takeTurn(gameId: number, player: Player) {
-        const gameState = await GameService.getState(gameId);
-        const actions = await ActionService.getActions(gameId, player.userId);
-        const regions = gameState.regions;
-        const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
-        const cardsInMarket = gameState.cards.filter(card => card.state === CardState.IN_MARKET);
+    canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
+        return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
+    }
 
+    canAddTokenWithBand(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
+        const leader = cardsInHand.find(card => card.id === action.leaderId);
+        const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
+        let region = regions.find(region => region.color === leader.color);
+        let canAddToken = this.canAddTokenToRegion(region, bandDetails, player);
+
+        if (leader.tribe.name === TribeName.WINGFOLK) {
+            const upgradeableRegions: Region[] = [];
+
+            for (const region of regions) {
+                canAddToken = this.canAddTokenToRegion(region, bandDetails, player);
+
+                if (canAddToken) {
+                    upgradeableRegions.push(region);
+                }
+            }
+
+            region = upgradeableRegions.sort((regionA, regionB) => this.getTotalRegionValue(regionB) - this.getTotalRegionValue(regionA))[0];
+        }
+
+        return region;
+    }
+
+    private async checkHandAndMarketCards(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
         if (!cardsInHand.length) {
-
-            if (cardsInMarket.length) {
+            if (cardsInMarket.length && actions.find(action => action.type === ActionType.PICK_UP_CARD)) {
                 await CommandService.handleAction(player.userId, player.gameId, {
                     type: ActionType.PICK_UP_CARD,
                     cardId: shuffle(cardsInMarket)[0].id
                 });
+                return true;
             }
+            if (actions.find(action => action.type === ActionType.DRAW_CARD)) {
+                await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
+                return true;
+            }
+        }
+        return false;
+    }
 
-            await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
-            return;
+    private getCardsInHand(player: Player): Card[] {
+        return player.cards.filter(card => card.state === CardState.IN_HAND);
+    }
+
+    private getCardsInMarket(gameState: Game): Card[] {
+        return gameState.cards.filter(card => card.state === CardState.IN_MARKET);
+    }
+
+    getHighValuePlayBandAction(actions: IPlayBandPayload[], cardsInHand: Card[]): IPlayBandPayload {
+        let highValueAction;
+        let highestPointValue = 0;
+
+        for (const action of actions) {
+            const leader = cardsInHand.find(card => card.id === action.leaderId);
+            const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
+
+            if (bandDetails.points >= 10 && bandDetails.points > highestPointValue) {
+                highValueAction = action;
+                highestPointValue = bandDetails.points;
+            }
         }
 
-        const freeTokenAction = actions.find(action => action.type === ActionType.ADD_FREE_TOKEN);
+        return highValueAction;
+    }
 
+    getMostFrequentColorInHand(cards: Card[]): { color: Color, maxCount: number } {
+        const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
+            const key = card.color;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        let mostFrequent: Color = null;
+        let maxCount = 0;
+
+        for (const [value, count] of Object.entries(counts)) {
+            if (count > maxCount) {
+                mostFrequent = value as Color;
+                maxCount = count;
+            }
+        }
+
+        return {
+            color: mostFrequent,
+            maxCount,
+        };
+    }
+
+    getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, maxCount: number } {
+        const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
+            const key = card.tribe.name;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        let mostFrequent: TribeName = null;
+        let maxCount = 0;
+
+        for (const [value, count] of Object.entries(counts)) {
+            if (count > maxCount) {
+                mostFrequent = value as TribeName;
+                maxCount = count;
+            }
+        }
+
+        return {
+            tribeName: mostFrequent,
+            maxCount,
+        };
+    }
+
+    getPlayerTokensInRegion(region: Region, player: Player): number {
+        return region.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
+    }
+
+    getTotalRegionValue(region: Region): number {
+        return region.values.reduce((total, value) => total + value, 0);
+    }
+
+    private async handleFreeTokenAction(actions: IActionPayload[], regions: Region[], player: Player): Promise<boolean> {
+        const freeTokenAction = actions.find(action => action.type === ActionType.ADD_FREE_TOKEN);
         if (freeTokenAction) {
             await this.addTokenToRegion(regions, player, freeTokenAction.nextActionId);
-            return;
+            return true;
         }
+        return false;
+    }
 
-
+    private organizeBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
-
         let centaurBandActions = [];
         let otherBandActions = [];
 
         for (const action of playBandActions) {
             const leader = cardsInHand.find(card => card.id === action.leaderId);
-
             if (leader.tribe.name === TribeName.CENTAURS) {
                 centaurBandActions.push(action);
             } else {
@@ -95,11 +200,31 @@ export default class BotService {
             }
         }
 
-        centaurBandActions = centaurBandActions.sort((actionA, actionB) => actionB.cardIds.length - actionA.cardIds.length);
-        otherBandActions = otherBandActions.sort((actionA, actionB) => actionB.cardIds.length - actionA.cardIds.length);
+        centaurBandActions.sort((a, b) => b.cardIds.length - a.cardIds.length);
+        otherBandActions.sort((a, b) => b.cardIds.length - a.cardIds.length);
 
-        const sortedPlayBandActions = [...centaurBandActions, ...otherBandActions];
+        return [...centaurBandActions, ...otherBandActions];
+    }
 
+    private async pickUpOrDrawCard(cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
+        const cardToPickUpId = this.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+        if (cardToPickUpId) {
+            await CommandService.handleAction(player.userId, player.gameId, {
+                type: ActionType.PICK_UP_CARD,
+                cardId: cardToPickUpId
+            });
+            return true;
+        }
+
+        if (cardsInHand.length < 10) {
+            await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
+            return true;
+        }
+
+        return false;
+    }
+
+    private async playBestBandAction(sortedPlayBandActions: IPlayBandPayload[], cardsInHand: Card[], regions: Region[], player: Player): Promise<boolean> {
         let targetRegion;
         let bestPlayBandAction;
 
@@ -113,55 +238,22 @@ export default class BotService {
         }
 
         if (bestPlayBandAction && targetRegion) {
-            await CommandService.handleAction(
-                player.userId,
-                player.gameId,
-                {...bestPlayBandAction, regionColor: targetRegion.color}
-            );
-            return;
+            await CommandService.handleAction(player.userId, player.gameId, {
+                ...bestPlayBandAction,
+                regionColor: targetRegion.color
+            });
+            return true;
         }
 
-        let highValuePlayBandAction;
+        return false;
+    }
 
-        if (!targetRegion && cardsInHand.length >= 5) {
-            highValuePlayBandAction = this.getHighValuePlayBandAction(playBandActions, cardsInHand);
-        }
+    private async playFallbackAction(actions: IActionPayload[], player: Player) {
+        const fallbackPlayAction = actions
+            .filter(action => action.type === ActionType.PLAY_BAND)
+            .sort((a, b) => b.cardIds.length - a.cardIds.length)[0];
 
-        if (highValuePlayBandAction) {
-            await CommandService.handleAction(
-                player.userId,
-                player.gameId,
-                highValuePlayBandAction
-            );
-            return;
-        }
-
-        let cardToPickUpId = this.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
-
-        if (cardToPickUpId) {
-            await CommandService.handleAction(
-                player.userId,
-                player.gameId,
-                {
-                    type: ActionType.PICK_UP_CARD,
-                    cardId: cardToPickUpId
-                }
-            );
-            return;
-        }
-
-        if (!cardToPickUpId && cardsInHand.length < 10) {
-            await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
-            return;
-        }
-
-        const fallbackPlayAction = playBandActions.sort((actionA, actionB) => actionB.cardIds.length - actionA.cardIds.length)[0];
-
-        await CommandService.handleAction(
-            player.userId,
-            player.gameId,
-            fallbackPlayAction
-        );
+        await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
     }
 
     shouldPickUpMarketCard(cardsInHand: Card[], cardsInMarket: Card[]): number {
@@ -188,101 +280,23 @@ export default class BotService {
         return cardToPickUpId;
     }
 
-    getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, maxCount: number } {
-        const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
-            const key = card.tribe.name;
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {});
+    async takeTurn(gameId: number, player: Player) {
+        const gameState = await GameService.getState(gameId);
+        const actions = await ActionService.getActions(gameId, player.userId);
+        const regions = gameState.regions;
+        const cardsInHand = this.getCardsInHand(player);
+        const cardsInMarket = this.getCardsInMarket(gameState);
 
-        let mostFrequent: TribeName = null;
-        let maxCount = 0;
+        if (await this.handleFreeTokenAction(actions, regions, player)) return;
 
-        for (const [value, count] of Object.entries(counts)) {
-            if (count > maxCount) {
-                mostFrequent = value as TribeName;
-                maxCount = count;
-            }
-        }
+        if (await this.checkHandAndMarketCards(actions, cardsInHand, cardsInMarket, player)) return;
 
-        return {
-            tribeName: mostFrequent,
-            maxCount,
-        };
-    }
+        const sortedPlayBandActions = this.organizeBandActions(actions, cardsInHand);
 
-    getMostFrequentColorInHand(cards: Card[]): { color: Color, maxCount: number } {
-        const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
-            const key = card.color;
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {});
+        if (await this.playBestBandAction(sortedPlayBandActions, cardsInHand, regions, player)) return;
 
-        let mostFrequent: Color = null;
-        let maxCount = 0;
+        if (await this.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
 
-        for (const [value, count] of Object.entries(counts)) {
-            if (count > maxCount) {
-                mostFrequent = value as Color;
-                maxCount = count;
-            }
-        }
-
-        return {
-            color: mostFrequent,
-            maxCount,
-        };
-    }
-
-    getPlayerTokensInRegion(region: Region, player: Player): number {
-        return region.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
-    }
-
-    canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
-        return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
-    }
-
-    getTotalRegionValue(region: Region): number {
-        return region.values.reduce((total, value) => total + value, 0);
-    }
-
-    canAddTokenWithBand(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
-        const leader = cardsInHand.find(card => card.id === action.leaderId);
-        const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
-        let region = regions.find(region => region.color === leader.color);
-        let canAddToken = this.canAddTokenToRegion(region, bandDetails, player);
-
-        if (leader.tribe.name === TribeName.WINGFOLK) {
-            const upgradeableRegions: Region[] = [];
-
-            for (const region of regions) {
-                canAddToken = this.canAddTokenToRegion(region, bandDetails, player);
-
-                if (canAddToken) {
-                    upgradeableRegions.push(region);
-                }
-            }
-
-            region = upgradeableRegions.sort((regionA, regionB) => this.getTotalRegionValue(regionB) - this.getTotalRegionValue(regionA))[0];
-        }
-
-        return region;
-    }
-
-    getHighValuePlayBandAction(actions: IPlayBandPayload[], cardsInHand: Card[]): IPlayBandPayload {
-        let highValueAction;
-        let highestPointValue = 0;
-
-        for (const action of actions) {
-            const leader = cardsInHand.find(card => card.id === action.leaderId);
-            const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
-
-            if (bandDetails.points >= 10 && bandDetails.points > highestPointValue) {
-                highValueAction = action;
-                highestPointValue = bandDetails.points;
-            }
-        }
-
-        return highValueAction;
+        await this.playFallbackAction(actions, player);
     }
 }
