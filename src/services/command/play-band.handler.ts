@@ -192,7 +192,7 @@ export default class PlayBandHandler {
 
         const tokenAdded = await this.addTokenToRegion(game, player, band, remainingCards);
 
-        await TribeService.handleTribeLogic(game,player, band);
+        await TribeService.handleTribeLogic(game, player, band);
 
         await this.discardRemainingCards({
             remainingCards,

@@ -23,7 +23,7 @@ import Game from '../../models/game.model';
 
 export default class BotService {
 
-    async addTokenToRegion(regions: Region[], player: Player, nextActionId: number) {
+    static async addTokenToRegion(regions: Region[], player: Player, nextActionId: number) {
         // sort regions by the regions player has the most tokens in
         const sortedRegions = regions.sort((regionA, regionB) => {
             const ownPlayerATokens = regionA.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
@@ -54,11 +54,11 @@ export default class BotService {
         await CommandService.handleAction(player.userId, player.gameId, action);
     }
 
-    canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
+    static canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
         return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
     }
 
-    canAddTokenWithBand(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
+    static canAddTokenWithBand(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
         const leader = cardsInHand.find(card => card.id === action.leaderId);
         const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
         let region = regions.find(region => region.color === leader.color);
@@ -81,7 +81,7 @@ export default class BotService {
         return region;
     }
 
-    private async emptyHandPickUpOrDrawCard(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
+    static async emptyHandPickUpOrDrawCard(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
         if (!cardsInHand.length) {
             if (cardsInMarket.length && actions.find(action => action.type === ActionType.PICK_UP_CARD)) {
                 await CommandService.handleAction(player.userId, player.gameId, {
@@ -98,15 +98,15 @@ export default class BotService {
         return false;
     }
 
-    private getCardsInHand(player: Player): Card[] {
+    static getCardsInHand(player: Player): Card[] {
         return player.cards.filter(card => card.state === CardState.IN_HAND);
     }
 
-    private getCardsInMarket(gameState: Game): Card[] {
+    static getCardsInMarket(gameState: Game): Card[] {
         return gameState.cards.filter(card => card.state === CardState.IN_MARKET);
     }
 
-    getHighValuePlayBandAction(actions: IPlayBandPayload[], cardsInHand: Card[]): IPlayBandPayload {
+    static getHighValuePlayBandAction(actions: IPlayBandPayload[], cardsInHand: Card[]): IPlayBandPayload {
         let highValueAction;
         let highestPointValue = 0;
 
@@ -123,7 +123,7 @@ export default class BotService {
         return highValueAction;
     }
 
-    getMostFrequentColorInHand(cards: Card[]): { color: Color, maxCount: number } {
+    static getMostFrequentColorInHand(cards: Card[]): { color: Color, maxCount: number } {
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
             const key = card.color;
             acc[key] = (acc[key] || 0) + 1;
@@ -146,7 +146,7 @@ export default class BotService {
         };
     }
 
-    getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, maxCount: number } {
+    static getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, maxCount: number } {
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
             const key = card.tribe.name;
             acc[key] = (acc[key] || 0) + 1;
@@ -169,15 +169,15 @@ export default class BotService {
         };
     }
 
-    getPlayerTokensInRegion(region: Region, player: Player): number {
+    static getPlayerTokensInRegion(region: Region, player: Player): number {
         return region.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
     }
 
-    getTotalRegionValue(region: Region): number {
+    static getTotalRegionValue(region: Region): number {
         return region.values.reduce((total, value) => total + value, 0);
     }
 
-    private async handleFreeTokenAction(actions: IActionPayload[], regions: Region[], player: Player): Promise<boolean> {
+    static async handleFreeTokenAction(actions: IActionPayload[], regions: Region[], player: Player): Promise<boolean> {
         const freeTokenAction = actions.find(action => action.type === ActionType.ADD_FREE_TOKEN);
         if (freeTokenAction) {
             await this.addTokenToRegion(regions, player, freeTokenAction.nextActionId);
@@ -186,7 +186,7 @@ export default class BotService {
         return false;
     }
 
-    private preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
+    static preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
         let centaurBandActions = [];
         let otherBandActions = [];
@@ -206,7 +206,7 @@ export default class BotService {
         return [...centaurBandActions, ...otherBandActions];
     }
 
-    private async pickUpOrDrawCard(cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
+    static async pickUpOrDrawCard(cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
         const cardToPickUpId = this.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
         if (cardToPickUpId) {
             await CommandService.handleAction(player.userId, player.gameId, {
@@ -224,7 +224,7 @@ export default class BotService {
         return false;
     }
 
-    private async playBestBandAction(sortedPlayBandActions: IPlayBandPayload[], cardsInHand: Card[], regions: Region[], player: Player): Promise<boolean> {
+    static async playBestBandAction(sortedPlayBandActions: IPlayBandPayload[], cardsInHand: Card[], regions: Region[], player: Player): Promise<boolean> {
         let targetRegion;
         let bestPlayBandAction;
 
@@ -248,7 +248,7 @@ export default class BotService {
         return false;
     }
 
-    private async playFallbackAction(actions: IActionPayload[], cardsInHand: Card[], player: Player) {
+    static async playFallbackAction(actions: IActionPayload[], cardsInHand: Card[], player: Player) {
         const tribePriority = {
             [TribeName.DRAGON]: -1,
             [TribeName.SKELETONS]: 0,
@@ -278,7 +278,7 @@ export default class BotService {
         await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
     }
 
-    shouldPickUpMarketCard(cardsInHand: Card[], cardsInMarket: Card[]): number {
+    static shouldPickUpMarketCard(cardsInHand: Card[], cardsInMarket: Card[]): number {
         let cardToPickUpId: number;
 
         const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
@@ -302,8 +302,9 @@ export default class BotService {
         return cardToPickUpId;
     }
 
-    async takeTurn(gameId: number, player: Player) {
+    static async takeTurn(gameId: number, playerId: number) {
         const gameState = await GameService.getState(gameId);
+        const player = gameState.players.find(player => player.id === playerId);
         const actions = await ActionService.getActions(gameId, player.userId);
         const regions = gameState.regions;
         const cardsInHand = this.getCardsInHand(player);

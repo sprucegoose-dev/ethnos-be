@@ -37,6 +37,7 @@ import {
 } from '@helpers/exception-handler';
 import { PLAYER_COLORS, PlayerColor } from '../../interfaces/player.interface';
 import PlayerRegion from '../../models/player_region.model';
+import BotService from '../bot/bot.service';
 
 export default class GameService {
 
@@ -55,7 +56,7 @@ export default class GameService {
             throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
         }
 
-        const user = await User.findOne({
+        const bots = await User.findAll({
             where: {
                 isBot: true,
                 id: {
@@ -64,7 +65,7 @@ export default class GameService {
             }}
         );
 
-        await PlayerService.create(user.id, gameId);
+        await PlayerService.create(shuffle(bots)[0].id, gameId);
 
         const updatedGameState = await this.getStateResponse(gameId);
 
@@ -345,6 +346,7 @@ export default class GameService {
                             attributes: [
                                 'id',
                                 'username',
+                                'isBot'
                             ],
                         }
                     ],
@@ -482,6 +484,7 @@ export default class GameService {
                             attributes: [
                                 'id',
                                 'username',
+                                'isBot',
                             ],
                         },
                         {
@@ -543,6 +546,7 @@ export default class GameService {
                             attributes: [
                                 'id',
                                 'username',
+                                'isBot',
                             ],
                         },
                         {
@@ -805,6 +809,17 @@ export default class GameService {
                 {
                     model: Player,
                     as: 'players',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: [
+                                'id',
+                                'username',
+                                'isBot'
+                            ],
+                        }
+                    ],
                 }
             ]
         });
@@ -878,6 +893,14 @@ export default class GameService {
             type: EVENT_ACTIVE_GAMES_UPDATE,
             payload: activeGames
         });
+
+        const startingPlayer = players.find(player => player.id === startingPlayerId);
+
+        if (startingPlayer.user.isBot) {
+            setTimeout(async() => {
+                await BotService.takeTurn(game.id, startingPlayer.id);
+            }, 500);
+        }
     }
 
     static async startNewAge(game: Game) {

@@ -38,16 +38,27 @@ export default class TribeHandler {
         });
 
         if (!largestGiantBand) {
-            await player.update({
+            await Player.update({
                 giantTokenValue: bandSize,
                 points: player.points + 2,
+            }, {
+                where: {
+                    id: player.id,
+                }
             });
         }
     }
 
     static async handleOrcTokens(player: Player, color: Color) {
         if (!player.orcTokens.includes(color)) {
-            await player.update({ orcTokens: [...player.orcTokens, color] });
+            await Player.update(
+                { orcTokens: [...player.orcTokens, color] },
+                {
+                    where: {
+                        id: player.id,
+                    }
+                }
+            );
         }
     }
 
@@ -70,8 +81,13 @@ export default class TribeHandler {
             });
         }
 
-        await player.update({
+        await Player.update({
             merfolkTrackScore: player.merfolkTrackScore + bandSize,
+        },
+        {
+            where: {
+                id: player.id,
+            }
         });
     }
 
@@ -111,12 +127,26 @@ export default class TribeHandler {
         const trollTokens = [6, 5, 4, 3, 2, 1].filter(token => !claimedTokens.includes(token));
 
         if (trollTokens.includes(bandSize)) {
-            await player.update({ trollTokens: [...player.trollTokens, bandSize] });
+            await Player.update(
+                { trollTokens: [...player.trollTokens, bandSize] },
+                {
+                    where: {
+                        id: player.id,
+                    }
+                }
+            )
         } else {
             const smallerToken = trollTokens.find(token => token < bandSize);
 
             if (smallerToken) {
-                await player.update({ trollTokens: [...player.trollTokens, smallerToken] });
+                await Player.update(
+                    { trollTokens: [...player.trollTokens, smallerToken] },
+                    {
+                        where: {
+                            id: player.id,
+                        }
+                    }
+                );
             }
         }
     }

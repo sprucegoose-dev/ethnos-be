@@ -21,6 +21,7 @@ import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
+import BotService from '../bot/bot.service';
 
 export default class CommandService {
 
@@ -66,8 +67,10 @@ export default class CommandService {
             });
         }
 
+        let nextPlayerId: number;
+
         if (!nextActions.length) {
-            const nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
+            nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
 
             await Game.update({
                 activePlayerId: nextPlayerId,
@@ -85,5 +88,13 @@ export default class CommandService {
             type: EVENT_GAME_UPDATE,
             payload: updatedGameState
         });
+
+        const nextPlayer = game.players.find(player => player.id === nextPlayerId);
+
+        if (nextPlayer.user.isBot) {
+            setTimeout(async () => {
+                await BotService.takeTurn(game.id, nextPlayer.id);
+            }, 1500);
+        }
     }
 }
