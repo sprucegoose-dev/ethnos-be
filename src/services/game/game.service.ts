@@ -40,6 +40,47 @@ import PlayerRegion from '../../models/player_region.model';
 
 export default class GameService {
 
+    static async addBotPlayer(userId: number, gameId: number) {
+        const game = await this.getState(gameId, ['password']);
+
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
+        if (game.creatorId !== userId) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Only the game creator can add a bot player');
+        }
+
+        if (game.players.length >= game.maxPlayers) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
+        }
+
+        const user = await User.findOne({
+            where: {
+                isBot: true,
+                id: {
+                    [Op.notIn]: game.players.map(player => player.userId)
+                }
+            }}
+        );
+
+        await PlayerService.create(user.id, gameId);
+
+        const updatedGameState = await this.getStateResponse(gameId);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: updatedGameState
+        });
+
+        const activeGames = await this.getActiveGames();
+
+        EventService.emitEvent({
+            type: EVENT_ACTIVE_GAMES_UPDATE,
+            payload: activeGames
+        });
+    }
+
     static async assignPlayerColor(userId: number, gameId: number, color: PlayerColor) {
         const game = await Game.findOne({
             where: {
@@ -591,6 +632,7 @@ export default class GameService {
     }
 
     static async join(userId: number, gameId: number, password: string = null): Promise<void> {
+
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before joining a new one.')
         }
@@ -716,6 +758,38 @@ export default class GameService {
                 index,
             });
         }
+    }
+
+    static async removeBotPlayer(userId: number, gameId: number, botPlayerId: number) {
+        const game = await this.getState(gameId, ['password']);
+
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
+        if (game.creatorId !== userId) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Only the game creator can add a bot player');
+        }
+
+        await Player.destroy({
+            where: {
+                id: botPlayerId,
+            }
+        });
+
+        const updatedGameState = await this.getStateResponse(gameId);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: updatedGameState
+        });
+
+        const activeGames = await this.getActiveGames();
+
+        EventService.emitEvent({
+            type: EVENT_ACTIVE_GAMES_UPDATE,
+            payload: activeGames
+        });
     }
 
     static setTurnOrder(players: Player[]): number[] {

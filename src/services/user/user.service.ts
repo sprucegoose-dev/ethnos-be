@@ -51,6 +51,10 @@ class UserService {
     static async login(email: string, password: string): Promise<IUserResponse> {
         const user = await User.unscoped().findOne({ where: { email }});
 
+        if (user.isBot) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Bot players cannot sign in');
+        }
+
         if (!user) {
             throw new CustomException(ERROR_NOT_FOUND, 'The provided email does not exist');
         }
@@ -144,7 +148,7 @@ class UserService {
             throw new CustomException(ERROR_BAD_REQUEST, `Password must be at least ${PASSWORD_MIN_CHARS} characters`);
         }
 
-        // TODO: add bad words validation to the usernam
+        // TODO: add bad words validation to the username
 
         if (payload.username.length < USERNAME_MIN_CHARS) {
             throw new CustomException(ERROR_BAD_REQUEST, `Username must be at least ${USERNAME_MIN_CHARS} characters`);

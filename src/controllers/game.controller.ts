@@ -13,6 +13,19 @@ import { ICreateGamePayload, IGameSettings } from '@interfaces/game.interface';
 @exceptionHandler()
 class GamesController {
 
+    async addBotPlayer(req: AuthRequest, res: Response): Promise<void> {
+        const gameId = req.params.id;
+        await GameService.addBotPlayer(req.userId, parseInt(gameId, 10));
+        res.send();
+    }
+
+    async removeBotPlayer(req: AuthRequest, res: Response): Promise<void> {
+        const gameId = req.params.id;
+        const botPlayerId = req.params.botPlayerId;
+        await GameService.removeBotPlayer(req.userId, parseInt(gameId, 10), parseInt(botPlayerId, 10));
+        res.send();
+    }
+
     async assignPlayerColor(req: AuthRequest, res: Response): Promise<void> {
         const payload = req.body;
         const gameId = req.params.id;

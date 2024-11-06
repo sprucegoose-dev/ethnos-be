@@ -1,3 +1,6 @@
+const bcrypt = require('bcrypt');
+const moment = require('moment');
+const { v4: uuid } = require('uuid');
 
 function generateTribeSeeds() {
     const tribes = [];
@@ -45,6 +48,37 @@ function generateTribeSeeds() {
     return tribes;
 }
 
+
+async function generateBotSeeds() {
+    const bots = [
+        'Bismo',
+        'Violet',
+        'MacGruber',
+        'LittleHeart',
+        'SirMud'
+    ];
+    const seeds = [];
+
+    for (let i = 0; i < bots.length; i++) {
+        const sessionId = uuid();
+        const sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const password = await bcrypt.hash(`${bots[i]}${randomSuffix}`, 10);
+
+        seeds.push({
+            username: bots[i],
+            email: `${bots[i]}@ethnos-online.com`,
+            password,
+            session_id: sessionId,
+            session_exp: sessionExp,
+            is_bot: true,
+        });
+    }
+
+    return seeds;
+}
+
 module.exports = {
+    generateBotSeeds,
     generateTribeSeeds,
 };
