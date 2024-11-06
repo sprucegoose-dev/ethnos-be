@@ -22,7 +22,7 @@ const userDataC = {
     password: 'smoothie',
 };
 const userDataD = {
-    username: 'Bismo',
+    username: 'BismoSkint',
     email: 'bismo.skint@gmail.com',
     password: 'sling3021',
 };

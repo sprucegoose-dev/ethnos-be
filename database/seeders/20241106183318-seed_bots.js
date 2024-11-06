@@ -8,7 +8,6 @@ module.exports = {
         return queryInterface.bulkInsert('users', await generateBotSeeds());
     },
     down: (queryInterface, Sequelize) => {
-        console.log('got here');
         return queryInterface.bulkDelete('users', {
             username: {
                 [Sequelize.Op.in]: [

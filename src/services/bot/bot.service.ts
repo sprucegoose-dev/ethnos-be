@@ -23,7 +23,7 @@ import Game from '../../models/game.model';
 
 export default class BotService {
 
-    static async addTokenToRegion(regions: Region[], player: Player, nextActionId: number) {
+    static async addFreeTokenToRegion(player: Player, regions: Region[], nextActionId: number) {
         // sort regions by the regions player has the most tokens in
         const sortedRegions = regions.sort((regionA, regionB) => {
             const ownPlayerATokens = regionA.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
@@ -36,7 +36,6 @@ export default class BotService {
 
         // out of those regions, find the most valuable one
         for (const region of sortedRegions) {
-
             const regionTotalValue = region.values.reduce((acc, num) => acc + num, 0);
 
             if (regionTotalValue > highestValue) {
@@ -180,7 +179,7 @@ export default class BotService {
     static async handleFreeTokenAction(actions: IActionPayload[], regions: Region[], player: Player): Promise<boolean> {
         const freeTokenAction = actions.find(action => action.type === ActionType.ADD_FREE_TOKEN);
         if (freeTokenAction) {
-            await this.addTokenToRegion(regions, player, freeTokenAction.nextActionId);
+            await this.addFreeTokenToRegion(player, regions, freeTokenAction.nextActionId);
             return true;
         }
         return false;

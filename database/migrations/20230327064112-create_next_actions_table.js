@@ -45,6 +45,7 @@ module.exports = {
                     'pending',
                     'resolved',
                 ],
+                defaultValue: 'pending',
             },
         };
 
