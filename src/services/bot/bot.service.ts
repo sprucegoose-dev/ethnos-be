@@ -81,7 +81,7 @@ export default class BotService {
         return region;
     }
 
-    private async checkHandAndMarketCards(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
+    private async emptyHandPickUpOrDrawCard(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
         if (!cardsInHand.length) {
             if (cardsInMarket.length && actions.find(action => action.type === ActionType.PICK_UP_CARD)) {
                 await CommandService.handleAction(player.userId, player.gameId, {
@@ -186,7 +186,7 @@ export default class BotService {
         return false;
     }
 
-    private organizeBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
+    private preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
         let centaurBandActions = [];
         let otherBandActions = [];
@@ -248,10 +248,32 @@ export default class BotService {
         return false;
     }
 
-    private async playFallbackAction(actions: IActionPayload[], player: Player) {
+    private async playFallbackAction(actions: IActionPayload[], cardsInHand: Card[], player: Player) {
+        const tribePriority = {
+            [TribeName.DRAGON]: -1,
+            [TribeName.SKELETONS]: 0,
+            [TribeName.HALFLINGS]: 1,
+            [TribeName.WINGFOLK]: 2,
+            [TribeName.CENTAURS]: 3,
+            [TribeName.MINOTAURS]: 4,
+            [TribeName.ORCS]: 5,
+            [TribeName.GIANTS]: 6,
+            [TribeName.TROLLS]: 7,
+            [TribeName.ELVES]: 8,
+            [TribeName.WIZARDS]: 9,
+            [TribeName.DWARVES]: 10,
+            [TribeName.MERFOLK]: 11,
+        };
+
         const fallbackPlayAction = actions
             .filter(action => action.type === ActionType.PLAY_BAND)
-            .sort((a, b) => b.cardIds.length - a.cardIds.length)[0];
+            .sort((actionA, actionB) => {
+                const leaderA = cardsInHand.find(card => card.id === actionA.leaderId);
+                const leaderB = cardsInHand.find(card => card.id === actionB.leaderId);
+
+                return actionB.cardIds.length - actionA.cardIds.length ||
+                    tribePriority[leaderA.tribe.name] - tribePriority[leaderB.tribe.name]
+            })[0];
 
         await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
     }
@@ -289,14 +311,14 @@ export default class BotService {
 
         if (await this.handleFreeTokenAction(actions, regions, player)) return;
 
-        if (await this.checkHandAndMarketCards(actions, cardsInHand, cardsInMarket, player)) return;
+        if (await this.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player)) return;
 
-        const sortedPlayBandActions = this.organizeBandActions(actions, cardsInHand);
+        const sortedPlayBandActions = this.preSortBandActions(actions, cardsInHand);
 
         if (await this.playBestBandAction(sortedPlayBandActions, cardsInHand, regions, player)) return;
 
         if (await this.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
 
-        await this.playFallbackAction(actions, player);
+        await this.playFallbackAction(actions, cardsInHand, player);
     }
 }
