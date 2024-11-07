@@ -257,9 +257,6 @@ describe('BotPickUpCardHandler', () => {
     describe('pickUpOrDrawCard', () => {
         let gameState: IGameState;
         let playerA: Player;
-        let playerB: Player;
-        let playerC: Player;
-        let playerD: Player;
 
         beforeEach(async () => {
             const result = await createGame({
@@ -273,9 +270,6 @@ describe('BotPickUpCardHandler', () => {
                 ]
             });
             playerA = result.playerA;
-            playerB = result.playerA;
-            playerC = result.playerA;
-            playerD = result.playerA;
             gameState = result.gameState;
 
             await Game.update({
@@ -290,17 +284,15 @@ describe('BotPickUpCardHandler', () => {
         afterEach(async () => await Game.truncate());
 
         it("should pick up a card from the market matching the most frequent color in a player's hand", async () => {
-            await returnPlayerCardsToDeck(playerA.id);
-            await returnPlayerCardsToDeck(playerB.id);
-            await returnPlayerCardsToDeck(playerC.id);
-            await returnPlayerCardsToDeck(playerD.id);
-
             await Card.update({
                 state: CardState.IN_DECK,
+                playerId: null,
             }, {
                 where: {
                     gameId: gameState.id,
-                    state: CardState.IN_MARKET,
+                    state: {
+                        [Op.in]: [CardState.IN_MARKET,  CardState.IN_HAND]
+                    }
                 }
             });
 
@@ -375,6 +367,166 @@ describe('BotPickUpCardHandler', () => {
 
             expect(updatedOrangeCards.length).toBe(5);
             expect(updatedCardsInMarket.length).toBe(3);
+            expect(result).toBe(true);
+        });
+
+        it("should pick up a card from the market matching the most frequent tribe in a player's hand if theey exceed same-color cards", async () => {
+            await Card.update({
+                state: CardState.IN_DECK,
+                playerId: null,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    state: {
+                        [Op.in]: [CardState.IN_MARKET,  CardState.IN_HAND]
+                    }
+                }
+            });
+
+            let updatedGame = await GameService.getState(gameState.id);
+
+            let dwarfCards = updatedGame.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.DWARVES
+            ).slice(0, 3);
+
+            const centuarCards = updatedGame.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.BLUE &&
+                card.tribe.name === TribeName.CENTAURS
+            ).slice(0, 1);
+
+            const merfolkCards = updatedGame.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.GRAY &&
+                card.tribe.name === TribeName.MERFOLK
+            ).slice(0, 1);
+
+            const cardsInHand = [...dwarfCards, ...centuarCards, ...merfolkCards];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const dwarfCardIds = dwarfCards.map(card => card.id);
+
+            const dwarfForMarket = updatedGame.cards.find(card =>
+                card.tribe.name === TribeName.DWARVES &&
+                !dwarfCardIds.includes(card.id)
+            );
+            const nonDwarvesForMarket =  updatedGame.cards.filter(card => card.tribe.name !== TribeName.DWARVES).slice(0, 3);
+
+            await Card.update({
+                state: CardState.IN_MARKET,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    id: dwarfForMarket.id,
+                    state: CardState.IN_DECK,
+                }
+            });
+
+            await Card.update({
+                state: CardState.IN_MARKET,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    id: {
+                        [Op.in]: nonDwarvesForMarket.map(card => card.id),
+                    },
+                    state: CardState.IN_DECK,
+                }
+            });
+
+            updatedGame = await GameService.getState(gameState.id);
+
+            const cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(cardsInMarket.length).toBe(4);
+
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+
+            updatedGame = await GameService.getState(gameState.id);
+
+            const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const updatedDwarfCards = updatedPlayer.cards.filter(card => card.state === CardState.IN_HAND && card.tribe.name === TribeName.DWARVES);
+
+            expect(updatedDwarfCards.length).toBe(4);
+            expect(updatedCardsInMarket.length).toBe(3);
+            expect(result).toBe(true);
+        });
+
+        it("should draw a card from the deck if the market doesn't have cards matching the player's most frequent card color or tribe", async () => {
+            await Card.update({
+                state: CardState.IN_DECK,
+                playerId: null,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    state: {
+                        [Op.in]: [CardState.IN_MARKET,  CardState.IN_HAND]
+                    }
+                }
+            });
+
+            let updatedGame = await GameService.getState(gameState.id);
+
+            let orangeCards = updatedGame.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.ORANGE &&
+                [TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name)
+            ).slice(0, 4);
+
+            const blueCards = updatedGame.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.BLUE &&
+                ![TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name),
+            ).slice(0, 1);
+
+            const cardsInHand = [...orangeCards, ...blueCards];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const nonMatchingCards = updatedGame.cards.filter(card =>
+                ![TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name) &&
+                card.color !== Color.ORANGE &&
+                !cardIdsToAssign.includes(card.id)
+            ).slice(0, 3);
+
+            await Card.update({
+                state: CardState.IN_MARKET,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    id: {
+                        [Op.in]: nonMatchingCards.map(card => card.id),
+                    },
+                    state: CardState.IN_DECK,
+                }
+            });
+
+            updatedGame = await GameService.getState(gameState.id);
+
+            const cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+            const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+
+            updatedGame = await GameService.getState(gameState.id);
+
+            const updatedCardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const updatedPlayerCards = updatedPlayer.cards.filter(card => card.state === CardState.IN_HAND);
+
+            expect(updatedPlayerCards.length).toBe(6);
+            expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
             expect(result).toBe(true);
         });
     });
