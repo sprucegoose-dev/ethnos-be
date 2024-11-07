@@ -30,7 +30,7 @@ export default class BotPickUpCardHandler {
         return false;
     }
 
-    static getMostFrequentColorInHand(cards: Card[]): { color: Color, maxCount: number } {
+    static getMostFrequentColorInHand(cards: Card[]): { color: Color, total: number } {
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
             const key = card.color;
             acc[key] = (acc[key] || 0) + 1;
@@ -38,22 +38,22 @@ export default class BotPickUpCardHandler {
         }, {});
 
         let mostFrequent: Color = null;
-        let maxCount = 0;
+        let highestCount = 0;
 
         for (const [value, count] of Object.entries(counts)) {
-            if (count > maxCount) {
+            if (count > highestCount) {
                 mostFrequent = value as Color;
-                maxCount = count;
+                highestCount = count;
             }
         }
 
         return {
             color: mostFrequent,
-            maxCount,
+            total: highestCount,
         };
     }
 
-    static getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, maxCount: number } {
+    static getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, total: number } {
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
             const key = card.tribe.name;
             acc[key] = (acc[key] || 0) + 1;
@@ -61,18 +61,18 @@ export default class BotPickUpCardHandler {
         }, {});
 
         let mostFrequent: TribeName = null;
-        let maxCount = 0;
+        let highestCount = 0;
 
         for (const [value, count] of Object.entries(counts)) {
-            if (count > maxCount) {
+            if (count > highestCount) {
                 mostFrequent = value as TribeName;
-                maxCount = count;
+                highestCount = count;
             }
         }
 
         return {
             tribeName: mostFrequent,
-            maxCount,
+            total: highestCount,
         };
     }
 
@@ -121,7 +121,7 @@ export default class BotPickUpCardHandler {
 
         const mostFrequentTribe = this.getMostFrequentTribeInHand(cardsInHand);
 
-        if (!cardToPickUpId || mostFrequentTribe.maxCount > mostFrequentColor.maxCount) {
+        if (!cardToPickUpId || mostFrequentTribe.total > mostFrequentColor.total) {
             for (const card of cardsInMarket) {
                 if (card.tribe.name === mostFrequentTribe.tribeName) {
                     cardToPickUpId = card.id;

@@ -3,17 +3,19 @@ import Player from '@models/player.model';
 import Card from '@models/card.model';
 
 import { CardState } from '@interfaces/card.interface';
-import { IGameState } from '@interfaces/game.interface';
+import { Color, IGameState } from '@interfaces/game.interface';
 
 import ActionService from '@services/action/action.service';
 import PlayerService from '@services/player/player.service';
 
 import {
+    // assignCardsToPlayer,
     createGame,
     returnPlayerCardsToDeck,
 } from '../test-helpers';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
 import GameService from '../game/game.service';
+import { TribeName } from '../../interfaces/tribe.interface';
 
 describe('BotPickUpCardHandler', () => {
 
@@ -98,6 +100,80 @@ describe('BotPickUpCardHandler', () => {
             expect(response).toBe(true);
             expect(cardsInHand.length).toBe(1);
             expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
+        });
+    });
+
+    describe('getMostFrequentColorInHand', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return the most frequent color in a player's hand and the total count of that color", async () => {
+            const orangeCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.ORANGE
+            ).slice(0, 3);
+
+            const blueCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.BLUE
+            ).slice(0, 2);
+
+            const grayCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.GRAY
+            ).slice(0, 1);
+
+            const cardsInHand =  [...orangeCards, ...blueCards, ...grayCards];
+
+            const mostFrequentColor = BotPickUpCardHandler.getMostFrequentColorInHand(cardsInHand);
+
+            expect(mostFrequentColor).toEqual({
+                color: Color.ORANGE,
+                total: 3
+            })
+        });
+    });
+
+    describe('getMostFrequentTribeInHand', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return the most frequent color in a player's hand and the total count of that color", async () => {
+            const orangeCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.DWARVES
+            ).slice(0, 3);
+
+            const blueCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.MINOTAURS
+            ).slice(0, 2);
+
+            const grayCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.MERFOLK
+            ).slice(0, 1);
+
+            const cardsInHand =  [...orangeCards, ...blueCards, ...grayCards];
+
+            const mostFrequentColor = BotPickUpCardHandler.getMostFrequentTribeInHand(cardsInHand);
+
+            expect(mostFrequentColor).toEqual({
+                tribeName: TribeName.DWARVES,
+                total: 3
+            })
         });
     });
 });
