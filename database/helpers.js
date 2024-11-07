@@ -69,7 +69,7 @@ async function generateBotSeeds() {
         const sessionId = uuid();
         const sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
         const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-        const password = await bcrypt.hash(`${bots[i]}${randomSuffix}`, 10);
+        const password = await bcrypt.hash(`${botNames[i]}${randomSuffix}`, 10);
 
         seeds.push({
             username: botNames[i],
@@ -85,7 +85,7 @@ async function generateBotSeeds() {
 }
 
 module.exports = {
-    bots,
+    botNames,
     generateBotSeeds,
     generateTribeSeeds,
 };

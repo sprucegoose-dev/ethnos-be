@@ -9,7 +9,6 @@ import {
 
 import Card from '@models/card.model';
 import Player from '@models/player.model';
-import Region from '@models/region.model';
 import Game from '@models/game.model';
 
 import ActionService from '@services/action/action.service';
@@ -27,10 +26,6 @@ export default class BotService {
 
     static getCardsInMarket(gameState: Game): Card[] {
         return gameState.cards.filter(card => card.state === CardState.IN_MARKET);
-    }
-
-    static getTotalRegionValue(region: Region): number {
-        return region.values.reduce((total, value) => total + value, 0);
     }
 
     static preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {

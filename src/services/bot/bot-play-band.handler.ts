@@ -20,6 +20,10 @@ export default class BotPlayBandHandler {
         return region.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
     }
 
+    static getTotalRegionValue(region: Region): number {
+        return region.values.reduce((total, value) => total + value, 0);
+    }
+
     static canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
         return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
     }

@@ -44,6 +44,4 @@ export default class BotTokenHandler {
         }
         return false;
     }
-
-
 }

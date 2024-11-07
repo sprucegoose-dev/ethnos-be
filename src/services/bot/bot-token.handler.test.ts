@@ -7,18 +7,15 @@ import NextAction from '@models/nextAction.model';
 import PlayerRegion from '@models/player_region.model';
 
 import { ActionType } from '@interfaces/action.interface';
-import { TribeName } from '@interfaces/tribe.interface';
 
 import {
     createGame,
 } from '../test-helpers';
 
-import ScoringService from '@services/scoring/scoring.service';
-
-import BotService from './bot.service';
 import BotTokenHandler from './bot-token.handler';
 
 describe('BotTokenHandler', () => {
+
     describe('addFreeTokenToRegion', () => {
         let gameId: number;
         let playerA: Player;
