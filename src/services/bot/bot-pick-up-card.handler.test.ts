@@ -48,8 +48,8 @@ describe('BotPickUpCardHandler', () => {
             const player = await PlayerService.getPlayerWithCards(playerA.id);
             const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
             const actions = await ActionService.getActions(gameId, player.userId);
-            const response = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player);
-            expect(response).toBe(false);
+            const result = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player);
+            expect(result).toBe(false);
         });
 
         it("should pick up a random card from the market if a player's hand is empty and there are cards in the market", async () => {
@@ -59,14 +59,14 @@ describe('BotPickUpCardHandler', () => {
 
             expect(cardsInMarket.length).toBe(8);
 
-            const response = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
+            const result = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
             const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
             const updatedGame = await GameService.getState(gameId);
 
             cardsInHand = updatedPlayer.cards.filter(card => card.state === CardState.IN_HAND);
             cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
-            expect(response).toBe(true);
+            expect(result).toBe(true);
             expect(cardsInHand.length).toBe(1);
             expect(cardsInMarket.length).toBe(7);
         });
@@ -89,7 +89,7 @@ describe('BotPickUpCardHandler', () => {
             let updatedGame = await GameService.getState(gameId);
             const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
 
-            const response = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
+            const result = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
             const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
             updatedGame = await GameService.getState(gameId);
 
@@ -97,7 +97,7 @@ describe('BotPickUpCardHandler', () => {
 
             const updatedCardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
 
-            expect(response).toBe(true);
+            expect(result).toBe(true);
             expect(cardsInHand.length).toBe(1);
             expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
         });
@@ -113,7 +113,7 @@ describe('BotPickUpCardHandler', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it("should return the most frequent color in a player's hand and the total count of that color", async () => {
+        it("should return the most frequent color in a player's hand and the total count of that color", () => {
             const orangeCards = gameState.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
                 card.color === Color.ORANGE
@@ -150,23 +150,23 @@ describe('BotPickUpCardHandler', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it("should return the most frequent color in a player's hand and the total count of that color", async () => {
-            const orangeCards = gameState.cards.filter(card =>
+        it("should return the most frequent color in a player's hand and the total count of that color", () => {
+            const dwarfCards = gameState.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
                 card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
-            const blueCards = gameState.cards.filter(card =>
+            const minotaurCards = gameState.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
                 card.tribe.name === TribeName.MINOTAURS
             ).slice(0, 2);
 
-            const grayCards = gameState.cards.filter(card =>
+            const merfolkCards = gameState.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
                 card.tribe.name === TribeName.MERFOLK
             ).slice(0, 1);
 
-            const cardsInHand =  [...orangeCards, ...blueCards, ...grayCards];
+            const cardsInHand =  [...dwarfCards, ...minotaurCards, ...merfolkCards];
 
             const mostFrequentColor = BotPickUpCardHandler.getMostFrequentTribeInHand(cardsInHand);
 
@@ -174,6 +174,82 @@ describe('BotPickUpCardHandler', () => {
                 tribeName: TribeName.DWARVES,
                 total: 3
             })
+        });
+    });
+
+    describe('isSkeletonsOnlyHand', () => {
+
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.SKELETONS,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                ]
+            });
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return true if all cards in a player's hand are Skeletons", () => {
+            const cardsInHand =  gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.SKELETONS
+            ).slice(0, 3);
+
+            const result = BotPickUpCardHandler.isSkeletonsOnlyHand(cardsInHand);
+
+            expect(result).toBe(true);
+        });
+
+        it("should return false if only some of the cards in a player's hand are Skeletons", () => {
+            const skeletonCards =  gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.SKELETONS
+            ).slice(0, 2);
+
+            const dwarfCards =  gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.DWARVES
+            ).slice(0, 2);
+
+            const cardsInHand = [...skeletonCards, ...dwarfCards];
+
+            const result = BotPickUpCardHandler.isSkeletonsOnlyHand(cardsInHand);
+
+            expect(result).toBe(false);
+        });
+
+        it("should return false if only some of the cards in a player's hand are Skeletons", () => {
+            const skeletonCards =  gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.SKELETONS
+            ).slice(0, 2);
+
+            const dwarfCards =  gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.DWARVES
+            ).slice(0, 2);
+
+            const cardsInHand = [...skeletonCards, ...dwarfCards];
+
+            const result = BotPickUpCardHandler.isSkeletonsOnlyHand(cardsInHand);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return false if a player has no cards in their hand', () => {
+            const cardsInHand: Card[] = [];
+
+            const result = BotPickUpCardHandler.isSkeletonsOnlyHand(cardsInHand);
+
+            expect(result).toBe(false);
         });
     });
 });
