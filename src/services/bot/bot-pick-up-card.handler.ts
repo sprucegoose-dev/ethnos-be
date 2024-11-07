@@ -82,6 +82,7 @@ export default class BotPickUpCardHandler {
 
     static async pickUpOrDrawCard(cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
         const cardToPickUpId = BotPickUpCardHandler.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+
         if (cardToPickUpId) {
             await CommandService.handleAction(player.userId, player.gameId, {
                 type: ActionType.PICK_UP_CARD,
@@ -112,6 +113,7 @@ export default class BotPickUpCardHandler {
         }
 
         const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
+
 
         for (const card of cardsInMarket) {
             if (card.color === mostFrequentColor.color) {
