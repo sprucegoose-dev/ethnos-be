@@ -1,4 +1,4 @@
-import { ActionType, IAddFreeTokenPayload } from '@interfaces/action.interface';
+import { ActionType, IActionPayload, IAddFreeTokenPayload } from '@interfaces/action.interface';
 import { Color } from '@interfaces/game.interface';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
@@ -35,5 +35,15 @@ export default class BotTokenHandler {
 
         await CommandService.handleAction(player.userId, player.gameId, action);
     }
+
+    static async handleFreeTokenAction(actions: IActionPayload[], regions: Region[], player: Player): Promise<boolean> {
+        const freeTokenAction = actions.find(action => action.type === ActionType.ADD_FREE_TOKEN);
+        if (freeTokenAction) {
+            await BotTokenHandler.addFreeTokenToRegion(player, regions, freeTokenAction.nextActionId);
+            return true;
+        }
+        return false;
+    }
+
 
 }

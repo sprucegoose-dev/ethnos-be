@@ -16,7 +16,7 @@ import {
 import ScoringService from '@services/scoring/scoring.service';
 
 import BotService from './bot.service';
-import BotTokenHandler from './bot.token.handler';
+import BotTokenHandler from './bot-token.handler';
 
 describe('BotTokenHandler', () => {
     describe('addFreeTokenToRegion', () => {

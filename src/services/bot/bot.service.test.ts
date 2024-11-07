@@ -14,14 +14,12 @@ import { TribeName } from '../../interfaces/tribe.interface';
 describe('BotService', () => {
 
     describe('canAddTokenToRegion', () => {
-        // let gameId: number;
         let playerA: Player;
         let regions: Region[];
 
         beforeEach(async () => {
             const result = await createGame();
 
-            // gameId = result.gameId;
             playerA = result.playerA;
             regions = result.gameState.regions;
         });
