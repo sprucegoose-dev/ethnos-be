@@ -30,6 +30,14 @@ describe('BotPickUpCardHandler', () => {
             playerA = result.playerA;
             gameState = result.gameState;
             cardsInMarket = gameState.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameId,
+                }
+            });
         });
 
         afterEach(async () => await Game.truncate());
@@ -59,6 +67,37 @@ describe('BotPickUpCardHandler', () => {
             expect(response).toBe(true);
             expect(cardsInHand.length).toBe(1);
             expect(cardsInMarket.length).toBe(7);
+        });
+
+        it("should draw a card from the deck if a player's hand is empty and there are no cards in the market", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            await Card.update({
+                state: CardState.IN_DECK
+            }, {
+                where: {
+                    gameId,
+                    state: CardState.IN_MARKET
+                }
+            });
+
+            let cardsInHand: Card[] = [];
+            const actions = await ActionService.getActions(gameId, playerA.userId);
+
+            let updatedGame = await GameService.getState(gameId);
+            const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            const response = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+            updatedGame = await GameService.getState(gameId);
+
+            cardsInHand = updatedPlayer.cards.filter(card => card.state === CardState.IN_HAND);
+
+            const updatedCardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            expect(response).toBe(true);
+            expect(cardsInHand.length).toBe(1);
+            expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
         });
     });
 });

@@ -21,6 +21,7 @@ export default class BotPickUpCardHandler {
                 });
                 return true;
             }
+
             if (actions.find(action => action.type === ActionType.DRAW_CARD)) {
                 await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
                 return true;
