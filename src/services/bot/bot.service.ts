@@ -21,6 +21,22 @@ import PlayBandHandler from '@services/command/play-band.handler';
 import GameService from '@services/game/game.service';
 import Game from '../../models/game.model';
 
+const tribePriority = {
+    [TribeName.DRAGON]: -1,
+    [TribeName.SKELETONS]: 0,
+    [TribeName.HALFLINGS]: 1,
+    [TribeName.WINGFOLK]: 2,
+    [TribeName.CENTAURS]: 3,
+    [TribeName.MINOTAURS]: 4,
+    [TribeName.ORCS]: 5,
+    [TribeName.GIANTS]: 6,
+    [TribeName.TROLLS]: 7,
+    [TribeName.ELVES]: 8,
+    [TribeName.WIZARDS]: 9,
+    [TribeName.DWARVES]: 10,
+    [TribeName.MERFOLK]: 11,
+};
+
 export default class BotService {
 
     static async addFreeTokenToRegion(player: Player, regions: Region[], nextActionId: number) {
@@ -185,6 +201,10 @@ export default class BotService {
         return false;
     }
 
+    static isSkeletonsOnlyHand(cardsInHand: Card[]): boolean {
+        return cardsInHand.length > 0 && cardsInHand.every(card => card.tribe.name === TribeName.SKELETONS);
+    }
+
     static preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
         let centaurBandActions = [];
@@ -248,22 +268,6 @@ export default class BotService {
     }
 
     static async playFallbackAction(actions: IActionPayload[], cardsInHand: Card[], player: Player) {
-        const tribePriority = {
-            [TribeName.DRAGON]: -1,
-            [TribeName.SKELETONS]: 0,
-            [TribeName.HALFLINGS]: 1,
-            [TribeName.WINGFOLK]: 2,
-            [TribeName.CENTAURS]: 3,
-            [TribeName.MINOTAURS]: 4,
-            [TribeName.ORCS]: 5,
-            [TribeName.GIANTS]: 6,
-            [TribeName.TROLLS]: 7,
-            [TribeName.ELVES]: 8,
-            [TribeName.WIZARDS]: 9,
-            [TribeName.DWARVES]: 10,
-            [TribeName.MERFOLK]: 11,
-        };
-
         const fallbackPlayAction = actions
             .filter(action => action.type === ActionType.PLAY_BAND)
             .sort((actionA, actionB) => {
@@ -271,7 +275,7 @@ export default class BotService {
                 const leaderB = cardsInHand.find(card => card.id === actionB.leaderId);
 
                 return actionB.cardIds.length - actionA.cardIds.length ||
-                    tribePriority[leaderA.tribe.name] - tribePriority[leaderB.tribe.name]
+                    tribePriority[leaderB.tribe.name] - tribePriority[leaderA.tribe.name]
             })[0];
 
         await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
@@ -279,6 +283,16 @@ export default class BotService {
 
     static shouldPickUpMarketCard(cardsInHand: Card[], cardsInMarket: Card[]): number {
         let cardToPickUpId: number;
+
+        if (this.isSkeletonsOnlyHand(cardsInHand) && cardsInMarket.length) {
+            cardToPickUpId = cardsInMarket
+                .filter(card => card.tribe.name !== TribeName.SKELETONS)
+                .sort((cardA, cardB) => tribePriority[cardB.tribe.name] - tribePriority[cardA.tribe.name])[0]?.id;
+
+            if (cardToPickUpId){
+                return cardToPickUpId;
+            }
+        }
 
         const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
 
