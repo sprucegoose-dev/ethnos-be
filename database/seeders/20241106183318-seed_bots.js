@@ -1,6 +1,6 @@
 'use strict';
 
-const { generateBotSeeds } = require('../helpers');
+const { botNames, generateBotSeeds } = require('../helpers');
 
 module.exports = {
     up: async (queryInterface) => {
@@ -10,13 +10,7 @@ module.exports = {
     down: (queryInterface, Sequelize) => {
         return queryInterface.bulkDelete('users', {
             username: {
-                [Sequelize.Op.in]: [
-                    'Bismo',
-                    'Violet',
-                    'MacGruber',
-                    'LittleHeart',
-                    'SirMud'
-                ]}
+                [Sequelize.Op.in]: botNames}
             },
         {});
     }

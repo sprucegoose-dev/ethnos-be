@@ -48,26 +48,32 @@ function generateTribeSeeds() {
     return tribes;
 }
 
+export const botNames = [
+    'Bismo',
+    'Violet',
+    'MacGruber',
+    'LittleHeart',
+    'SirMud',
+    'Winston',
+    'Dingbat',
+    'SirLancebot',
+    'Crumbum',
+    'Percival'
+
+];
 
 async function generateBotSeeds() {
-    const bots = [
-        'Bismo',
-        'Violet',
-        'MacGruber',
-        'LittleHeart',
-        'SirMud'
-    ];
     const seeds = [];
 
-    for (let i = 0; i < bots.length; i++) {
+    for (let i = 0; i < botNames.length; i++) {
         const sessionId = uuid();
         const sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
         const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         const password = await bcrypt.hash(`${bots[i]}${randomSuffix}`, 10);
 
         seeds.push({
-            username: bots[i],
-            email: `${bots[i]}@ethnos-online.com`,
+            username: botNames[i],
+            email: `${botNames[i]}@ethnos-online.com`,
             password,
             session_id: sessionId,
             session_exp: sessionExp,
@@ -79,6 +85,7 @@ async function generateBotSeeds() {
 }
 
 module.exports = {
+    bots,
     generateBotSeeds,
     generateTribeSeeds,
 };
