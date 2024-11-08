@@ -17,6 +17,7 @@ import BotPickUpCardHandler from './bot-pick-up-card.handler';
 import GameService from '../game/game.service';
 import { TribeName } from '../../interfaces/tribe.interface';
 import { Op } from 'sequelize';
+import Tribe from '../../models/tribe.model';
 
 describe('BotPickUpCardHandler', () => {
 
@@ -528,6 +529,152 @@ describe('BotPickUpCardHandler', () => {
             expect(updatedPlayerCards.length).toBe(6);
             expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
             expect(result).toBe(true);
+        });
+    });
+
+    describe('shouldPickUpMarketCard', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.SKELETONS,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                ]
+            });
+            playerA = result.playerA;
+            gameState = result.gameState;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return the ID of a card from the market if the player only has Skeletons in their hand", async () => {
+            const cardsInHand =  gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.SKELETONS
+            ).slice(0, 3);
+
+            const nonSkeletonMarketCard =  gameState.cards.find(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name !== TribeName.SKELETONS
+            );
+
+            const cardsInMarket = [...gameState.cards.filter(card => card.state === CardState.IN_MARKET), nonSkeletonMarketCard];
+
+            const nonSkeletonCardId = BotPickUpCardHandler.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+
+            const nonSkeletonCard = await Card.findOne({
+                where: {
+                    id: nonSkeletonCardId
+                },
+                include: [
+                    {
+                        model: Tribe
+                    }
+                ]
+            });
+
+            expect(nonSkeletonCard.tribe.name).not.toBe(TribeName.SKELETONS)
+        });
+
+        it("should return the ID of a card from the market matching the most frequent color in a player's hand", async () => {
+            const orangeCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.ORANGE &&
+                card.tribe.name !== TribeName.CENTAURS &&
+                card.tribe.name !== TribeName.ELVES
+            ).slice(0, 3);
+
+            const orangeCardIds = orangeCards.map(card => card.id);
+
+            const blueCard = gameState.cards.find(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.BLUE &&
+                card.tribe.name === TribeName.CENTAURS
+            );
+
+            const grayCard = gameState.cards.find(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.GRAY &&
+                card.tribe.name === TribeName.ELVES
+            );
+
+            const cardsInHand =  [...orangeCards, blueCard, grayCard];
+
+            const orangeCardInMarket = gameState.cards.find(card => card.color === Color.ORANGE && !orangeCardIds.includes(card.id));
+            const blueCardInMarket = gameState.cards.find(card => card.color === Color.BLUE && card.id !== blueCard.id);
+            const grayCardInMarket = gameState.cards.find(card => card.color === Color.GRAY && card.id !== grayCard.id);
+
+            const cardsInMarket = [orangeCardInMarket, blueCardInMarket, grayCardInMarket];
+
+            const orangeCardId = BotPickUpCardHandler.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+
+            const orangeCard = await Card.findOne({
+                where: {
+                    id: orangeCardId
+                }
+            });
+
+            expect(orangeCard.color).toBe(Color.ORANGE)
+        });
+
+        it("should return the ID of a card from the market matching the most frequent tribe in a player's hand", async () => {
+            const dwarfCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.DWARVES
+            ).slice(0, 3);
+
+            const dwarfCardIds = dwarfCards.map(card => card.id);
+
+            const nonDwarfCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name !== TribeName.DWARVES
+            ).slice(0, 2);
+
+            const nonDwarfCardIds = nonDwarfCards.map(card => card.id);
+
+            const cardsInHand =  [...dwarfCards, ...nonDwarfCards];
+
+            const dwarfMarketCard = gameState.cards.find(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name === TribeName.DWARVES &&
+                !dwarfCardIds.includes(card.id)
+            );
+            const nonDwarfMarketCards = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name !== TribeName.DWARVES &&
+                !nonDwarfCardIds.includes(card.id)
+            );
+
+            const cardsInMarket = [dwarfMarketCard, ...nonDwarfMarketCards];
+
+            const dwarfCardId = BotPickUpCardHandler.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+
+            const dwarfCard = await Card.findOne({
+                where: {
+                    id: dwarfCardId
+                },
+                include: [
+                    {
+                        model: Tribe
+                    }
+                ]
+            });
+
+            expect(dwarfCard.tribe.name).toBe(TribeName.DWARVES);
         });
     });
 });

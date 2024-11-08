@@ -114,7 +114,6 @@ export default class BotPickUpCardHandler {
 
         const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
 
-
         for (const card of cardsInMarket) {
             if (card.color === mostFrequentColor.color) {
                 cardToPickUpId = card.id;
