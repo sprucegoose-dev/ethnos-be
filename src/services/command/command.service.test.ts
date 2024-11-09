@@ -295,13 +295,7 @@ describe('CommandService', () => {
         it("should automatically take a bot's turn if the next player is a bot", async () => {
             jest.useFakeTimers();
 
-            await Game.update({
-                activePlayerId: playerA.id,
-            }, {
-                where: {
-                    id: gameState.id,
-                }
-            });
+            gameState.activePlayerId = playerA.id;
 
             gameState.players = gameState.players.map(player => {
                 if (player.id === playerB.id) {

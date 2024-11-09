@@ -158,6 +158,7 @@ describe('GamesController', () => {
                         cards: [],
                         user: {
                             id: userA.id,
+                            isBot: false,
                             username: userA.username,
                         }
                     }

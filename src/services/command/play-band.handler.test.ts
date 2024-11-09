@@ -491,7 +491,7 @@ describe('PlayBandHandler', () => {
                 gameState,
             } = await createGame();
 
-            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.DWARVES).slice(0, 3);
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.MERFOLK).slice(0, 3);
 
             const leader = bandCards[0];
 

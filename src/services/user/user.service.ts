@@ -51,12 +51,12 @@ class UserService {
     static async login(email: string, password: string): Promise<IUserResponse> {
         const user = await User.unscoped().findOne({ where: { email }});
 
-        if (user.isBot) {
-            throw new CustomException(ERROR_NOT_FOUND, 'Bot players cannot sign in');
-        }
-
         if (!user) {
             throw new CustomException(ERROR_NOT_FOUND, 'The provided email does not exist');
+        }
+
+        if (user.isBot) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Bot players cannot sign in');
         }
 
         if (await bcrypt.compare(password, user.toJSON().password)) {
