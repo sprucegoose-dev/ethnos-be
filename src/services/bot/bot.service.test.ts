@@ -1,14 +1,21 @@
+import shuffle from 'lodash.shuffle';
+
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
 import {
+    assignCardsToPlayer,
     createGame,
+    returnPlayerCardsToDeck,
 } from '../test-helpers';
 
 import BotService from './bot.service';
 import { CardState } from '../../interfaces/card.interface';
-import { IGameState } from '../../interfaces/game.interface';
+import { Color, IGameState } from '../../interfaces/game.interface';
 import PlayerService from '../player/player.service';
+import { TribeName } from '../../interfaces/tribe.interface';
+import ActionService from '../action/action.service';
+import { ActionType } from '../../interfaces/action.interface';
 
 describe('BotService', () => {
 
@@ -47,4 +54,90 @@ describe('BotService', () => {
         });
     });
 
+    describe('preSortBandActions', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should sort 'play band' actions so that Centaurs are sorted first", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const centaurCards = gameState.cards.filter(card => card.tribe.name === TribeName.CENTAURS).slice(0, 2);
+            const nonCentaurCards = gameState.cards.filter(card =>
+                card.tribe.name !== TribeName.CENTAURS &&
+                card.tribe.name !== TribeName.DRAGON
+            ).slice(0, 2);
+
+            const cardsInHand = [...centaurCards, ...nonCentaurCards];
+
+            const centaurCardIds = centaurCards.map(card => card.id);
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(shuffle(actions), cardsInHand);
+
+            expect(centaurCardIds).toContain(sortedPlayBandActions[0].leaderId);
+        });
+
+        it("should sort 'play band' actions so that Elves are sorted first when Centaurs are not available", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const elfCards = gameState.cards.filter(card => card.tribe.name === TribeName.ELVES).slice(0, 2);
+            const nonCentaurCards = gameState.cards.filter(card =>
+                card.tribe.name !== TribeName.ELVES &&
+                card.tribe.name !== TribeName.CENTAURS &&
+                card.tribe.name !== TribeName.DRAGON
+            ).slice(0, 2);
+
+            const cardsInHand = [...elfCards, ...nonCentaurCards];
+
+            const elfCardIds = elfCards.map(card => card.id);
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(shuffle(actions), cardsInHand);
+
+            expect(elfCardIds).toContain(sortedPlayBandActions[0].leaderId);
+        });
+
+        it("should sort the actions by the size of the bands", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const orangeDwarfCard = gameState.cards.find(card => card.tribe.name === TribeName.DWARVES && card.color === Color.ORANGE);
+            const blueDwarfCard = gameState.cards.find(card => card.tribe.name === TribeName.DWARVES && card.color === Color.BLUE);
+            const grayDwarfCard = gameState.cards.find(card => card.tribe.name === TribeName.DWARVES && card.color === Color.GRAY);
+            const grayMerfolkCard = gameState.cards.find(card => card.tribe.name === TribeName.MERFOLK && card.color === Color.GRAY);
+
+            const cardsInHand = [orangeDwarfCard, blueDwarfCard, grayDwarfCard, grayMerfolkCard];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(shuffle(actions), cardsInHand);
+
+            expect(sortedPlayBandActions[0].cardIds.length).toBe(3);
+            expect(sortedPlayBandActions[sortedPlayBandActions.length - 1].cardIds.length).toBe(1);
+        });
+    });
 });

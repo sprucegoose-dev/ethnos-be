@@ -12,17 +12,15 @@ import { CardState } from '@interfaces/card.interface';
 import { ActionType, IPlayBandPayload } from '@interfaces/action.interface';
 
 import ScoringService from '@services/scoring/scoring.service';
+import ActionService from '@services/action/action.service';
+import GameService from '@services/game/game.service';
 
 import {
     assignCardsToPlayer,
-    // assignCardsToPlayer,
     createGame,
     returnPlayerCardsToDeck,
-    // returnPlayerCardsToDeck,
 } from '../test-helpers';
 import BotPlayBandHandler from './bot-play-band.handler';
-import GameService from '../game/game.service';
-import ActionService from '../action/action.service';
 import BotService from './bot.service';
 
 describe('BotPlayBandHandler', () => {

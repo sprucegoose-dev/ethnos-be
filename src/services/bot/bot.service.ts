@@ -31,21 +31,25 @@ export default class BotService {
     static preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
         let centaurBandActions = [];
+        let elfBandActions = [];
         let otherBandActions = [];
 
         for (const action of playBandActions) {
             const leader = cardsInHand.find(card => card.id === action.leaderId);
             if (leader.tribe.name === TribeName.CENTAURS) {
                 centaurBandActions.push(action);
+            } else if (leader.tribe.name === TribeName.ELVES) {
+                elfBandActions.push(action);
             } else {
                 otherBandActions.push(action);
             }
         }
 
+        elfBandActions.sort((a, b) => b.cardIds.length - a.cardIds.length);
         centaurBandActions.sort((a, b) => b.cardIds.length - a.cardIds.length);
         otherBandActions.sort((a, b) => b.cardIds.length - a.cardIds.length);
 
-        return [...centaurBandActions, ...otherBandActions];
+        return [...centaurBandActions, ...elfBandActions, ...otherBandActions];
     }
 
     static async takeTurn(gameId: number, playerId: number) {
