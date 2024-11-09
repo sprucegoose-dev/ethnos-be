@@ -680,6 +680,125 @@ describe('GameService', () => {
         });
     });
 
+    describe('removeBotPlayer', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+        let playerB: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+            playerB = result.playerB;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should remove a bot from a game', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(userA.id, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            let botPlayer = gameState.players.find(player => player.user.isBot);
+
+            await GameService.removeBotPlayer(playerA.userId, gameState.id, botPlayer.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            botPlayer = gameState.players.find(player => player.user.isBot);
+
+            expect(botPlayer).toBe(undefined);
+        });
+
+        it('should throw an error if the game is not found', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(userA.id, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            let botPlayer = gameState.players.find(player => player.user.isBot);
+
+            try {
+                await GameService.removeBotPlayer(playerA.userId, 10, botPlayer.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
+            }
+        });
+
+        it('should throw an error if a player other than the game creator tries to remove a bot', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(userA.id, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            let botPlayer = gameState.players.find(player => player.user.isBot);
+
+            try {
+                await GameService.removeBotPlayer(playerB.userId, gameState.id, botPlayer.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Only the game creator can remove a bot player');
+            }
+        });
+
+        it('should throw an error if a player tries to remove a bot after the game had already started', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(userA.id, gameState.id);
+
+            await Game.update({
+                state: GameState.STARTED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            gameState = await GameService.getState(gameState.id);
+
+            let botPlayer = gameState.players.find(player => player.user.isBot);
+
+            try {
+                await GameService.removeBotPlayer(playerA.userId, gameState.id, botPlayer.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('You cannot remove a bot after the game has already started');
+            }
+        });
+    });
+
     describe('start', () => {
         let game: Game;
         let playerA: Player;

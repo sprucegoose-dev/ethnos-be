@@ -771,14 +771,18 @@ export default class GameService {
     }
 
     static async removeBotPlayer(userId: number, gameId: number, botPlayerId: number) {
-        const game = await this.getState(gameId, ['password']);
+        const game = await this.getState(gameId);
 
         if (!game) {
             throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
         }
 
         if (game.creatorId !== userId) {
-            throw new CustomException(ERROR_NOT_FOUND, 'Only the game creator can add a bot player');
+            throw new CustomException(ERROR_BAD_REQUEST, 'Only the game creator can remove a bot player');
+        }
+
+        if (game.state !== GameState.CREATED) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'You cannot remove a bot after the game has already started');
         }
 
         await Player.destroy({
