@@ -618,12 +618,10 @@ describe('BotPickUpCardHandler', () => {
 
         it("should return the ID of a card from the market if the player only has Skeletons in their hand", async () => {
             const cardsInHand =  gameState.cards.filter(card =>
-                card.state === CardState.IN_DECK &&
                 card.tribe.name === TribeName.SKELETONS
             ).slice(0, 3);
 
             const nonSkeletonMarketCard =  gameState.cards.find(card =>
-                card.state === CardState.IN_DECK &&
                 card.tribe.name !== TribeName.SKELETONS
             );
 
@@ -647,27 +645,23 @@ describe('BotPickUpCardHandler', () => {
 
         it("should return the ID of a card from the market matching the most frequent color in a player's hand", async () => {
             const orangeCards = gameState.cards.filter(card =>
-                card.state === CardState.IN_DECK &&
                 card.color === Color.ORANGE &&
-                card.tribe.name !== TribeName.CENTAURS &&
-                card.tribe.name !== TribeName.ELVES
+                ![TribeName.CENTAURS, TribeName.ELVES].includes(card.tribe.name)
             ).slice(0, 3);
 
             const orangeCardIds = orangeCards.map(card => card.id);
 
             const blueCard = gameState.cards.find(card =>
-                card.state === CardState.IN_DECK &&
                 card.color === Color.BLUE &&
                 card.tribe.name === TribeName.CENTAURS
             );
 
             const grayCard = gameState.cards.find(card =>
-                card.state === CardState.IN_DECK &&
                 card.color === Color.GRAY &&
                 card.tribe.name === TribeName.ELVES
             );
 
-            const cardsInHand =  [...orangeCards, blueCard, grayCard];
+            const cardsInHand = [...orangeCards, blueCard, grayCard];
 
             const orangeCardInMarket = gameState.cards.find(card => card.color === Color.ORANGE && !orangeCardIds.includes(card.id));
             const blueCardInMarket = gameState.cards.find(card => card.color === Color.BLUE && card.id !== blueCard.id);
@@ -688,14 +682,12 @@ describe('BotPickUpCardHandler', () => {
 
         it("should return the ID of a card from the market matching the most frequent tribe in a player's hand", async () => {
             const dwarfCards = gameState.cards.filter(card =>
-                card.state === CardState.IN_DECK &&
                 card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
             const dwarfCardIds = dwarfCards.map(card => card.id);
 
             const nonDwarfCards = gameState.cards.filter(card =>
-                card.state === CardState.IN_DECK &&
                 card.tribe.name !== TribeName.DWARVES &&
                 card.tribe.name !== TribeName.DRAGON
             ).slice(0, 2);
@@ -705,12 +697,10 @@ describe('BotPickUpCardHandler', () => {
             const cardsInHand =  [...dwarfCards, ...nonDwarfCards];
 
             const dwarfMarketCard = gameState.cards.find(card =>
-                card.state === CardState.IN_DECK &&
                 card.tribe.name === TribeName.DWARVES &&
                 !dwarfCardIds.includes(card.id)
             );
             const nonDwarfMarketCards = gameState.cards.filter(card =>
-                card.state === CardState.IN_DECK &&
                 card.tribe.name !== TribeName.DWARVES &&
                 !nonDwarfCardIds.includes(card.id)
             );
