@@ -35,7 +35,7 @@ describe('BotPickUpCardHandler', () => {
                     TribeName.MINOTAURS,
                     TribeName.MERFOLK,
                     TribeName.CENTAURS,
-                    TribeName.ORCS,
+                    TribeName.ELVES,
                 ]
             });
 
@@ -64,6 +64,31 @@ describe('BotPickUpCardHandler', () => {
         });
 
         it("should pick up an Orc card from the market of a color the player doesn't have on their Orc Hoard Board if the player's hand is empty", async () => {
+            await Game.truncate();
+
+            const gameWithOrcs = await createGame({
+                tribes: [
+                    TribeName.SKELETONS,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAURS,
+                    TribeName.ORCS,
+                ]
+            });
+
+            gameId = gameWithOrcs.gameId;
+            gameState = gameWithOrcs.gameState;
+            playerA = gameWithOrcs.playerA;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameId,
+                }
+            });
+
             await Card.update({
                 state: CardState.IN_DECK
             }, {
