@@ -482,7 +482,8 @@ describe('PlayBandHandler', () => {
             expect(bandDetails).toEqual({
                 color: leader.color,
                 tribe: leader.tribe.name,
-                bandSize: 3
+                bandSize: 3,
+                points: 3
             });
         });
 
@@ -500,7 +501,27 @@ describe('PlayBandHandler', () => {
             expect(bandDetails).toEqual({
                 color: leader.color,
                 tribe: leader.tribe.name,
-                bandSize: 4
+                bandSize: 4,
+                points: 3,
+            });
+        });
+
+        it('returns a points value equal to a band size of +1 when the leader is a Dwarf', async () => {
+            const {
+                gameState,
+            } = await createGame();
+
+            const bandCards = gameState.cards.filter(card => card.tribe.name === TribeName.DWARVES).slice(0, 3);
+
+            const leader = bandCards[0];
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, bandCards.map(card => card.id));
+
+            expect(bandDetails).toEqual({
+                color: leader.color,
+                tribe: leader.tribe.name,
+                bandSize: 3,
+                points: 6,
             });
         });
 
@@ -528,7 +549,8 @@ describe('PlayBandHandler', () => {
             expect(bandDetails).toEqual({
                 color: Color.PURPLE,
                 tribe: leader.tribe.name,
-                bandSize: 3
+                bandSize: 3,
+                points: 3,
             });
         });
 
