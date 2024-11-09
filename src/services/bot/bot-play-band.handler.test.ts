@@ -6,12 +6,14 @@ import Game from '@models/game.model';
 import {
     IGameState
 } from '@interfaces/game.interface';
+import { TribeName } from '@interfaces/tribe.interface';
+
+import ScoringService from '@services/scoring/scoring.service';
 
 import {
     createGame,
 } from '../test-helpers';
 import BotPlayBandHandler from './bot-play-band.handler';
-
 
 describe('BotPlayBandHandler', () => {
 
@@ -69,6 +71,82 @@ describe('BotPlayBandHandler', () => {
             region.values = [2, 4, 8];
             const totalRegionValue = BotPlayBandHandler.getTotalRegionValue(region)
             expect(totalRegionValue).toBe(14);
+        });
+    });
+
+    describe('canAddTokenToRegion', () => {
+        let playerA: Player;
+        let regions: Region[];
+
+        beforeEach(async () => {
+            const result = await createGame();
+
+            playerA = result.playerA;
+            regions = result.gameState.regions;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return true if a player's band is large enough to add a token to a region", async () => {
+            await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: regions[0].id,
+                tokens: 2
+            });
+
+            const updatedRegion = await Region.findOne({
+                where: {
+                    id: regions[0].id
+                },
+                include: [
+                    {
+                        model: PlayerRegion,
+                        as: 'playerTokens'
+                    }
+                ]
+            });
+
+            const bandDetails = {
+                color: regions[0].color,
+                bandSize: 3,
+                tribe: TribeName.TROLLS,
+                points: ScoringService.getBandPoints(3),
+            }
+
+            const canAddToken = BotPlayBandHandler.canAddTokenToRegion(updatedRegion, bandDetails, playerA);
+
+            expect(canAddToken).toBe(true);
+        });
+
+        it("should return false if a player's band is NOT large enough to add a token to a region", async () => {
+            await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: regions[0].id,
+                tokens: 2
+            });
+
+            const updatedRegion = await Region.findOne({
+                where: {
+                    id: regions[0].id
+                },
+                include: [
+                    {
+                        model: PlayerRegion,
+                        as: 'playerTokens'
+                    }
+                ]
+            });
+
+            const bandDetails = {
+                color: regions[0].color,
+                bandSize: 2,
+                tribe: TribeName.TROLLS,
+                points: ScoringService.getBandPoints(3),
+            }
+
+            const canAddToken = BotPlayBandHandler.canAddTokenToRegion(updatedRegion, bandDetails, playerA);
+
+            expect(canAddToken).toBe(false);
         });
     });
 });
