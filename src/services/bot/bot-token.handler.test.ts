@@ -13,6 +13,8 @@ import {
 } from '../test-helpers';
 
 import BotTokenHandler from './bot-token.handler';
+import { IGameState } from '../../interfaces/game.interface';
+import ActionService from '../action/action.service';
 
 describe('BotTokenHandler', () => {
 
@@ -143,6 +145,59 @@ describe('BotTokenHandler', () => {
             });
 
             expect(updatedPlayerRegion.tokens).toBe(1);
+        });
+    });
+
+    describe('handleFreeTokenAction', () => {
+        let gameId: number;
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+
+            gameId = result.gameId;
+            gameState = result.gameState;
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should add a free token to the region if an 'add free token' action is available", async () => {
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+
+            await NextAction.create({
+                gameId,
+                playerId: playerA.id,
+                type: ActionType.ADD_FREE_TOKEN,
+            });
+
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+
+            const result = await BotTokenHandler.handleFreeTokenAction(actions, gameState.regions, playerA);
+
+            const updatedRegion = await PlayerRegion.findOne({
+                where: {
+                    playerId: playerA.id,
+                }
+            });
+
+            expect(result).toBe(true);
+            expect(updatedRegion.tokens).toBe(1);
+        });
+
+        it("should return 'false' if an 'add free token' action is not available", async () => {
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+
+            const result = await BotTokenHandler.handleFreeTokenAction(actions, gameState.regions, playerA);
+
+            expect(result).toBe(false);
         });
     });
 });
