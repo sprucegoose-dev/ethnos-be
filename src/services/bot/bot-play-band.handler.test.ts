@@ -53,4 +53,22 @@ describe('BotPlayBandHandler', () => {
             expect(result).toBe(3);
         });
     });
+
+    describe('getTotalRegionValue', () => {
+        let gameState: IGameState;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should return return the combined value of the points in a region', () => {
+            const region = gameState.regions[0];
+            region.values = [2, 4, 8];
+            const totalRegionValue = BotPlayBandHandler.getTotalRegionValue(region)
+            expect(totalRegionValue).toBe(14);
+        });
+    });
 });
