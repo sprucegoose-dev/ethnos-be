@@ -436,4 +436,77 @@ describe('BotPlayBandHandler', () => {
             expect(result).toBe(false);
         });
     });
+
+    describe('playSingleOrc', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame({
+                tribes: [
+                    TribeName.ORCS,
+                    TribeName.MINOTAURS,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                    TribeName.GIANTS,
+                ]
+            });
+
+            gameState = result.gameState;
+            playerA = result.playerA;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should play a band with a single Orc if the player only has one card in their hand and have not claimed that Orc color yet', async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const orcCard = gameState.cards.find(card => card.color === Color.ORANGE && card.tribe.name === TribeName.ORCS);
+
+            await assignCardsToPlayer(playerA.id, [orcCard.id]);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const result = await BotPlayBandHandler.playSingleOrc(actions, [orcCard], playerA);
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            const updatedPlayer = updatedGame.players.find(player => player.id === playerA.id);
+
+            expect(result).toBe(true);
+            expect(updatedPlayer.orcTokens).toEqual([Color.ORANGE]);
+        });
+
+        it('should NOT play a band with a single Orc if the player only has one card in their hand and has already claimed that Orc color', async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const orcCard = gameState.cards.find(card => card.color === Color.ORANGE && card.tribe.name === TribeName.ORCS);
+
+            await assignCardsToPlayer(playerA.id, [orcCard.id]);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            playerA.orcTokens = [Color.ORANGE];
+
+            const result = await BotPlayBandHandler.playSingleOrc(actions, [orcCard], playerA);
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            const updatedPlayer = updatedGame.players.find(player => player.id === playerA.id);
+
+            expect(result).toBe(false);
+            expect(updatedPlayer.orcTokens).toEqual([]);
+        });
+    });
 });

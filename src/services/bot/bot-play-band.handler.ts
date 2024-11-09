@@ -100,7 +100,7 @@ export default class BotPlayBandHandler {
         return false;
     }
 
-    static async playBandFallbackAction(actions: IActionPayload[], cardsInHand: Card[], player: Player) {
+    static async playBandFallbackAction(actions: IActionPayload[], cardsInHand: Card[], player: Player): Promise<void> {
         const fallbackPlayAction = actions
             .filter(action => action.type === ActionType.PLAY_BAND)
             .sort((actionA, actionB) => {
@@ -112,5 +112,18 @@ export default class BotPlayBandHandler {
             })[0];
 
         await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
+    }
+
+    static async playSingleOrc(actions: IPlayBandPayload[], cardsInHand: Card[], player: Player) {
+        if (cardsInHand.length === 1 &&
+            cardsInHand[0].tribe.name === TribeName.ORCS &&
+            !player.orcTokens.includes(cardsInHand[0].color)
+        ) {
+            const playOrcBandAction = actions.find(action => action.leaderId === cardsInHand[0].id);
+            await CommandService.handleAction(player.userId, player.gameId, playOrcBandAction);
+            return true;
+        }
+
+        return false
     }
 }
