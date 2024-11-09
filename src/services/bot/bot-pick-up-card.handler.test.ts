@@ -74,7 +74,10 @@ describe('BotPickUpCardHandler', () => {
             });
 
             const orcCard = gameState.cards.find(card => card.tribe.name === TribeName.ORCS);
-            const nonOrcCards = gameState.cards.filter(card => card.tribe.name !== TribeName.ORCS).slice(0, 7);
+            const nonOrcCards = gameState.cards.filter(card =>
+                card.tribe.name !== TribeName.ORCS &&
+                card.tribe.name !== TribeName.DRAGON
+            ).slice(0, 7);
 
             await Card.update({
                 state: CardState.IN_MARKET
@@ -693,7 +696,8 @@ describe('BotPickUpCardHandler', () => {
 
             const nonDwarfCards = gameState.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
-                card.tribe.name !== TribeName.DWARVES
+                card.tribe.name !== TribeName.DWARVES &&
+                card.tribe.name !== TribeName.DRAGON
             ).slice(0, 2);
 
             const nonDwarfCardIds = nonDwarfCards.map(card => card.id);

@@ -512,6 +512,7 @@ export default class GameService {
                     include: [
                         {
                             model: PlayerRegion,
+                            as: 'playerTokens'
                         }
                     ],
                 },

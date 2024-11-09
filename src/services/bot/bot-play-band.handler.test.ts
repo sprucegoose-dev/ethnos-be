@@ -23,6 +23,7 @@ import {
 import BotPlayBandHandler from './bot-play-band.handler';
 import GameService from '../game/game.service';
 import ActionService from '../action/action.service';
+import BotService from './bot.service';
 
 describe('BotPlayBandHandler', () => {
 
@@ -307,7 +308,9 @@ describe('BotPlayBandHandler', () => {
             await returnPlayerCardsToDeck(playerA.id);
 
             const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 5);
-            const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE).slice(0, 3);
+            const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE &&
+                card.tribe.name !== TribeName.DRAGON
+            ).slice(0, 3);
 
             const cardsInHand = [...bandCards, ...otherCards];
 
@@ -334,7 +337,7 @@ describe('BotPlayBandHandler', () => {
             await returnPlayerCardsToDeck(playerA.id);
 
             const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 2);
-            const otherCard = gameState.cards.find(card => card.color !== Color.ORANGE);
+            const otherCard = gameState.cards.find(card => card.color !== Color.ORANGE && card.tribe.name !== TribeName.DRAGON);
 
             const cardsInHand = [...bandCards, otherCard];
 
@@ -346,6 +349,89 @@ describe('BotPlayBandHandler', () => {
                 .filter(action => action.type === ActionType.PLAY_BAND);
 
             const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, playerA);
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('playBestBandAction', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+
+            gameState = result.gameState;
+            playerA = result.playerA;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should play a band if it can add a token to a region', async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 5);
+            const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE  && card.tribe.name !== TribeName.DRAGON).slice(0, 2);
+
+            const cardsInHand = [...bandCards, ...otherCards];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(actions, cardsInHand);
+
+            const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, gameState.regions, playerA);
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            const updatedRegion = updatedGame.regions.find(region => region.color === Color.ORANGE);
+
+            const playerTokensInRegion = updatedRegion.playerTokens.find(tokenData => tokenData.playerId === playerA.id);
+
+            expect(result).toBe(true);
+            expect(playerTokensInRegion.tokens).toBe(1);
+        });
+
+        it("should return 'false' if the player does not have a band large enough in their hand to add a token to a region", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const cardsInHand = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.tribe.name !== TribeName.DRAGON
+            ).slice(0, 2);
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            for (const region of gameState.regions) {
+                await PlayerRegion.create({
+                    playerId: playerA.id,
+                    regionId: region.id,
+                    tokens: 3
+                });
+            }
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(actions, cardsInHand);
+
+            const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, updatedGame.regions, playerA);
 
             expect(result).toBe(false);
         });

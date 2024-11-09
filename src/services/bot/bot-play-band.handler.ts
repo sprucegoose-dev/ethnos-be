@@ -77,7 +77,12 @@ export default class BotPlayBandHandler {
         return false;
     }
 
-    static async playBestBandAction(sortedPlayBandActions: IPlayBandPayload[], cardsInHand: Card[], regions: Region[], player: Player): Promise<boolean> {
+    static async playBestBandAction(
+        sortedPlayBandActions: IPlayBandPayload[],
+        cardsInHand: Card[],
+        regions: Region[],
+        player: Player
+    ): Promise<boolean> {
         let targetRegion;
 
         for (const action of sortedPlayBandActions) {
