@@ -19,13 +19,6 @@ class GamesController {
         res.send();
     }
 
-    async removeBotPlayer(req: AuthRequest, res: Response): Promise<void> {
-        const gameId = req.params.id;
-        const botPlayerId = req.params.botPlayerId;
-        await GameService.removeBotPlayer(req.userId, parseInt(gameId, 10), parseInt(botPlayerId, 10));
-        res.send();
-    }
-
     async assignPlayerColor(req: AuthRequest, res: Response): Promise<void> {
         const payload = req.body;
         const gameId = req.params.id;
@@ -69,8 +62,8 @@ class GamesController {
     async getPlayerHands(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
-        const cardsInHand = await GameService.getPlayerHands(userId, parseInt(gameId, 10));
-        res.send(cardsInHand);
+        const playerHands = await GameService.getPlayerHands(userId, parseInt(gameId, 10));
+        res.send(playerHands);
     }
 
     async getState(req: AuthRequest, res: Response): Promise<void> {
@@ -99,6 +92,13 @@ class GamesController {
         const gameId = req.params.id;
         const cardIds = req.body.cardIds;
         await GameService.orderCards(userId, parseInt(gameId, 10), cardIds);
+        res.send();
+    }
+
+    async removeBotPlayer(req: AuthRequest, res: Response): Promise<void> {
+        const gameId = req.params.id;
+        const botPlayerId = req.params.botPlayerId;
+        await GameService.removeBotPlayer(req.userId, parseInt(gameId, 10), parseInt(botPlayerId, 10));
         res.send();
     }
 

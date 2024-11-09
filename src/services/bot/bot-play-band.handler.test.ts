@@ -377,7 +377,9 @@ describe('BotPlayBandHandler', () => {
             await returnPlayerCardsToDeck(playerA.id);
 
             const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 5);
-            const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE  && card.tribe.name !== TribeName.DRAGON).slice(0, 2);
+            const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE  &&
+                ![TribeName.CENTAURS, TribeName.ELVES, TribeName.DRAGON].includes(card.tribe.name)
+            ).slice(0, 2);
 
             const cardsInHand = [...bandCards, ...otherCards];
 

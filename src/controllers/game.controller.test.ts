@@ -15,6 +15,9 @@ import { createGame } from '@services/test-helpers';
 import { userA, userB, userC, userD } from '@jest.setup';
 import { PlayerColor } from '../interfaces/player.interface';
 import gameController from './game.controller';
+import PlayerService from '../services/player/player.service';
+import { CardState } from '../interfaces/card.interface';
+import Card from '../models/card.model';
 
 describe('GamesController', () => {
 
@@ -77,14 +80,6 @@ describe('GamesController', () => {
             const result = await createGame();
             gameState = result.gameState;
 
-            await Player.update({
-                color: null,
-            }, {
-                where: {
-                    gameId: gameState.id
-                }
-            });
-
             response = {
                 send: jest.fn()
             };
@@ -118,21 +113,15 @@ describe('GamesController', () => {
         });
     });
 
-    describe('removeBotPlayer', () => {
+    describe('getCardsInHand', () => {
         let gameState: IGameState;
+        let playerA: Player;
         let response: any;
 
         beforeEach(async () => {
             const result = await createGame();
             gameState = result.gameState;
-
-            await Player.update({
-                color: null,
-            }, {
-                where: {
-                    gameId: gameState.id
-                }
-            });
+            playerA = result.playerA;
 
             response = {
                 send: jest.fn()
@@ -141,36 +130,82 @@ describe('GamesController', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it('should remove a bot from a game', async () => {
-            await Game.update({
-                state: GameState.CREATED,
-            }, {
-                where: {
-                    id: gameState.id
-                }
-            });
-
-            await GameService.addBotPlayer(userA.id, gameState.id);
-
-            gameState = await GameService.getState(gameState.id);
-
-            let botPlayer = gameState.players.find(player => player.user.isBot);
-
+        it("should return the cards in a player's hand", async () => {
             const request: any = {
-                userId: userA.id,
+                userId: playerA.userId,
                 params: {
                     id: gameState.id,
-                    botPlayerId: botPlayer.id,
                 }
             };
 
-            await gameController.removeBotPlayer(request, response);
+            const player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            gameState = await GameService.getState(gameState.id);
+            const cardsInHand = player
+                .cards
+                .filter(card => card.state === CardState.IN_HAND)
+                .map(card => card.toJSON());
 
-            botPlayer = gameState.players.find(player => player.user.isBot);
+            await GamesController.getCardsInHand(request, response);
 
-            expect(botPlayer).toBe(undefined);
+            const expectedResponse: Card[] = response.send.mock.calls[0][0];
+
+            expect(expectedResponse.map(card => card.toJSON())).toEqual(cardsInHand);
+        });
+    });
+
+    describe('getPlayerHands', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+        let playerB: Player;
+        let playerC: Player;
+        let playerD: Player;
+        let response: any;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+            playerB = result.playerB;
+            playerC = result.playerC;
+            playerD = result.playerD;
+
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should return the cards in all players' hands, but only 'id' property for other player's cards", async () => {
+            const request: any = {
+                userId: playerA.userId,
+                params: {
+                    id: gameState.id,
+                }
+            };
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            const cardsByPlayerId: {[playerId: number]: Card[]} = {};
+
+            updatedGame.players.map(player => {
+
+                if (player.id === playerA.id) {
+                    cardsByPlayerId[player.id] = player.cards;
+                } else {
+                    // @ts-ignore
+                    cardsByPlayerId[player.id] = player.cards.map(card => ({ id: card.id }));
+                }
+            })
+
+            await GamesController.getPlayerHands(request, response);
+
+            const expectedResponse: {[playerId: number]: Card[]} = response.send.mock.calls[0][0];
+
+            expect(expectedResponse[playerA.id].map(card => card.toJSON())).toEqual(cardsByPlayerId[playerA.id]);
+            expect(expectedResponse[playerB.id].map(card => card.toJSON())).toEqual(cardsByPlayerId[playerB.id]);
+            expect(expectedResponse[playerC.id].map(card => card.toJSON())).toEqual(cardsByPlayerId[playerC.id]);
+            expect(expectedResponse[playerD.id].map(card => card.toJSON())).toEqual(cardsByPlayerId[playerD.id]);
         });
     });
 
@@ -418,77 +453,6 @@ describe('GamesController', () => {
         });
     });
 
-    describe('join', () => {
-        let response: any;
-
-        beforeEach(() => {
-            response = {
-                send: jest.fn()
-            };
-        });
-
-        afterEach(async () => await Game.truncate());
-
-        it("should add a player to a game", async () => {
-            const game = await GameService.create(userA.id);
-
-            expect(game.players.length).toBe(1);
-
-            const request: any = {
-                userId: userB.id,
-                params: {
-                    id: game.id
-                },
-                body: {}
-            };
-
-            await GamesController.join(request, response);
-
-            const updatedGame = await GameService.getState(game.id);
-
-            expect(updatedGame.players.length).toBe(2);
-            expect(updatedGame.players[1].userId).toBe(userB.id);
-        });
-    });
-
-    describe('leave', () => {
-        let response: any;
-
-        beforeEach(() => {
-            response = {
-                send: jest.fn()
-            };
-        });
-
-        afterEach(async () => await Game.truncate());
-
-        it("should remove a player from a game", async () => {
-            const gameStateResponse = await GameService.create(userA.id);
-
-            await GameService.join(userB.id, gameStateResponse.id);
-            await GameService.join(userC.id, gameStateResponse.id);
-            await GameService.join(userD.id, gameStateResponse.id);
-
-            let gameState = await GameService.getState(gameStateResponse.id);
-
-            expect(gameState.players.length).toBe(4);
-
-            const request: any = {
-                userId: userD.id,
-                params: {
-                    id: gameState.id
-                }
-            };
-
-            await GamesController.leave(request, response);
-
-            gameState = await GameService.getState(gameState.id);
-
-            expect(gameState.players.length).toBe(3);
-            expect(gameState.players.find(player => player.userId === userD.id)).toBe(undefined);
-        });
-    });
-
     describe('handleAction', () => {
         let response: any;
 
@@ -532,6 +496,124 @@ describe('GamesController', () => {
         });
     });
 
+    describe('join', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should add a player to a game", async () => {
+            const game = await GameService.create(userA.id);
+
+            expect(game.players.length).toBe(1);
+
+            const request: any = {
+                userId: userB.id,
+                params: {
+                    id: game.id
+                },
+                body: {}
+            };
+
+            await GamesController.join(request, response);
+
+            const updatedGame = await GameService.getState(game.id);
+
+            expect(updatedGame.players.length).toBe(2);
+            expect(updatedGame.players[1].userId).toBe(userB.id);
+        });
+    });
+
+    describe('removeBotPlayer', () => {
+        let gameState: IGameState;
+        let response: any;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should remove a bot from a game', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(userA.id, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            let botPlayer = gameState.players.find(player => player.user.isBot);
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id,
+                    botPlayerId: botPlayer.id,
+                }
+            };
+
+            await gameController.removeBotPlayer(request, response);
+
+            gameState = await GameService.getState(gameState.id);
+
+            botPlayer = gameState.players.find(player => player.user.isBot);
+
+            expect(botPlayer).toBe(undefined);
+        });
+    });
+
+    describe('leave', () => {
+        let response: any;
+
+        beforeEach(() => {
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should remove a player from a game", async () => {
+            const gameStateResponse = await GameService.create(userA.id);
+
+            await GameService.join(userB.id, gameStateResponse.id);
+            await GameService.join(userC.id, gameStateResponse.id);
+            await GameService.join(userD.id, gameStateResponse.id);
+
+            let gameState = await GameService.getState(gameStateResponse.id);
+
+            expect(gameState.players.length).toBe(4);
+
+            const request: any = {
+                userId: userD.id,
+                params: {
+                    id: gameState.id
+                }
+            };
+
+            await GamesController.leave(request, response);
+
+            gameState = await GameService.getState(gameState.id);
+
+            expect(gameState.players.length).toBe(3);
+            expect(gameState.players.find(player => player.userId === userD.id)).toBe(undefined);
+        });
+    });
     describe('start', () => {
         let response: any;
 
