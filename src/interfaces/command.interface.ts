@@ -3,6 +3,7 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 
 import { Color } from './game.interface';
+import { IPlayBandPayload } from './action.interface';
 
 export interface IBandDetails {
     tribe: string;
@@ -20,7 +21,7 @@ export interface IRemainingCardsOptions {
     remainingCards: Card[];
     tokenAdded: boolean;
     player: Player;
-    cardIdsToKeep: number[];
+    playBandAction: IPlayBandPayload;
     band: IBandDetails;
 }
 

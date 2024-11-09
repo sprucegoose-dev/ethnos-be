@@ -4,6 +4,7 @@ import Region from '@models/region.model';
 import Game from '@models/game.model';
 
 import {
+    Color,
     IGameState
 } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
@@ -13,11 +14,15 @@ import { ActionType, IPlayBandPayload } from '@interfaces/action.interface';
 import ScoringService from '@services/scoring/scoring.service';
 
 import {
+    assignCardsToPlayer,
     // assignCardsToPlayer,
     createGame,
+    returnPlayerCardsToDeck,
     // returnPlayerCardsToDeck,
 } from '../test-helpers';
 import BotPlayBandHandler from './bot-play-band.handler';
+import GameService from '../game/game.service';
+import ActionService from '../action/action.service';
 
 describe('BotPlayBandHandler', () => {
 
@@ -274,6 +279,75 @@ describe('BotPlayBandHandler', () => {
             const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
 
             expect(region.id).not.toBe(regions[0].id);
+        });
+    });
+
+    describe('playHighValueBandAction', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+
+            gameState = result.gameState;
+            playerA = result.playerA;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should play a band if its value is 10 points or more', async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 5);
+            const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE).slice(0, 3);
+
+            const cardsInHand = [...bandCards, ...otherCards];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, playerA);
+
+            const updatedGame = await GameService.getState(gameState.id);
+
+            const updatedRegion = updatedGame.regions.find(region => region.color === Color.ORANGE);
+
+            const playerTokensInRegion = updatedRegion.playerTokens.find(tokenData => tokenData.playerId === playerA.id);
+
+            expect(result).toBe(true);
+            expect(playerTokensInRegion.tokens).toBe(1);
+        });
+
+        it("should return 'false' if the player does not have a band worth 10 or more points in their hand", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 2);
+            const otherCard = gameState.cards.find(card => card.color !== Color.ORANGE);
+
+            const cardsInHand = [...bandCards, otherCard];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, playerA);
+
+            expect(result).toBe(false);
         });
     });
 });

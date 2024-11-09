@@ -917,16 +917,37 @@ export default class GameService {
             }
         });
 
-        const activePlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
+        const nextPlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
+        const nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
         await Game.update({
             age: game.age + 1,
-            activePlayerId,
+            activePlayerId: nextPlayerId
         }, {
             where: {
                 id: game.id,
             }
         });
+
+        const updatedGameState = await this.getStateResponse(game.id);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: updatedGameState
+        });
+
+        const activeGames = await this.getActiveGames();
+
+        EventService.emitEvent({
+            type: EVENT_ACTIVE_GAMES_UPDATE,
+            payload: activeGames
+        });
+
+        if (nextPlayer.user.isBot) {
+            setTimeout(async() => {
+                await BotService.takeTurn(game.id, nextPlayer.id);
+            }, 1500);
+        }
     };
 
     static async updateSettings(userId: number, gameId: number, settings: IGameSettings): Promise<void> {

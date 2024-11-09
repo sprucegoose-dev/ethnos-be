@@ -262,11 +262,17 @@ describe('PlayBandHandler', () => {
 
             expect(remainingCards.length).toBe(6);
 
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                leaderId: cardIdsToAssign[0],
+                cardIdsToKeep: [],
+            };
+
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
                 tokenAdded: false,
                 player,
-                cardIdsToKeep: [],
+                playBandAction,
                 band: {
                     tribe: TribeName.MINOTAURS,
                     color: Color.BLUE,
@@ -301,13 +307,19 @@ describe('PlayBandHandler', () => {
 
             const cardIdsToKeep = remainingCards.slice(0, 3).map(card => card.id);
 
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                leaderId: cardIdsToAssign[0],
+                cardIdsToKeep: cardIdsToKeep,
+            };
+
             expect(remainingCards.length).toBe(6);
 
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
                 tokenAdded: false,
                 player,
-                cardIdsToKeep,
+                playBandAction,
                 band: {
                     tribe: TribeName.ELVES,
                     color: Color.ORANGE,
@@ -344,11 +356,17 @@ describe('PlayBandHandler', () => {
 
             expect(remainingCards.length).toBe(6);
 
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                leaderId: cardIdsToAssign[0],
+                cardIdsToKeep: []
+            };
+
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
                 tokenAdded: true,
                 player,
-                cardIdsToKeep: [],
+                playBandAction,
                 band: {
                     tribe: TribeName.CENTAURS,
                     color: Color.BLUE,

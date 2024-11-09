@@ -96,10 +96,14 @@ export default class PlayBandHandler {
         remainingCards,
         tokenAdded,
         player,
-        cardIdsToKeep,
+        playBandAction,
         band,
     }: IRemainingCardsOptions) {
         if (band.tribe === ELVES) {
+            const cardIdsToKeep = (playBandAction.cardIdsToKeep || []).length ?
+            playBandAction.cardIdsToKeep :
+                remainingCards.filter(card => !playBandAction.cardIds.includes(card.id))
+                .map(card => card.id);
             remainingCards = this.filterOutCardsToKeep(remainingCards, cardIdsToKeep, band.bandSize);
         }
 
@@ -198,7 +202,7 @@ export default class PlayBandHandler {
             remainingCards,
             tokenAdded,
             player,
-            cardIdsToKeep: payload.cardIdsToKeep,
+            playBandAction: payload,
             band,
         });
 

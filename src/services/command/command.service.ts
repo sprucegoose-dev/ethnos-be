@@ -22,6 +22,7 @@ import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
 import BotService from '../bot/bot.service';
+import Player from '../../models/player.model';
 
 export default class CommandService {
 
@@ -67,10 +68,12 @@ export default class CommandService {
             });
         }
 
-        let nextPlayerId: number;
+        let nextPlayerId: number = activePlayer.id;
+        let nextPlayer: Player = activePlayer;
 
         if (!nextActions.length) {
             nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
+            nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
             await Game.update({
                 activePlayerId: nextPlayerId,
@@ -88,8 +91,6 @@ export default class CommandService {
             type: EVENT_GAME_UPDATE,
             payload: updatedGameState
         });
-
-        const nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
         if (nextPlayer.user.isBot) {
             setTimeout(async () => {

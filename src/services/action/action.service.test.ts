@@ -147,7 +147,6 @@ describe('ActionService', () => {
 
             const activePlayer = updatedGame.players.find(player => player.id === updatedGame.activePlayerId);
 
-
             const actions = await ActionService.getActions(
                 game.id,
                 activePlayer.user.id,
