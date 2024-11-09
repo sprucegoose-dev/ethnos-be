@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid';
 import {
     CustomException,
     ERROR_BAD_REQUEST,
+    ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
     ERROR_UNAUTHORIZED,
 } from '@helpers/exception-handler';
@@ -56,7 +57,7 @@ class UserService {
         }
 
         if (user.isBot) {
-            throw new CustomException(ERROR_NOT_FOUND, 'Bot players cannot sign in');
+            throw new CustomException(ERROR_FORBIDDEN, 'Bot players cannot sign in');
         }
 
         if (await bcrypt.compare(password, user.toJSON().password)) {

@@ -22,8 +22,8 @@ class GamesController {
     async assignPlayerColor(req: AuthRequest, res: Response): Promise<void> {
         const payload = req.body;
         const gameId = req.params.id;
-        const game = await GameService.assignPlayerColor(req.userId, parseInt(gameId, 10), payload?.color);
-        res.send(game);
+        await GameService.assignPlayerColor(req.userId, parseInt(gameId, 10), payload.color);
+        res.send();
     }
 
     async create(req: AuthRequest, res: Response): Promise<void> {

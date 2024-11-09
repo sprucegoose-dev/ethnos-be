@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import moment from 'moment';
 
 import {
+    ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
     ERROR_UNAUTHORIZED,
 } from '@helpers/exception-handler';
@@ -14,8 +15,9 @@ import {
     USERNAME_MIN_CHARS
 } from '@interfaces/user.interface';
 
+import { UNEXPECTED_ERROR_MSG } from '@jest.setup';
+
 import UserService from './user.service';
-import { UNEXPECTED_ERROR_MSG } from '../../../jest.setup';
 
 describe('UserService', () => {
     let userData: any;
@@ -99,6 +101,7 @@ describe('UserService', () => {
         });
 
     });
+
     describe('getAll', () => {
 
         it('should retrieve an existing user from the database', async () => {
@@ -156,6 +159,23 @@ describe('UserService', () => {
                 await UserService.login('invalid-email@gmail.com', 'yummy');
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_NOT_FOUND);
+            }
+        });
+
+        it('should throw an exception if the user attempting to log in is a bot', async () => {
+            try {
+                const botUser = {
+                    username: 'bot-user',
+                    email: 'bot-user@gmail.com',
+                    password: 'some-password',
+                    isBot: true,
+                };
+
+                await User.create(botUser);
+
+                await UserService.login(botUser.email, 'some-password');
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_FORBIDDEN);
             }
         });
 
