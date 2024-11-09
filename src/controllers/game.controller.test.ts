@@ -10,7 +10,7 @@ import GamesController from './game.controller';
 
 import GameService from '@services/game/game.service';
 import CommandService from '@services/command/command.service';
-import { createGame } from '@services/test-helpers';
+import { assignCardsToPlayer, createGame, returnPlayerCardsToDeck } from '@services/test-helpers';
 
 import { userA, userB, userC, userD } from '@jest.setup';
 import { PlayerColor } from '../interfaces/player.interface';
@@ -529,6 +529,62 @@ describe('GamesController', () => {
         });
     });
 
+    describe('orderCards', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+        let response: any;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should order the cards in a player's hand", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const cardsInHand =  gameState.cards.filter(card => card.tribe.name !== TribeName.DRAGON).slice(0, 5);
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id,
+                },
+                body: {
+                    cardIds: [
+                        cardIdsToAssign[3],
+                        cardIdsToAssign[2],
+                        cardIdsToAssign[4],
+                        cardIdsToAssign[0],
+                        cardIdsToAssign[1],
+                    ]
+                }
+            };
+
+            await gameController.orderCards(request, response);
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsSortByIndex = updatedPlayer.cards.sort((cardA, cardB) => cardA.index - cardB.index);
+
+            expect(cardsSortByIndex[0].id).toBe(cardIdsToAssign[3]);
+            expect(cardsSortByIndex[1].id).toBe(cardIdsToAssign[2]);
+            expect(cardsSortByIndex[2].id).toBe(cardIdsToAssign[4]);
+            expect(cardsSortByIndex[3].id).toBe(cardIdsToAssign[0]);
+            expect(cardsSortByIndex[4].id).toBe(cardIdsToAssign[1]);
+        });
+    });
+
     describe('removeBotPlayer', () => {
         let gameState: IGameState;
         let response: any;
@@ -614,6 +670,7 @@ describe('GamesController', () => {
             expect(gameState.players.find(player => player.userId === userD.id)).toBe(undefined);
         });
     });
+
     describe('start', () => {
         let response: any;
 
