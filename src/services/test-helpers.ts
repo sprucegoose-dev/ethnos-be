@@ -49,7 +49,8 @@ export async function createGame(settings: IGameSettings = defaultSettings) {
 
 export function getCardsFromDeck(cards: Card[], quantity: number): number[] {
     return cards.filter(card =>
-            card.state === CardState.IN_DECK
+            card.state === CardState.IN_DECK &&
+            card.tribe.name !== TribeName.DRAGON
         )
         .sort((cardA, cardB) => cardA.index - cardB.index)
         .slice(0, quantity)

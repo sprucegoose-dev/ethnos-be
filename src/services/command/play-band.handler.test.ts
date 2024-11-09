@@ -265,7 +265,6 @@ describe('PlayBandHandler', () => {
             const playBandAction: IPlayBandPayload = {
                 type: ActionType.PLAY_BAND,
                 leaderId: cardIdsToAssign[0],
-                cardIdsToKeep: [],
             };
 
             await PlayBandHandler.discardRemainingCards({
@@ -277,6 +276,7 @@ describe('PlayBandHandler', () => {
                     tribe: TribeName.MINOTAURS,
                     color: Color.BLUE,
                     bandSize: 3,
+                    points: 3,
                 }
             });
 
@@ -292,7 +292,83 @@ describe('PlayBandHandler', () => {
         });
 
         it("retains some cards in the player's hand if the band leader is an Elf", async () => {
-            const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const elfCards = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.ELVES
+            ).slice(0, 4);
+
+            const nonElfCards = gameState.cards.filter(card =>
+                ![TribeName.ELVES, TribeName.DRAGON].includes(card.tribe.name)
+            ).slice(0, 6);
+
+            await assignCardsToPlayer(playerA.id, nonElfCards.map(card => card.id));
+
+            let updatedGame = await GameService.getState(gameId);
+
+            const originalCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(originalCardsInMarket.length).toBe(8);
+
+            let player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const remainingCards = player.cards.filter(card =>
+                card.state === CardState.IN_HAND &&
+                card.tribe.name !== TribeName.ELVES
+            );
+
+            expect(remainingCards.length).toBe(6);
+
+
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                leaderId: elfCards[0].id,
+                cardIds: elfCards.map(card => card.id),
+                cardIdsToKeep: nonElfCards.map(card => card.id).slice(0, 4)
+            };
+
+            await PlayBandHandler.discardRemainingCards({
+                remainingCards,
+                tokenAdded: false,
+                player,
+                playBandAction,
+                band: {
+                    tribe: TribeName.ELVES,
+                    color: Color.ORANGE,
+                    bandSize: 4,
+                    points: 6,
+                }
+            });
+
+            updatedGame = await GameService.getState(gameId);
+
+            player = await PlayerService.getPlayerWithCards(playerA.id);
+
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(4);
+
+            const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(updatedCardsInMarket.length).toBe(
+                originalCardsInMarket.length + remainingCards.length - playBandAction.cardIdsToKeep.length
+            );
+        });
+
+        it.each([
+            { cardIdsToKeep: []},
+            { cardIdsToKeep: null },
+        ])("automatically assigns random 'card IDs to keep' when playBandAction.cardIdsToKeep is %s", async ({cardIdsToKeep}) => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const elfCards = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.ELVES
+            ).slice(0, 4);
+
+            const nonElfCards = gameState.cards.filter(card =>
+                ![TribeName.ELVES, TribeName.DRAGON].includes(card.tribe.name)
+            ).slice(0, 6);
+
+            const cardIdsToAssign = nonElfCards.map(card => card.id);
+
             await assignCardsToPlayer(playerA.id, cardIdsToAssign);
 
             let updatedGame = await GameService.getState(gameId);
@@ -303,42 +379,47 @@ describe('PlayBandHandler', () => {
 
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            const remainingCards = player.cards.filter(card => card.state === CardState.IN_HAND);
+            const remainingCards = player.cards.filter(card =>
+                card.state === CardState.IN_HAND &&
+                card.tribe.name !== TribeName.ELVES
+            );
 
-            const cardIdsToKeep = remainingCards.slice(0, 3).map(card => card.id);
+            expect(remainingCards.length).toBe(6);
 
             const playBandAction: IPlayBandPayload = {
                 type: ActionType.PLAY_BAND,
-                leaderId: cardIdsToAssign[0],
-                cardIdsToKeep: cardIdsToKeep,
+                leaderId: elfCards[0].id,
+                cardIds: elfCards.map(card => card.id),
+                cardIdsToKeep
             };
 
-            expect(remainingCards.length).toBe(6);
+            const bandDetails = {
+                tribe: TribeName.ELVES,
+                color: Color.ORANGE,
+                bandSize: 4,
+                points: 6,
+            };
 
             await PlayBandHandler.discardRemainingCards({
                 remainingCards,
                 tokenAdded: false,
                 player,
                 playBandAction,
-                band: {
-                    tribe: TribeName.ELVES,
-                    color: Color.ORANGE,
-                    bandSize: 3,
-                }
+                band: bandDetails,
             });
 
             updatedGame = await GameService.getState(gameId);
 
             player = await PlayerService.getPlayerWithCards(playerA.id);
 
-            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(3);
+            expect(player.cards.filter(card => card.state === CardState.IN_HAND).length).toBe(4);
 
             const updatedCardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
             expect(updatedCardsInMarket.length).toBe(
-                originalCardsInMarket.length + remainingCards.length - cardIdsToKeep.length
+                originalCardsInMarket.length + remainingCards.length - bandDetails.bandSize
             );
-        });
+        })
 
         it("doesn't discard any cards if there's a next action of the type 'play_band'", async () => {
             const cardIdsToAssign = getCardsFromDeck(gameState.cards, 5);
@@ -371,6 +452,7 @@ describe('PlayBandHandler', () => {
                     tribe: TribeName.CENTAURS,
                     color: Color.BLUE,
                     bandSize: 3,
+                    points: 3,
                 }
             });
 

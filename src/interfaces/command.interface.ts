@@ -2,14 +2,7 @@ import Card from '@models/card.model';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
-import { Color } from './game.interface';
-import { IPlayBandPayload } from './action.interface';
-
-export interface IBandDetails {
-    tribe: string;
-    bandSize: number;
-    color: Color;
-}
+import { IBandDetails, IPlayBandPayload } from './action.interface';
 
 export interface IHandleTribeOptions {
     band: IBandDetails;
