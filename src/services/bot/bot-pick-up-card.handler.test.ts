@@ -675,6 +675,32 @@ describe('BotPickUpCardHandler', () => {
             expect(nonSkeletonCard.tribe.name).not.toBe(TribeName.SKELETONS)
         });
 
+        it("should return 'undefined' if the player only has Skeletons in their hand and the market also has only Skeletons", async () => {
+            await Card.update({
+                state: CardState.IN_DECK,
+                playerId: null,
+            }, {
+                where: {
+                    gameId: gameState.id
+                }
+            });
+
+            const cardsInHand =  gameState.cards.filter(card =>
+                card.tribe.name === TribeName.SKELETONS
+            ).slice(0, 3);
+
+            const cardsInHandIds = cardsInHand.map(card => card.id);
+
+            const skeletonMarketCards =  gameState.cards.filter(card =>
+                card.tribe.name === TribeName.SKELETONS &&
+                !cardsInHandIds.includes(card.id)
+            ).slice(0, 3);
+
+            const cardToPickUpId = BotPickUpCardHandler.shouldPickUpMarketCard(cardsInHand, skeletonMarketCards);
+
+            expect(cardToPickUpId).toBe(undefined);
+        });
+
         it("should return the ID of a card from the market matching the most frequent color in a player's hand", async () => {
             const orangeCards = gameState.cards.filter(card =>
                 card.color === Color.ORANGE &&

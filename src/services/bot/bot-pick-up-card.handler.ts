@@ -44,6 +44,8 @@ export default class BotPickUpCardHandler {
     }
 
     static getMostFrequentColorInHand(cards: Card[]): { color: Color, total: number } {
+        cards = cards.filter(card => card.tribe.name !== TribeName.SKELETONS);
+
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
             const key = card.color;
             acc[key] = (acc[key] || 0) + 1;
@@ -67,6 +69,8 @@ export default class BotPickUpCardHandler {
     }
 
     static getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, total: number } {
+        cards = cards.filter(card => card.tribe.name !== TribeName.SKELETONS);
+
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
             const key = card.tribe.name;
             acc[key] = (acc[key] || 0) + 1;
@@ -120,9 +124,7 @@ export default class BotPickUpCardHandler {
                 .filter(card => card.tribe.name !== TribeName.SKELETONS)
                 .sort((cardA, cardB) => TRIBE_PRIORITY[cardB.tribe.name] - TRIBE_PRIORITY[cardA.tribe.name])[0]?.id;
 
-            if (cardToPickUpId){
-                return cardToPickUpId;
-            }
+            return cardToPickUpId;
         }
 
         const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
