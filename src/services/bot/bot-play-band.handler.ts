@@ -28,7 +28,7 @@ export default class BotPlayBandHandler {
         return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
     }
 
-    static canAddTokenWithBand(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
+    static getRegionIfUpgradeable(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
         const leader = cardsInHand.find(card => card.id === action.leaderId);
         const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
         let region = regions.find(region => region.color === leader.color);
@@ -48,7 +48,7 @@ export default class BotPlayBandHandler {
             region = upgradeableRegions.sort((regionA, regionB) => this.getTotalRegionValue(regionB) - this.getTotalRegionValue(regionA))[0];
         }
 
-        return region;
+        return canAddToken ? region : null;
     }
 
     static async playHighValueBandAction(actions: IPlayBandPayload[], cardsInHand: Card[], player: Player): Promise<boolean> {
@@ -79,23 +79,17 @@ export default class BotPlayBandHandler {
 
     static async playBestBandAction(sortedPlayBandActions: IPlayBandPayload[], cardsInHand: Card[], regions: Region[], player: Player): Promise<boolean> {
         let targetRegion;
-        let bestPlayBandAction;
 
         for (const action of sortedPlayBandActions) {
-            targetRegion = this.canAddTokenWithBand(action, cardsInHand, regions, player);
+            targetRegion = this.getRegionIfUpgradeable(action, cardsInHand, regions, player);
 
             if (targetRegion) {
-                bestPlayBandAction = action;
-                break;
+                await CommandService.handleAction(player.userId, player.gameId, {
+                    ...action,
+                    regionColor: targetRegion.color
+                });
+                return true;
             }
-        }
-
-        if (bestPlayBandAction && targetRegion) {
-            await CommandService.handleAction(player.userId, player.gameId, {
-                ...bestPlayBandAction,
-                regionColor: targetRegion.color
-            });
-            return true;
         }
 
         return false;

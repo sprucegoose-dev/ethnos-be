@@ -7,11 +7,15 @@ import {
     IGameState
 } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
+import { CardState } from '@interfaces/card.interface';
+import { ActionType, IPlayBandPayload } from '@interfaces/action.interface';
 
 import ScoringService from '@services/scoring/scoring.service';
 
 import {
+    // assignCardsToPlayer,
     createGame,
+    // returnPlayerCardsToDeck,
 } from '../test-helpers';
 import BotPlayBandHandler from './bot-play-band.handler';
 
@@ -147,6 +151,58 @@ describe('BotPlayBandHandler', () => {
             const canAddToken = BotPlayBandHandler.canAddTokenToRegion(updatedRegion, bandDetails, playerA);
 
             expect(canAddToken).toBe(false);
+        });
+    });
+
+    describe('getRegionIfUpgradeable', () => {
+        let playerA: Player;
+        let gameState: IGameState;
+        let regions: Region[];
+
+        beforeEach(async () => {
+            const result = await createGame();
+
+            playerA = result.playerA;
+            gameState = result.gameState;
+            regions = result.gameState.regions;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should return the region if a token can be added to it', async () => {
+            const cardsInHand = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === regions[0].color
+            ).slice(0, 3);
+
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                cardIds: cardsInHand.map(card => card.id),
+                leaderId: cardsInHand[0].id,
+            };
+
+
+            await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: regions[0].id,
+                tokens: 2
+            });
+
+            const region = await Region.findOne({
+                where: {
+                    id: regions[0].id
+                },
+                include: [
+                    {
+                        model: PlayerRegion,
+                        as: 'playerTokens'
+                    }
+                ]
+            });
+
+            const result = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, [region], playerA);
+
+            expect(result.id).toBe(regions[0].id);
         });
     });
 });
