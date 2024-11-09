@@ -169,7 +169,7 @@ describe('BotPlayBandHandler', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it('should return the region if a token can be added to it', async () => {
+        it("should return a region matching the action leader's color if a token can be added to it", async () => {
             const cardsInHand = gameState.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
                 card.color === regions[0].color
@@ -181,16 +181,15 @@ describe('BotPlayBandHandler', () => {
                 leaderId: cardsInHand[0].id,
             };
 
-
             await PlayerRegion.create({
                 playerId: playerA.id,
                 regionId: regions[0].id,
                 tokens: 2
             });
 
-            const region = await Region.findOne({
+            const updatedRegions = await Region.findAll({
                 where: {
-                    id: regions[0].id
+                    gameId: gameState.id,
                 },
                 include: [
                     {
@@ -200,9 +199,81 @@ describe('BotPlayBandHandler', () => {
                 ]
             });
 
-            const result = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, [region], playerA);
+            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
 
-            expect(result.id).toBe(regions[0].id);
+            expect(region.id).toBe(regions[0].id);
+        });
+
+        it("should return 'null' if a token cannot be added to the region matching the action leader's color", async () => {
+            const cardsInHand = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === regions[0].color
+            ).slice(0, 3);
+
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                cardIds: cardsInHand.map(card => card.id),
+                leaderId: cardsInHand[0].id,
+            };
+
+            await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: regions[0].id,
+                tokens: 4
+            });
+
+            const updatedRegions = await Region.findAll({
+                where: {
+                    gameId: gameState.id,
+                },
+                include: [
+                    {
+                        model: PlayerRegion,
+                        as: 'playerTokens'
+                    }
+                ]
+            });
+
+            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
+
+            expect(region).toBe(null);
+        });
+
+        it("should return 'true' if the leader is a Wingfolk a token can be added to a region not matching the leader's color", async () => {
+            const cardsInHand = gameState.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === regions[0].color
+            ).slice(0, 3);
+
+            const playBandAction: IPlayBandPayload = {
+                type: ActionType.PLAY_BAND,
+                cardIds: cardsInHand.map(card => card.id),
+                leaderId: cardsInHand[0].id,
+            };
+
+            await PlayerRegion.create({
+                playerId: playerA.id,
+                regionId: regions[0].id,
+                tokens: 4
+            });
+
+            const updatedRegions = await Region.findAll({
+                where: {
+                    gameId: gameState.id,
+                },
+                include: [
+                    {
+                        model: PlayerRegion,
+                        as: 'playerTokens'
+                    }
+                ]
+            });
+
+            cardsInHand[0].tribe.name = TribeName.WINGFOLK;
+
+            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
+
+            expect(region.id).not.toBe(regions[0].id);
         });
     });
 });
