@@ -24,6 +24,7 @@ import {
     UNEXPECTED_ERROR_MSG,
     userA,
 } from '@jest.setup';
+import BotService from '../bot/bot.service';
 
 
 describe('CommandService', () => {
@@ -289,6 +290,40 @@ describe('CommandService', () => {
             gameState = await GameService.getState(gameId);
 
             expect(gameState.activePlayerId).toBe(player.id);
+        });
+
+        it("should automatically take a bot's turn if the next player is a bot", async () => {
+            jest.useFakeTimers();
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+
+            gameState.players = gameState.players.map(player => {
+                if (player.id === playerB.id) {
+                    player.user.isBot = true;
+                }
+
+                return player;
+            });
+
+            jest.spyOn(BotService, 'takeTurn').mockResolvedValueOnce();
+            jest.spyOn(GameService, 'getState').mockResolvedValue(gameState);
+            jest.spyOn(GameService, 'getNextPlayerId').mockReturnValueOnce(playerB.id);
+
+            const action: IActionPayload = {
+                type: ActionType.DRAW_CARD
+            };
+
+            await CommandService.handleAction(playerA.userId, gameState.id, action);
+
+            jest.runAllTimers();
+
+            expect(BotService.takeTurn).toHaveBeenCalledWith(gameState.id, playerB.id);
         });
     });
 });
