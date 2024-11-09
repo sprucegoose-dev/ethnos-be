@@ -29,6 +29,7 @@ import {
     userD,
 } from '@jest.setup';
 import { assignCardsToPlayer, createGame, getCardsFromDeck, returnPlayerCardsToDeck } from '../test-helpers';
+import BotService from '../bot/bot.service';
 
 describe('GameService', () => {
 
@@ -860,6 +861,28 @@ describe('GameService', () => {
                 expect(player.giantTokenValue).toBe(0);
                 expect(player.trollTokens).toEqual([]);
             }
+        });
+
+        it("should automatically take a bot's turn if the next player is a bot", async () => {
+            jest.useFakeTimers();
+
+            gameState.players = gameState.players.map(player => {
+
+                if (player.id === playerD.id) {
+                    player.user.isBot = true;
+                }
+
+                return player;
+            });
+
+            jest.spyOn(BotService, 'takeTurn').mockResolvedValueOnce();
+            jest.spyOn(GameService, 'getNewAgeFirstPlayerId').mockReturnValueOnce(playerD.id);
+
+            await GameService.startNewAge(gameState);
+
+            jest.runAllTimers();
+
+            expect(BotService.takeTurn).toHaveBeenCalledWith(gameState.id, playerD.id);
         });
     });
 

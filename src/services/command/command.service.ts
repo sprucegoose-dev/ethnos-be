@@ -23,6 +23,7 @@ import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
 import BotService from '../bot/bot.service';
 import Player from '../../models/player.model';
+import { BOT_DELAY } from '../bot/constants';
 
 export default class CommandService {
 
@@ -95,7 +96,7 @@ export default class CommandService {
         if (nextPlayer.user.isBot) {
             setTimeout(async () => {
                 await BotService.takeTurn(game.id, nextPlayer.id);
-            }, 1500);
+            }, BOT_DELAY);
         }
     }
 }

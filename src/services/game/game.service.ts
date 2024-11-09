@@ -38,6 +38,7 @@ import {
 import { PLAYER_COLORS, PlayerColor } from '../../interfaces/player.interface';
 import PlayerRegion from '../../models/player_region.model';
 import BotService from '../bot/bot.service';
+import { BOT_DELAY } from '../bot/constants';
 
 export default class GameService {
 
@@ -900,7 +901,7 @@ export default class GameService {
         if (startingPlayer.user.isBot) {
             setTimeout(async() => {
                 await BotService.takeTurn(game.id, startingPlayer.id);
-            }, 500);
+            }, BOT_DELAY);
         }
     }
 
@@ -920,6 +921,8 @@ export default class GameService {
 
         const nextPlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
         const nextPlayer = game.players.find(player => player.id === nextPlayerId);
+
+        console.log('nextPlayerId', nextPlayerId);
 
         await Game.update({
             age: game.age + 1,
@@ -947,7 +950,7 @@ export default class GameService {
         if (nextPlayer.user.isBot) {
             setTimeout(async() => {
                 await BotService.takeTurn(game.id, nextPlayer.id);
-            }, 1500);
+            }, BOT_DELAY);
         }
     };
 
