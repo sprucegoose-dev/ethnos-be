@@ -28,7 +28,16 @@ describe('BotPickUpCardHandler', () => {
         let cardsInMarket: Card[];
 
         beforeEach(async () => {
-            const result = await createGame();
+            const result = await createGame({
+                tribes: [
+                    TribeName.SKELETONS,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAURS,
+                    TribeName.ORCS,
+                ]
+            });
 
             gameId = result.gameId;
             playerA = result.playerA;
@@ -52,6 +61,49 @@ describe('BotPickUpCardHandler', () => {
             const actions = await ActionService.getActions(gameId, player.userId);
             const result = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player);
             expect(result).toBe(false);
+        });
+
+        it("should pick up an Orc card from the market of a color the player doesn't have on their Orc Hoard Board if the player's hand is empty", async () => {
+            await Card.update({
+                state: CardState.IN_DECK
+            }, {
+                where: {
+                    gameId,
+                    state: [CardState.IN_MARKET, CardState.IN_HAND]
+                }
+            });
+
+            const orcCard = gameState.cards.find(card => card.tribe.name === TribeName.ORCS);
+            const nonOrcCards = gameState.cards.filter(card => card.tribe.name !== TribeName.ORCS).slice(0, 7);
+
+            await Card.update({
+                state: CardState.IN_MARKET
+            }, {
+                where: {
+                    gameId,
+                    id: [orcCard.id, ...nonOrcCards.map(card => card.id)]
+                }
+            });
+
+            let updatedGame = await GameService.getState(gameId);
+
+            let cardsInHand: Card[] = [];
+            let cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+            const actions = await ActionService.getActions(gameId, playerA.userId);
+
+            expect(cardsInMarket.length).toBe(8);
+
+            const result = await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+            updatedGame = await GameService.getState(gameId);
+
+            cardsInHand = updatedPlayer.cards.filter(card => card.state === CardState.IN_HAND);
+            cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            expect(result).toBe(true);
+            expect(cardsInHand[0].tribe.name).toBe(TribeName.ORCS);
+            expect(cardsInHand.length).toBe(1);
+            expect(cardsInMarket.length).toBe(7);
         });
 
         it("should pick up a random card from the market if a player's hand is empty and there are cards in the market", async () => {

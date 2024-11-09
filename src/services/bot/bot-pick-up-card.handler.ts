@@ -15,6 +15,19 @@ export default class BotPickUpCardHandler {
     static async emptyHandPickUpOrDrawCard(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
         if (!cardsInHand.length) {
             if (cardsInMarket.length && actions.find(action => action.type === ActionType.PICK_UP_CARD)) {
+
+                const unclaimedOrcCard = cardsInMarket.find(card => card.tribe.name === TribeName.ORCS &&
+                    !player.orcTokens.includes(card.color)
+                );
+
+                if (unclaimedOrcCard) {
+                    await CommandService.handleAction(player.userId, player.gameId, {
+                        type: ActionType.PICK_UP_CARD,
+                        cardId: unclaimedOrcCard.id
+                    });
+                    return true;
+                }
+
                 await CommandService.handleAction(player.userId, player.gameId, {
                     type: ActionType.PICK_UP_CARD,
                     cardId: shuffle(cardsInMarket)[0].id
@@ -132,4 +145,6 @@ export default class BotPickUpCardHandler {
 
         return cardToPickUpId;
     }
+
+    // TODO: add logic to prefer picking up an Orc if the player's hand is empty
 }
