@@ -20,12 +20,21 @@ import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
 import moment from 'moment';
+import Tribe from '../../models/tribe.model';
 
 
 export default class BotService {
 
-    static getCardsInHand(player: Player): Card[] {
-        return player.cards.filter(card => card.state === CardState.IN_HAND);
+    static async getCardsInHand(player: Player): Promise<Card[]> {
+        return (await Card.findAll({
+            where: {
+                state: CardState.IN_HAND,
+                playerId: player.id,
+            },
+            include: {
+                model: Tribe
+            }
+        })).map(card => card.toJSON());
     }
 
     static getCardsInMarket(gameState: IGameState): Card[] {
@@ -40,6 +49,7 @@ export default class BotService {
 
         for (const action of playBandActions) {
             const leader = cardsInHand.find(card => card.id === action.leaderId);
+
             if (leader.tribe.name === TribeName.CENTAURS) {
                 centaurBandActions.push(action);
             } else if (leader.tribe.name === TribeName.ELVES) {
@@ -57,27 +67,36 @@ export default class BotService {
     }
 
     static async takeTurn(gameId: number, playerId: number) {
-        const gameState = await GameService.getState(gameId);
-        const player = gameState.players.find(player => player.id === playerId);
-        const actions = await ActionService.getActions(gameId, player.userId);
-        const regions = gameState.regions;
-        const cardsInHand = this.getCardsInHand(player);
-        const cardsInMarket = this.getCardsInMarket(gameState);
-        const sortedPlayBandActions = this.preSortBandActions(actions, cardsInHand);
+        try {
+            const gameState = await GameService.getState(gameId);
+            const player = gameState.players.find(player => player.id === playerId);
 
-        if (await BotTokenHandler.handleFreeTokenAction(actions, regions, player)) return;
+            if (player.id !== gameState.activePlayerId) {
+                return;
+            }
 
-        if (await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player)) return;
+            const actions = await ActionService.getActions(gameId, player.userId);
+            const regions = gameState.regions;
+            const cardsInHand = await this.getCardsInHand(player);
+            const cardsInMarket = this.getCardsInMarket(gameState);
+            const sortedPlayBandActions = this.preSortBandActions(actions, cardsInHand);
 
-        if (await BotPlayBandHandler.playSingleOrc(sortedPlayBandActions, cardsInHand, player)) return;
+            if (await BotTokenHandler.handleFreeTokenAction(actions, regions, player)) return;
 
-        if (await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, regions, player)) return;
+            if (await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player)) return;
 
-        if (await BotPlayBandHandler.playHighValueBandAction(sortedPlayBandActions, cardsInHand, player)) return;
+            if (await BotPlayBandHandler.playSingleOrc(sortedPlayBandActions, cardsInHand, player)) return;
 
-        if (await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
+            if (await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, regions, player)) return;
 
-        await BotPlayBandHandler.playBandFallbackAction(actions, cardsInHand, player);
+            if (await BotPlayBandHandler.playHighValueBandAction(sortedPlayBandActions, cardsInHand, player)) return;
+
+            if (await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
+
+            await BotPlayBandHandler.playBandFallbackAction(actions, cardsInHand, player);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     static async activateStaleBots() {
@@ -104,7 +123,11 @@ export default class BotService {
             if (activePlayer.user.isBot) {
 
                 if (moment().diff(game.updatedAt, 'seconds') > 5) {
-                    BotService.takeTurn(game.id, activePlayer.id);
+                    try {
+                        await BotService.takeTurn(game.id, activePlayer.id);
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
             }
         }

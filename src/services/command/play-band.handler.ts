@@ -207,17 +207,6 @@ export default class PlayBandHandler {
             playBandAction: payload,
             band,
         });
-
-        // TODO: test
-        if (payload.nextActionId) {
-            await NextAction.update({
-                state: NextActionState.RESOLVED,
-            }, {
-                where: {
-                    id: payload.nextActionId
-                }
-            });
-        }
     }
 
     static validateBand(cardsInHand: Card[], bandCardIds: number[], leader: Card): boolean {

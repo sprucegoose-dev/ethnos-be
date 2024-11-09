@@ -29,7 +29,8 @@ const {
 const options = {
     host: DB_HOST,
     dialect: 'mysql' as Dialect,
-    logging: NODE_ENV === 'development' ? console.log : false,
+    // logging: NODE_ENV === 'development' ? console.log : false,
+    logging: false,
     pool: {
         max: 5,
         min: 0,

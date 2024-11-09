@@ -37,6 +37,7 @@ export default class ActionService {
             where: {
                 gameId: gameId,
                 state: NextActionState.PENDING,
+                playerId: activePlayer.id
             }
         });
 

@@ -197,6 +197,7 @@ export default class GameService {
                 state: CardState.IN_HAND,
                 index: 0,
                 playerId: players[i].id,
+                leaderId: null,
                 gameId,
             }, {
                 where: {
@@ -210,6 +211,7 @@ export default class GameService {
                 state: CardState.IN_MARKET,
                 index: i,
                 playerId: null,
+                leaderId: null,
                 gameId,
             }, {
                 where: {
@@ -229,6 +231,7 @@ export default class GameService {
                 state: CardState.IN_DECK,
                 index: i,
                 playerId: null,
+                leaderId: null,
                 gameId,
             }, {
                 where: {
@@ -919,6 +922,8 @@ export default class GameService {
 
     static async startNewAge(game: Game) {
         const scoringResults = await ScoringService.handleScoring(game);
+
+        await
 
         await this.dealCards(game.id, game.players, game.cards);
 
