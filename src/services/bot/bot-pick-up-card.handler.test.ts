@@ -585,6 +585,13 @@ describe('BotPickUpCardHandler', () => {
             expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
             expect(result).toBe(true);
         });
+
+        it("should return 'false' if a player already has 10 cards in their hand", async () => {
+            const cardsInMarket = gameState.cards.filter(card => card.state === CardState.IN_MARKET);
+            const cardsInHand = gameState.cards.filter(card => card.tribe.name !== TribeName.DRAGON).slice(0, 10);
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+            expect(result).toBe(false);
+        });
     });
 
     describe('shouldPickUpMarketCard', () => {

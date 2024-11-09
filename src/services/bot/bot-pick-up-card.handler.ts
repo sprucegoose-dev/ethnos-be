@@ -94,7 +94,11 @@ export default class BotPickUpCardHandler {
     }
 
     static async pickUpOrDrawCard(cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
-        const cardToPickUpId = BotPickUpCardHandler.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
+        if (cardsInHand.length >= 10) {
+            return false;
+        }
+
+        const cardToPickUpId = this.shouldPickUpMarketCard(cardsInHand, cardsInMarket);
 
         if (cardToPickUpId) {
             await CommandService.handleAction(player.userId, player.gameId, {
@@ -104,12 +108,8 @@ export default class BotPickUpCardHandler {
             return true;
         }
 
-        if (cardsInHand.length < 10) {
-            await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
-            return true;
-        }
-
-        return false;
+        await CommandService.handleAction(player.userId, player.gameId, { type: ActionType.DRAW_CARD });
+        return true;
     }
 
     static shouldPickUpMarketCard(cardsInHand: Card[], cardsInMarket: Card[]): number {
@@ -145,6 +145,4 @@ export default class BotPickUpCardHandler {
 
         return cardToPickUpId;
     }
-
-    // TODO: add logic to prefer picking up an Orc if the player's hand is empty
 }
