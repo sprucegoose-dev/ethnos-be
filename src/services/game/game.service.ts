@@ -922,8 +922,6 @@ export default class GameService {
         const nextPlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
         const nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
-        console.log('nextPlayerId', nextPlayerId);
-
         await Game.update({
             age: game.age + 1,
             activePlayerId: nextPlayerId

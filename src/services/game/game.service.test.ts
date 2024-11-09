@@ -30,6 +30,7 @@ import {
 } from '@jest.setup';
 import { assignCardsToPlayer, createGame, getCardsFromDeck, returnPlayerCardsToDeck } from '../test-helpers';
 import BotService from '../bot/bot.service';
+import User from '../../models/user.model';
 
 describe('GameService', () => {
 
@@ -600,7 +601,17 @@ describe('GameService', () => {
             };
         });
 
-        afterEach(async () => await Game.truncate());
+        afterEach(async () => {
+            await Game.truncate();
+
+            await User.update({
+                isBot: false
+            }, {
+                where: {
+                    id: playerA.id
+                }
+            });
+        });
 
         it("should set the game state to 'started'", async () => {
             await GameService.start(userA.id, game.id, settings);
@@ -773,6 +784,29 @@ describe('GameService', () => {
             for (const player of updatedGame.players) {
                 expect(PLAYER_COLORS.includes(player.color)).toBe(true);
             }
+        });
+
+        it("should automatically take a bot's turn if the first player is a bot", async () => {
+            jest.useFakeTimers();
+
+            await User.update({
+                isBot: true,
+            }, {
+                where: {
+                    id: playerA.userId
+                }
+            });
+
+            jest.spyOn(GameService, 'setTurnOrder').mockReturnValueOnce(
+                [playerA.id, playerB.id, playerC.id, playerD.id]
+            );
+            jest.spyOn(BotService, 'takeTurn').mockResolvedValueOnce();
+
+            await GameService.start(playerA.userId, game.id, settings);
+
+            jest.runAllTimers();
+
+            expect(BotService.takeTurn).toHaveBeenCalledWith(game.id, playerA.id);
         });
     });
 
