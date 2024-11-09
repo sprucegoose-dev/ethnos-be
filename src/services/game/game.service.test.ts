@@ -400,6 +400,24 @@ describe('GameService', () => {
         });
     });
 
+    describe('getStateResponse', () => {
+
+        beforeEach(async () => {
+            await createGame();
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should throw an error if the game is not found', async () => {
+            try {
+                await GameService.getStateResponse(10);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
+            }
+        });
+    });
+
     describe('leave', () => {
 
         afterEach(async () => await Game.truncate());

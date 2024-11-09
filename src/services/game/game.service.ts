@@ -605,6 +605,10 @@ export default class GameService {
             ]
         });
 
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
         const cardsInDeckCount = await Card.count({
             where: {
                 gameId,
@@ -612,7 +616,7 @@ export default class GameService {
             }
         });
 
-        const gameState = game?.toJSON();
+        const gameState = game.toJSON();
 
         return {
             ...gameState,
