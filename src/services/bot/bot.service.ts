@@ -9,7 +9,6 @@ import {
 
 import Card from '@models/card.model';
 import Player from '@models/player.model';
-import Game from '@models/game.model';
 
 import ActionService from '@services/action/action.service';
 import GameService from '@services/game/game.service';
@@ -17,6 +16,7 @@ import GameService from '@services/game/game.service';
 import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
+import { IGameState } from '../../interfaces/game.interface';
 
 export default class BotService {
 
@@ -24,7 +24,7 @@ export default class BotService {
         return player.cards.filter(card => card.state === CardState.IN_HAND);
     }
 
-    static getCardsInMarket(gameState: Game): Card[] {
+    static getCardsInMarket(gameState: IGameState): Card[] {
         return gameState.cards.filter(card => card.state === CardState.IN_MARKET);
     }
 
