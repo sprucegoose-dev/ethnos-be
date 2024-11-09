@@ -34,6 +34,112 @@ import User from '../../models/user.model';
 
 describe('GameService', () => {
 
+    describe('addBotPlayer', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+        let playerB: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+            playerB = result.playerB;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should add a bot to a game', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(playerA.userId, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            const botPlayer = gameState.players.find(player => player.user.isBot);
+
+            expect(botPlayer).not.toBe(undefined);
+        });
+
+        it('should throw an error if the game is not found', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            try {
+                await GameService.addBotPlayer(playerA.userId, 10);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_NOT_FOUND);
+                expect(error.message).toBe('Game not found');
+            }
+        });
+
+        it('should throw an error if a player other than the game creator is trying to add a bot', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            try {
+                await GameService.addBotPlayer(playerB.userId, gameState.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('Only the game creator can add a bot player');
+            }
+        });
+
+        it('should throw an error if a player tries to add a bot after the game had already started', async () => {
+            await Game.update({
+                state: GameState.STARTED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            try {
+                await GameService.addBotPlayer(playerA.userId, gameState.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('You cannot add a bot to a game after it has started');
+            }
+        });
+
+        it('should throw an error if a player tries to add a bot when the game is already full', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+                maxPlayers: 4,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            try {
+                await GameService.addBotPlayer(playerA.userId, gameState.id);
+                throw new Error(UNEXPECTED_ERROR_MSG);
+            } catch (error: any) {
+                expect(error.type).toBe(ERROR_BAD_REQUEST);
+                expect(error.message).toBe('This game is already full');
+            }
+        });
+    });
+
     describe('assignPlayerColor', () => {
         let gameState: IGameState;
 
