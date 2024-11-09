@@ -53,6 +53,10 @@ export default class GameService {
             throw new CustomException(ERROR_NOT_FOUND, 'Only the game creator can add a bot player');
         }
 
+        if (game.state !== GameState.CREATED) {
+            throw new CustomException(ERROR_NOT_FOUND, 'You cannot add a bot to a game after it has started');
+        }
+
         if (game.players.length >= game.maxPlayers) {
             throw new CustomException(ERROR_BAD_REQUEST, 'This game is already full');
         }

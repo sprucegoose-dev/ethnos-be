@@ -14,6 +14,7 @@ import { createGame } from '@services/test-helpers';
 
 import { userA, userB, userC, userD } from '@jest.setup';
 import { PlayerColor } from '../interfaces/player.interface';
+import gameController from './game.controller';
 
 describe('GamesController', () => {
 
@@ -65,6 +66,111 @@ describe('GamesController', () => {
 
             const updatedPlayer = gameState.players.find(player => player.userId === userA.id);
             expect(updatedPlayer.color).toBe(PlayerColor.BLUE);
+        });
+    });
+
+    describe('addBotPlayer', () => {
+        let gameState: IGameState;
+        let response: any;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+
+            await Player.update({
+                color: null,
+            }, {
+                where: {
+                    gameId: gameState.id
+                }
+            });
+
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should add a bot to a game', async () => {
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id,
+                }
+            };
+
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GamesController.addBotPlayer(request, response);
+
+            gameState = await GameService.getState(gameState.id);
+
+            const botPlayer = gameState.players.find(player => player.user.isBot);
+
+            expect(botPlayer).not.toBe(undefined);
+        });
+    });
+
+    describe('removeBotPlayer', () => {
+        let gameState: IGameState;
+        let response: any;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+
+            await Player.update({
+                color: null,
+            }, {
+                where: {
+                    gameId: gameState.id
+                }
+            });
+
+            response = {
+                send: jest.fn()
+            };
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should remove a bot from a game', async () => {
+            await Game.update({
+                state: GameState.CREATED,
+            }, {
+                where: {
+                    id: gameState.id
+                }
+            });
+
+            await GameService.addBotPlayer(userA.id, gameState.id);
+
+            gameState = await GameService.getState(gameState.id);
+
+            let botPlayer = gameState.players.find(player => player.user.isBot);
+
+            const request: any = {
+                userId: userA.id,
+                params: {
+                    id: gameState.id,
+                    botPlayerId: botPlayer.id,
+                }
+            };
+
+            await gameController.removeBotPlayer(request, response);
+
+            gameState = await GameService.getState(gameState.id);
+
+            botPlayer = gameState.players.find(player => player.user.isBot);
+
+            expect(botPlayer).toBe(undefined);
         });
     });
 
