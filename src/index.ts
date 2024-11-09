@@ -1,4 +1,6 @@
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
+import { setupWorker } from '@socket.io/sticky';
+import { createAdapter } from '@socket.io/cluster-adapter';
 
 import UsersController from './controllers/user.controller';
 import GamesController from './controllers/game.controller';
@@ -9,21 +11,22 @@ import {
     EVENT_LEAVE_GAME,
 } from './interfaces/event.interface';
 import '../database/connection';
+import BotService from './services/bot/bot.service';
 
 const express = require('express');
 const app = require('express')();
-const server = require('http').createServer(app);
-const socket = require('socket.io')(server, {
+const cors = require('cors');
+const http = require('http');
+
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
     cors: {
-        origin: 'http://localhost:8080',
+        origin: '*',
+        methods: ['GET','HEAD','PUT','PATCH','POST','DELETE']
     },
-    transports: [
-        'websocket',
-        'polling',
-    ],
+    transports: ['websocket'],
 });
 
-const cors = require('cors');
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -54,13 +57,23 @@ app.post('/game/create', GamesController.create);
 
 app.get('/tribe/all', TribesController.getAll);
 
-export const gameSocket = socket;
+export const gameSocket = io;
 
-server.listen(3000, () => {
-    console.log('listening on *:3000');
-});
 
-gameSocket.on('connection', (socket: Socket) => {
+let instance = '0';
+
+if (process.env.NODE_ENV === 'production') {
+    // use the cluster adapter
+    io.adapter(createAdapter());
+
+    // setup connection with the primary process
+    setupWorker(io);
+
+    // assign the process instance number when in cluster mode
+    instance = process.env.NODE_APP_INSTANCE;
+}
+
+io.on('connection', (socket: Socket) => {
     socket.on(EVENT_JOIN_GAME, (gameId: number) => {
         socket.join(`game-${gameId}`);
     });
@@ -70,3 +83,12 @@ gameSocket.on('connection', (socket: Socket) => {
     });
 });
 
+const port = `300${instance}`;
+
+httpServer.listen(port, () => {
+    console.log(`listening on *:${port}`);
+});
+
+if (instance === '0') {
+    setInterval(BotService.activateStaleBots, 3000);
+}

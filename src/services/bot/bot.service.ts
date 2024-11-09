@@ -6,9 +6,12 @@ import {
     IActionPayload,
     IPlayBandPayload
 } from '@interfaces/action.interface';
+import { GameState, IGameState } from '@interfaces/game.interface';
 
 import Card from '@models/card.model';
 import Player from '@models/player.model';
+import Game from '@models/game.model';
+import User from '@models/user.model';
 
 import ActionService from '@services/action/action.service';
 import GameService from '@services/game/game.service';
@@ -16,7 +19,8 @@ import GameService from '@services/game/game.service';
 import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
-import { IGameState } from '../../interfaces/game.interface';
+import moment from 'moment';
+
 
 export default class BotService {
 
@@ -74,5 +78,35 @@ export default class BotService {
         if (await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
 
         await BotPlayBandHandler.playBandFallbackAction(actions, cardsInHand, player);
+    }
+
+    static async activateStaleBots() {
+        const activeGames = await Game.findAll({
+            where: {
+                state: GameState.STARTED,
+            },
+            include: [
+                {
+                    model: Player,
+                    as: 'players',
+                    include: [
+                        {
+                            model: User,
+                        }
+                    ]
+                }
+            ]
+        });
+
+        for (const game of activeGames) {
+            const activePlayer = game.players.find(player => player.id === game.activePlayerId);
+
+            if (activePlayer.user.isBot) {
+
+                if (moment().diff(game.updatedAt, 'seconds') > 5) {
+                    BotService.takeTurn(game.id, activePlayer.id);
+                }
+            }
+        }
     }
 }
