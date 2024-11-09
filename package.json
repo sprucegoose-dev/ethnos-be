@@ -1,5 +1,5 @@
 {
-    "name": "antinomy",
+    "name": "Ethnos (backend)",
     "version": "1.0.0",
     "description": "A digital adaptation of the card game Antinomy by ButtonShyGames",
     "main": "src/index.ts",

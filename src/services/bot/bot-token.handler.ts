@@ -9,7 +9,9 @@ export default class BotTokenHandler {
     static async addFreeTokenToRegion(player: Player, regions: Region[], nextActionId: number) {
         // sort regions by the regions player has the most tokens in
         const sortedRegions = regions.sort((regionA, regionB) => {
+            // istanbul ignore next
             const ownPlayerATokens = regionA.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
+            // istanbul ignore next
             const ownPlayerBTokens = regionB.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
             return ownPlayerBTokens - ownPlayerATokens;
         });

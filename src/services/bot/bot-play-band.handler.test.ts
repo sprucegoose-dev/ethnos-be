@@ -22,6 +22,7 @@ import {
 } from '../test-helpers';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotService from './bot.service';
+import PlayerService from '../player/player.service';
 
 describe('BotPlayBandHandler', () => {
 
@@ -434,6 +435,95 @@ describe('BotPlayBandHandler', () => {
             const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, updatedGame.regions, playerA);
 
             expect(result).toBe(false);
+        });
+    });
+
+    describe('playBandFallbackAction', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+
+            gameState = result.gameState;
+            playerA = result.playerA;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it("should play the largest in a player's hand", async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const orangeCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 4);
+            const blueCard = gameState.cards.find(card => card.color === Color.BLUE);
+            const grayCard = gameState.cards.find(card => card.color === Color.GRAY);
+
+            const cardsInHand = [...orangeCards, blueCard, grayCard];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(actions, cardsInHand);
+
+            await BotPlayBandHandler.playBandFallbackAction(sortedPlayBandActions, cardsInHand, playerA);
+
+            const updatedPlayer  = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInBands = updatedPlayer.cards.filter(card => card.state === CardState.IN_BAND);
+
+            expect(cardsInBands.length).toBe(4);
+
+            for (const card of cardsInBands) {
+                expect(card.color).toBe(Color.ORANGE);
+            }
+        });
+
+        it('should play a band based on the tribe priority if all band sizes are equal', async () => {
+            await returnPlayerCardsToDeck(playerA.id);
+
+            const merfolkCards = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.MERFOLK &&
+                [Color.ORANGE, Color.GRAY].includes(card.color)
+            ).slice(0, 3);
+            const dwarfCards = gameState.cards.filter(card =>
+                card.tribe.name === TribeName.DWARVES &&
+                [Color.BLUE, Color.PURPLE].includes(card.color)
+            ).slice(0, 3);
+
+            const cardsInHand = [...merfolkCards, ...dwarfCards];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+                .filter(action => action.type === ActionType.PLAY_BAND);
+
+            const sortedPlayBandActions = BotService.preSortBandActions(actions, cardsInHand);
+
+            await BotPlayBandHandler.playBandFallbackAction(sortedPlayBandActions, cardsInHand, playerA);
+
+            const updatedPlayer  = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const cardsInBands = updatedPlayer.cards.filter(card => card.state === CardState.IN_BAND);
+
+            expect(cardsInBands.length).toBe(3);
+
+            for (const card of cardsInBands) {
+                expect(card.tribe.name).toBe(TribeName.MERFOLK);
+            }
         });
     });
 
