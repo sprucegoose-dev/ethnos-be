@@ -16,6 +16,9 @@ import PlayerService from '../player/player.service';
 import { TribeName } from '../../interfaces/tribe.interface';
 import ActionService from '../action/action.service';
 import { ActionType } from '../../interfaces/action.interface';
+import BotTokenHandler from './bot-token.handler';
+import BotPickUpCardHandler from './bot-pick-up-card.handler';
+import BotPlayBandHandler from './bot-play-band.handler';
 
 describe('BotService', () => {
 
@@ -138,6 +141,96 @@ describe('BotService', () => {
 
             expect(sortedPlayBandActions[0].cardIds.length).toBe(3);
             expect(sortedPlayBandActions[sortedPlayBandActions.length - 1].cardIds.length).toBe(1);
+        });
+    });
+
+    describe('takeTurn', () => {
+        let gameState: IGameState;
+        let playerA: Player;
+
+        beforeEach(async () => {
+            const result = await createGame();
+            gameState = result.gameState;
+            playerA = result.playerA;
+        });
+
+        afterEach(async () => await Game.truncate());
+
+        it('should call BotTokenHandler.handleFreeTokenAction', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(true);
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotTokenHandler.handleFreeTokenAction).toHaveBeenCalled();
+        });
+
+        it('should call BotPickUpCardHandler.emptyHandPickUpOrDrawCard if the precedeing action was falsy', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'emptyHandPickUpOrDrawCard').mockResolvedValueOnce(true);
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotPickUpCardHandler.emptyHandPickUpOrDrawCard).toHaveBeenCalled();
+        });
+
+        it('should call BotPlayBandHandler.playSingleOrc if all precedeing actions were falsy', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'emptyHandPickUpOrDrawCard').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playSingleOrc').mockResolvedValueOnce(true);
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotPlayBandHandler.playSingleOrc).toHaveBeenCalled();
+        });
+
+        it('should call BotPlayBandHandler.playBestBandAction if all precedeing actions were falsy', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'emptyHandPickUpOrDrawCard').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playSingleOrc').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playBestBandAction').mockResolvedValueOnce(true);
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotPlayBandHandler.playBestBandAction).toHaveBeenCalled();
+        });
+
+        it('should call BotPlayBandHandler.playHighValueBandAction if all precedeing actions were falsy', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'emptyHandPickUpOrDrawCard').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playSingleOrc').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playBestBandAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playHighValueBandAction').mockResolvedValueOnce(true);
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotPlayBandHandler.playHighValueBandAction).toHaveBeenCalled();
+        });
+
+        it('should call BotPickUpCardHandler.pickUpOrDrawCard if all precedeing actions were falsy', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'emptyHandPickUpOrDrawCard').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playSingleOrc').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playBestBandAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playHighValueBandAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'pickUpOrDrawCard').mockResolvedValueOnce(true);
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotPickUpCardHandler.pickUpOrDrawCard).toHaveBeenCalled();
+        });
+
+        it('should call BotPlayBandHandler.playBandFallbackAction if all precedeing actions were falsy', async () => {
+            jest.spyOn(BotTokenHandler, 'handleFreeTokenAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'emptyHandPickUpOrDrawCard').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playSingleOrc').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playBestBandAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playHighValueBandAction').mockResolvedValueOnce(false);
+            jest.spyOn(BotPickUpCardHandler, 'pickUpOrDrawCard').mockResolvedValueOnce(false);
+            jest.spyOn(BotPlayBandHandler, 'playBandFallbackAction').mockResolvedValueOnce();
+
+            await BotService.takeTurn(gameState.id, playerA.id);
+
+            expect(BotPlayBandHandler.playBandFallbackAction).toHaveBeenCalled();
         });
     });
 });
