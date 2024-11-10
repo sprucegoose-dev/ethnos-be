@@ -12,17 +12,6 @@ import { TribeName } from '@interfaces/tribe.interface';
 
 export default class ScoringService {
 
-    static groupCardsByLeader(cards: Card[]): IGroupedCards {
-        return cards.reduce<IGroupedCards>((acc, card) => {
-            const { leaderId } = card;
-            if (!acc[leaderId]) {
-              acc[leaderId] = [];
-            }
-            acc[leaderId].push(card);
-            return acc;
-        }, {});
-    }
-
     static getTrollTokenTotals(players: Player[]) {
         const trollTokenTotals: { [playerId: number]: number } = {};
 
@@ -37,6 +26,17 @@ export default class ScoringService {
         }
 
         return trollTokenTotals;
+    }
+
+    static groupCardsByLeader(cards: Card[]): IGroupedCards {
+        return cards.reduce<IGroupedCards>((acc, card) => {
+            const { leaderId } = card;
+            if (!acc[leaderId]) {
+              acc[leaderId] = [];
+            }
+            acc[leaderId].push(card);
+            return acc;
+        }, {});
     }
 
     static async handleScoring(game: Game): Promise<IScoringResults> {
@@ -120,6 +120,7 @@ export default class ScoringService {
 
         for (const [leaderId, bandCards] of Object.entries(bands)) {
             leader = bandCards.find(card => card.id === Number(leaderId));
+
             bandSize = bandCards.length;
 
             if (leader.tribe.name === TribeName.DWARVES) {

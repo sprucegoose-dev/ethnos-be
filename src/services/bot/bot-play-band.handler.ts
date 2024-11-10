@@ -13,6 +13,7 @@ import { TribeName } from '@interfaces/tribe.interface';
 import CommandService from '@services/command/command.service';
 import PlayBandHandler from '@services/command/play-band.handler';
 import { TRIBE_PRIORITY } from './constants';
+import { PlayerColor } from '../../interfaces/player.interface';
 
 export default class BotPlayBandHandler {
 
@@ -20,15 +21,25 @@ export default class BotPlayBandHandler {
         return region.playerTokens.find(tokenData => tokenData.playerId === player.id)?.tokens || 0;
     }
 
-    static getTotalRegionValue(region: Region): number {
-        return region.values.reduce((total, value) => total + value, 0);
+    static getTotalRegionValue(region: Region, age: number, color: PlayerColor): number {
+        let values = region.values;
+
+        if ([PlayerColor.PINK, PlayerColor.YELLOW].includes(color)) {
+            values = values .slice(0, age + 1);
+        }
+
+        if ([PlayerColor.WHITE, PlayerColor.GREEN].includes(color)) {
+            values = values.slice(0, age);
+        }
+
+        return values.reduce((total, value) => total + value, 0);
     }
 
     static canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
         return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
     }
 
-    static getRegionIfUpgradeable(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player): Region {
+    static getRegionIfUpgradeable(action: IPlayBandPayload, cardsInHand: Card[], regions: Region[], player: Player, age: number): Region {
         const leader = cardsInHand.find(card => card.id === action.leaderId);
         const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
         let region = regions.find(region => region.color === leader.color);
@@ -45,22 +56,31 @@ export default class BotPlayBandHandler {
                 }
             }
 
-            region = upgradeableRegions.sort((regionA, regionB) => this.getTotalRegionValue(regionB) - this.getTotalRegionValue(regionA))[0];
+            region = upgradeableRegions.sort((regionA, regionB) =>
+                this.getTotalRegionValue(regionB, age, player.color) - this.getTotalRegionValue(regionA, age, player.color)
+            )[0];
         }
 
         return canAddToken ? region : null;
     }
 
-    static async playHighValueBandAction(actions: IPlayBandPayload[], cardsInHand: Card[], player: Player): Promise<boolean> {
+    static async playHighValueBandAction(actions: IPlayBandPayload[], cardsInHand: Card[], cardsInDeck: Card[], player: Player): Promise<boolean> {
         let highValueAction;
         let highestPointValue = 0;
+        let pointsThreshold = 10;
+
+        if (cardsInDeck.length < 5) {
+            pointsThreshold = 3;
+        } else if (cardsInDeck.length < 10) {
+            pointsThreshold = 6;
+        }
 
         for (const action of actions) {
             const leader = cardsInHand.find(card => card.id === action.leaderId);
             const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
 
-            if (bandDetails.points >= 10 && bandDetails.points > highestPointValue) {
-                highValueAction = action;
+            if (bandDetails.points >= pointsThreshold && bandDetails.points > highestPointValue) {
+                highValueAction = action
                 highestPointValue = bandDetails.points;
             }
         }
@@ -81,12 +101,13 @@ export default class BotPlayBandHandler {
         sortedPlayBandActions: IPlayBandPayload[],
         cardsInHand: Card[],
         regions: Region[],
-        player: Player
+        player: Player,
+        age: number
     ): Promise<boolean> {
         let targetRegion;
 
         for (const action of sortedPlayBandActions) {
-            targetRegion = this.getRegionIfUpgradeable(action, cardsInHand, regions, player);
+            targetRegion = this.getRegionIfUpgradeable(action, cardsInHand, regions, player, age);
 
             if (targetRegion) {
                 await CommandService.handleAction(player.userId, player.gameId, {
@@ -111,7 +132,9 @@ export default class BotPlayBandHandler {
                     TRIBE_PRIORITY[leaderB.tribe.name] - TRIBE_PRIORITY[leaderA.tribe.name]
             })[0];
 
-        await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
+        if (fallbackPlayAction) {
+            await CommandService.handleAction(player.userId, player.gameId, fallbackPlayAction);
+        }
     }
 
     static async playSingleOrc(actions: IPlayBandPayload[], cardsInHand: Card[], player: Player) {

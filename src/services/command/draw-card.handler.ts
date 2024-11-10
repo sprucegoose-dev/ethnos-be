@@ -7,7 +7,6 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 
 import { CardState } from '@interfaces/card.interface';
-import { GameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import GameService from '../game/game.service';
 import Card from '../../models/card.model';
@@ -36,6 +35,10 @@ export default class DrawCardHandler {
         let nextCard = cardsInDeck[nextCardIndex];
 
         do {
+            if (!nextCard) {
+                break;
+            }
+
             if (nextCard.tribe.name === DRAGON) {
                 await Card.update({
                     state: CardState.REVEALED,
@@ -49,19 +52,13 @@ export default class DrawCardHandler {
                 nextCardIndex++;
                 nextCard = cardsInDeck[nextCardIndex];
             }
-        } while (nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
+        } while (nextCard && nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
 
         if (!dragonsRemaining) {
             const finalAge = game.players.length >= 4 ? 3 : 2;
 
             if (game.age === finalAge) {
-                await Game.update({
-                    state: GameState.ENDED
-                }, {
-                    where: {
-                        id: game.id,
-                    }
-                });
+                await GameService.endFinalAge(game);
             } else {
                 await GameService.startNewAge(game);
             }
@@ -77,5 +74,4 @@ export default class DrawCardHandler {
             });
         }
     }
-
 }

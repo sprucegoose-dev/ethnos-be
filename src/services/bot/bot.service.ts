@@ -32,6 +32,10 @@ export default class BotService {
         return gameState.cards.filter(card => card.state === CardState.IN_MARKET);
     }
 
+    static getCardsInDeck(gameState: IGameState): Card[] {
+        return gameState.cards.filter(card => card.state === CardState.IN_DECK);
+    }
+
     static preSortBandActions(actions: IActionPayload[], cardsInHand: Card[]): IPlayBandPayload[] {
         const playBandActions = actions.filter(action => action.type === ActionType.PLAY_BAND);
         let centaurBandActions = [];
@@ -69,6 +73,7 @@ export default class BotService {
             const regions = gameState.regions;
             const cardsInHand = this.getCardsInHand(player);
             const cardsInMarket = this.getCardsInMarket(gameState);
+            const cardsInDeck = this.getCardsInDeck(gameState);
             const sortedPlayBandActions = this.preSortBandActions(actions, cardsInHand);
 
             if (await BotTokenHandler.handleFreeTokenAction(actions, regions, player)) return;
@@ -77,9 +82,9 @@ export default class BotService {
 
             if (await BotPlayBandHandler.playSingleOrc(sortedPlayBandActions, cardsInHand, player)) return;
 
-            if (await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, regions, player)) return;
+            if (await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, regions, player, gameState.age)) return;
 
-            if (await BotPlayBandHandler.playHighValueBandAction(sortedPlayBandActions, cardsInHand, player)) return;
+            if (await BotPlayBandHandler.playHighValueBandAction(sortedPlayBandActions, cardsInHand, cardsInDeck, player)) return;
 
             if (await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
 

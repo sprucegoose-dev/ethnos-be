@@ -913,7 +913,7 @@ export default class GameService {
 
         const startingPlayer = players.find(player => player.id === startingPlayerId);
 
-        if (startingPlayer.user.isBot) {
+        if (gameState.state === GameState.STARTED && startingPlayer.user.isBot) {
             setTimeout(async() => {
                 await BotService.takeTurn(game.id, startingPlayer.id);
             }, BOT_DELAY);
@@ -960,12 +960,38 @@ export default class GameService {
             payload: activeGames
         });
 
-        if (nextPlayer.user.isBot) {
+        if (updatedGameState.state === GameState.STARTED &&  nextPlayer.user.isBot) {
             setTimeout(async() => {
                 await BotService.takeTurn(game.id, nextPlayer.id);
             }, BOT_DELAY);
         }
     };
+
+    static async endFinalAge(game: Game) {
+        await Game.update({
+            state: GameState.ENDED
+        }, {
+            where: {
+                id: game.id,
+            }
+        });
+
+        await ScoringService.handleScoring(game);
+
+        const updatedGameState = await this.getStateResponse(game.id);
+
+        EventService.emitEvent({
+            type: EVENT_GAME_UPDATE,
+            payload: updatedGameState
+        });
+
+        const activeGames = await this.getActiveGames();
+
+        EventService.emitEvent({
+            type: EVENT_ACTIVE_GAMES_UPDATE,
+            payload: activeGames
+        });
+    }
 
     static async updateSettings(userId: number, gameId: number, settings: IGameSettings): Promise<void> {
         const game = await Game.findOne({

@@ -24,6 +24,7 @@ import TokenHandler from './token.handler';
 import BotService from '../bot/bot.service';
 import Player from '../../models/player.model';
 import { BOT_DELAY } from '../bot/constants';
+import { GameState } from '../../interfaces/game.interface';
 
 export default class CommandService {
 
@@ -93,7 +94,7 @@ export default class CommandService {
             payload: updatedGameState
         });
 
-        if (nextPlayer.user.isBot) {
+        if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {
             setTimeout(async () => {
                 await BotService.takeTurn(game.id, nextPlayer.id);
             }, BOT_DELAY);
