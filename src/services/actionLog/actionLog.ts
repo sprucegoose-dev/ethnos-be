@@ -24,6 +24,7 @@ export default class ActionLogService {
             }
         });
 
+
         await ActionLog.create({
             actionLogTypeId: actionLogType.id,
             gameId,

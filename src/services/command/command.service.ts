@@ -76,7 +76,8 @@ export default class CommandService {
                     break;
             }
 
-            const regionColor = activePlayer.cards.find(card => card.id === (payload as IPlayBandPayload).leaderId) ||
+            const regionColor = activePlayer.cards.find(card => card.id ===
+                (payload as IPlayBandPayload).leaderId)?.color ||
                 (payload as IPlayBandPayload).regionColor;
 
             await ActionLogService.log({
@@ -111,6 +112,8 @@ export default class CommandService {
                     }
                 });
             }
+
+            await transaction.commit();
 
             const updatedGameState = await GameService.getStateResponse(gameId);
 
