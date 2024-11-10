@@ -43,6 +43,14 @@ module.exports = {
                 },
                 allowNull: true,
             },
+            card_id: {
+                ...foreignKey,
+                references: {
+                    model: 'cards',
+                    key: 'id',
+                },
+                allowNull: true,
+            },
             leader_id: {
                 ...foreignKey,
                 references: {

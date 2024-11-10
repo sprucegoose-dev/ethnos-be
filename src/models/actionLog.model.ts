@@ -59,6 +59,15 @@ export default class ActionLog extends Model {
     regionId: number;
 
     @Column({
+        field: 'card_id',
+        references: {
+            model: Card,
+            key: 'id',
+        }
+    })
+    cardId: number;
+
+    @Column({
         field: 'leader_id',
         references: {
             model: Card,

@@ -24,7 +24,7 @@ export default class ActionLogService {
             }
         });
 
-        await ActionLogType.create({
+        await ActionLog.create({
             actionTypeId: actionType.id,
             gameId,
             playerId,
@@ -38,13 +38,21 @@ export default class ActionLogService {
         let username = actionLog.player.user.username;
         let actionLabel = '';
 
-
         switch (actionType) {
             case LogType.ADD_FREE_TOKEN:
                 actionLabel = `${username} adds a free token to the ${actionLog.region.color} region`;
                 break;
             case LogType.REVEAL_DRAGON:
                 actionLabel = `${username} reveals a dragon`;
+                break;
+            case LogType.DRAW_CARD:
+                actionLabel = `${username} draws a card`;
+                break;
+            case LogType.PICK_UP_CARD:
+                actionLabel = `${username} picks up a card`;
+                break;
+            case LogType.PLAY_BAND:
+                actionLabel = `${username} picks up a card`;
                 break;
             default:
                 throw new CustomException(ERROR_SERVER, `Invalid action type: ${actionType}`);
@@ -53,6 +61,8 @@ export default class ActionLogService {
         return {
             id: actionLog.id,
             label: `${username}${actionLabel}`,
+            cardId: actionLog.cardId,
+            leaderId: actionLog.leaderId,
             playerColor: actionLog.player.color,
         };
     }

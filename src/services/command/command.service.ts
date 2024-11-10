@@ -7,6 +7,8 @@ import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 import { GameState } from '@interfaces/game.interface';
 
+import sequelize from '@database/connection';
+
 import {
     CustomException,
     ERROR_BAD_REQUEST,
@@ -30,81 +32,89 @@ import TokenHandler from './token.handler';
 export default class CommandService {
 
     static async handleAction(userId: number, gameId: number, payload: IActionPayload): Promise<void> {
-        const game = await GameService.getState(gameId);
+        const transaction = await sequelize.transaction();
 
-        if (!game) {
-            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
-        }
-        const activePlayer = game.players.find(p =>
-            p.id === game.activePlayerId && p.userId === userId
-        );
+        try {
+            const game = await GameService.getState(gameId);
 
-        if (!activePlayer) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
-        }
+            if (!game) {
+                throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+            }
+            const activePlayer = game.players.find(p =>
+                p.id === game.activePlayerId && p.userId === userId
+            );
 
-        let nextActions = [];
+            if (!activePlayer) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
+            }
 
-        switch (payload.type) {
-            case ActionType.DRAW_CARD:
-                await DrawCardHandler.handleDrawCard(game, activePlayer);
-                break;
-            case ActionType.PLAY_BAND:
-                 await PlayBandHandler.handlePlayBand(game, activePlayer, payload);
-                break;
-            case ActionType.PICK_UP_CARD:
-                await PickUpCardHandler.handlePickUpCard(game, activePlayer, payload.cardId);
-                break;
-            case ActionType.ADD_FREE_TOKEN:
-                await TokenHandler.addFreeTokenToRegion(game, activePlayer, payload);
-                break;
-        }
+            let nextActions = [];
 
-        const regionColor = activePlayer.cards.find(card => card.id === (payload as IPlayBandPayload).leaderId) ||
-            (payload as IPlayBandPayload).regionColor;
+            switch (payload.type) {
+                case ActionType.DRAW_CARD:
+                    await DrawCardHandler.handleDrawCard(game, activePlayer);
+                    break;
+                case ActionType.PLAY_BAND:
+                    await PlayBandHandler.handlePlayBand(game, activePlayer, payload);
+                    break;
+                case ActionType.PICK_UP_CARD:
+                    await PickUpCardHandler.handlePickUpCard(game, activePlayer, payload.cardId);
+                    break;
+                case ActionType.ADD_FREE_TOKEN:
+                    await TokenHandler.addFreeTokenToRegion(game, activePlayer, payload);
+                    break;
+            }
 
-        await ActionLogService.log({
-            payload,
-            gameId,
-            playerId: activePlayer.id,
-            regionId: game.regions.find(region => region.color === regionColor)?.id
-        });
+            const regionColor = activePlayer.cards.find(card => card.id === (payload as IPlayBandPayload).leaderId) ||
+                (payload as IPlayBandPayload).regionColor;
 
-        if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
-            nextActions = await NextAction.findAll({
-                where: {
-                    gameId: game.id,
-                    state: NextActionState.PENDING,
-                }
+            await ActionLogService.log({
+                payload,
+                gameId,
+                playerId: activePlayer.id,
+                regionId: game.regions.find(region => region.color === regionColor)?.id
             });
-        }
 
-        let nextPlayerId: number = activePlayer.id;
-        let nextPlayer: Player = activePlayer;
+            if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
+                nextActions = await NextAction.findAll({
+                    where: {
+                        gameId: game.id,
+                        state: NextActionState.PENDING,
+                    }
+                });
+            }
 
-        if (!nextActions.length) {
-            nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
-            nextPlayer = game.players.find(player => player.id === nextPlayerId);
+            let nextPlayerId: number = activePlayer.id;
+            let nextPlayer: Player = activePlayer;
 
-            await Game.update({
-                activePlayerId: nextPlayerId,
-            }, {
-                where: {
-                    id: game.id,
-                    age: game.age // if the age has already advanced, this query will intenationally fail
-                }
+            if (!nextActions.length) {
+                nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
+                nextPlayer = game.players.find(player => player.id === nextPlayerId);
+
+                await Game.update({
+                    activePlayerId: nextPlayerId,
+                }, {
+                    where: {
+                        id: game.id,
+                        age: game.age // if the age has already advanced, this query will intenationally fail
+                    }
+                });
+            }
+
+            const updatedGameState = await GameService.getStateResponse(gameId);
+
+            EventService.emitEvent({
+                type: EVENT_GAME_UPDATE,
+                payload: updatedGameState
             });
-        }
 
-        const updatedGameState = await GameService.getStateResponse(gameId);
-
-        EventService.emitEvent({
-            type: EVENT_GAME_UPDATE,
-            payload: updatedGameState
-        });
-
-        if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {
-            await BotService.takeTurn(game.id, nextPlayer.id);
+            if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {
+                await BotService.takeTurn(game.id, nextPlayer.id);
+            }
+        } catch (error: any) {
+            console.log(error);
+            await transaction.rollback();
+            throw new CustomException(error.type, error.message);
         }
     }
 }
