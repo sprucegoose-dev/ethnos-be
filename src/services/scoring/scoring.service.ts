@@ -120,7 +120,6 @@ export default class ScoringService {
 
         for (const [leaderId, bandCards] of Object.entries(bands)) {
             leader = bandCards.find(card => card.id === Number(leaderId));
-
             bandSize = bandCards.length;
 
             if (leader.tribe.name === TribeName.DWARVES) {

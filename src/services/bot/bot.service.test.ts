@@ -152,6 +152,8 @@ describe('BotService', () => {
             const result = await createGame();
             gameState = result.gameState;
             playerA = result.playerA;
+
+            jest.spyOn(BotService, 'delayBot').mockResolvedValue();
         });
 
         afterEach(async () => await Game.truncate());

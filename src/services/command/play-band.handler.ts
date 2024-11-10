@@ -214,6 +214,10 @@ export default class PlayBandHandler {
             throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
         }
 
+        if (!bandCardIds.includes(leader.id)) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'The leader must be included in the band');
+        }
+
         const validActions = ActionService.getPlayBandActions(cardsInHand);
 
         let isValid = false;

@@ -8,6 +8,7 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
 import User from '@models/user.model';
+import PlayerRegion from '@models/player_region.model';
 
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
@@ -24,6 +25,7 @@ import {
     EVENT_GAME_UPDATE,
 } from '@interfaces/event.interface';
 import { IScoringResults } from '@interfaces/command.interface';
+import { PLAYER_COLORS, PlayerColor } from '@interfaces/player.interface';
 
 import PlayerService from '@services/player/player.service';
 import EventService from '@services/event/event.service';
@@ -35,10 +37,7 @@ import {
     ERROR_FORBIDDEN,
     ERROR_NOT_FOUND,
 } from '@helpers/exception-handler';
-import { PLAYER_COLORS, PlayerColor } from '../../interfaces/player.interface';
-import PlayerRegion from '../../models/player_region.model';
 import BotService from '../bot/bot.service';
-import { BOT_DELAY } from '../bot/constants';
 
 export default class GameService {
 
@@ -914,9 +913,7 @@ export default class GameService {
         const startingPlayer = players.find(player => player.id === startingPlayerId);
 
         if (gameState.state === GameState.STARTED && startingPlayer.user.isBot) {
-            setTimeout(async() => {
-                await BotService.takeTurn(game.id, startingPlayer.id);
-            }, BOT_DELAY);
+            await BotService.takeTurn(game.id, startingPlayer.id);
         }
     }
 
@@ -961,9 +958,7 @@ export default class GameService {
         });
 
         if (updatedGameState.state === GameState.STARTED &&  nextPlayer.user.isBot) {
-            setTimeout(async() => {
-                await BotService.takeTurn(game.id, nextPlayer.id);
-            }, BOT_DELAY);
+            await BotService.takeTurn(game.id, nextPlayer.id);
         }
     };
 

@@ -1,4 +1,6 @@
 
+import moment from 'moment';
+
 import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import {
@@ -19,8 +21,7 @@ import GameService from '@services/game/game.service';
 import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
-import moment from 'moment';
-
+import { BOT_DELAY_MS } from './constants';
 
 export default class BotService {
 
@@ -60,6 +61,14 @@ export default class BotService {
         return [...centaurBandActions, ...elfBandActions, ...otherBandActions];
     }
 
+    static async delayBot(timeMs: number): Promise<void> {
+        await new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(true);
+            }, timeMs);
+        });
+    }
+
     static async takeTurn(gameId: number, playerId: number) {
         try {
             const gameState = await GameService.getState(gameId);
@@ -68,6 +77,8 @@ export default class BotService {
             if (player.id !== gameState.activePlayerId) {
                 return;
             }
+
+            await this.delayBot(BOT_DELAY_MS);
 
             const actions = await ActionService.getActions(gameId, player.userId, gameState);
             const regions = gameState.regions;

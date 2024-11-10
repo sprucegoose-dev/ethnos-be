@@ -16,4 +16,4 @@ export const TRIBE_PRIORITY = {
     [TribeName.MERFOLK]: 11,
 };
 
-export const BOT_DELAY = 2000;
+export const BOT_DELAY_MS = 2000;
