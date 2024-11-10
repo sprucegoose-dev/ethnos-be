@@ -10,12 +10,22 @@ import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import GameService from '../game/game.service';
 import Card from '../../models/card.model';
+import ActionLogService from '../actionLog/actionLog';
+import { ActionType } from '../../interfaces/action.interface';
 
 const {
     DRAGON,
 } = TribeName;
 
 export default class DrawCardHandler {
+
+    static async logRevealedDragon(gameId: number, playerId: number) {
+        await ActionLogService.log({
+            payload: { type: ActionType.DRAW_CARD },
+            gameId,
+            playerId,
+        });
+    }
 
     static async handleDrawCard(game: Game, player: Player): Promise<void> {
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
@@ -47,6 +57,7 @@ export default class DrawCardHandler {
                 dragonsRemaining--;
                 nextCardIndex++;
                 nextCard = cardsInDeck[nextCardIndex];
+                await this.logRevealedDragon(game.id, player.id);
             }
         } while (nextCard && nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
 

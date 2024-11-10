@@ -1,5 +1,5 @@
 import Player from '@models/player.model';
-import PlayerRegion from '@models/player_region.model';
+import PlayerRegion from '@models/playerRegion.model';
 import Region from '@models/region.model';
 import Game from '@models/game.model';
 

@@ -6,7 +6,7 @@ import {
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 import PlayerService from '../player/player.service';
-import PlayerRegion from '@models/player_region.model';
+import PlayerRegion from '@models/playerRegion.model';
 import Region from '@models/region.model';
 import NextAction from '@models/nextAction.model';
 

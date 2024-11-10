@@ -14,16 +14,6 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true
             },
-            type: {
-                type: Sequelize.ENUM,
-                values: [
-                    'draw_card',
-                    'pick_up_card',
-                    'play_band',
-                    'keep_cards',
-                    'add_free_token',
-                ],
-            },
             game_id: {
                 ...foreignKey,
                 references: {
@@ -35,6 +25,13 @@ module.exports = {
                 ...foreignKey,
                 references: {
                     model: 'players',
+                    key: 'id',
+                },
+            },
+            action_log_type_id: {
+                ...foreignKey,
+                references: {
+                    model: 'action_log_types',
                     key: 'id',
                 },
             },

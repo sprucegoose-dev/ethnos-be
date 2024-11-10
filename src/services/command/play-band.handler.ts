@@ -20,7 +20,7 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Card from '@models/card.model';
 import Region from '@models/region.model';
-import PlayerRegion from '@models/player_region.model';
+import PlayerRegion from '@models/playerRegion.model';
 import NextAction from '@models/nextAction.model';
 
 import ActionService from '@services/action/action.service';

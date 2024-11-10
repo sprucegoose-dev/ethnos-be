@@ -10,7 +10,7 @@ import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import ScoringService from './scoring.service';
 import { CardState } from '@interfaces/card.interface';
 import Region from '../../models/region.model';
-import PlayerRegion from '../../models/player_region.model';
+import PlayerRegion from '../../models/playerRegion.model';
 
 describe('ScoringService', () => {
 

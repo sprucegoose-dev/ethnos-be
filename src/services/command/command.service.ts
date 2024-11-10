@@ -1,9 +1,11 @@
 import {
     ActionType,
     IActionPayload,
+    IPlayBandPayload,
 } from '@interfaces/action.interface';
 import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
+import { GameState } from '@interfaces/game.interface';
 
 import {
     CustomException,
@@ -13,17 +15,17 @@ import {
 
 import GameService from '@services/game/game.service';
 import EventService from '@services/event/event.service';
+import BotService from '@services/bot/bot.service';
+import ActionLogService from '@services/actionLog/actionLog';
 
 import NextAction from '@models/nextAction.model';
 import Game from '@models/game.model';
+import Player from '@models/player.model';
 
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
-import BotService from '../bot/bot.service';
-import Player from '../../models/player.model';
-import { GameState } from '../../interfaces/game.interface';
 
 export default class CommandService {
 
@@ -58,7 +60,15 @@ export default class CommandService {
                 break;
         }
 
-        // TODO: update actions log
+        const regionColor = activePlayer.cards.find(card => card.id === (payload as IPlayBandPayload).leaderId) ||
+            (payload as IPlayBandPayload).regionColor;
+
+        await ActionLogService.log({
+            payload,
+            gameId,
+            playerId: activePlayer.id,
+            regionId: game.regions.find(region => region.color === regionColor)?.id
+        });
 
         if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
             nextActions = await NextAction.findAll({

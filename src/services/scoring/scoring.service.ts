@@ -4,7 +4,7 @@ import Player from '@models/player.model';
 import Card from '@models/card.model';
 import Region from '@models/region.model';
 import Game from '@models/game.model';
-import PlayerRegion from '@models/player_region.model';
+import PlayerRegion from '@models/playerRegion.model';
 
 import { CardState, IGroupedCards } from '@interfaces/card.interface';
 import { IScoringResults } from '@interfaces/command.interface';

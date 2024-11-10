@@ -12,7 +12,7 @@ import User from './user.model';
 import { Color } from '@interfaces/game.interface';
 import Card from './card.model';
 import { PlayerColor } from '../interfaces/player.interface';
-import PlayerRegion from './player_region.model';
+import PlayerRegion from './playerRegion.model';
 
 @Table({
     tableName: 'players',
