@@ -185,7 +185,7 @@ describe('BotPickUpCardHandler', () => {
         });
     });
 
-    describe('getMostFrequentColorInHand', () => {
+    describe('getMostFrequentColor', () => {
         let gameState: IGameState;
 
         beforeEach(async () => {
@@ -213,7 +213,7 @@ describe('BotPickUpCardHandler', () => {
 
             const cardsInHand =  [...orangeCards, ...blueCards, ...grayCards];
 
-            const mostFrequentColor = BotPickUpCardHandler.getMostFrequentColorInHand(cardsInHand);
+            const mostFrequentColor = BotPickUpCardHandler.getMostFrequentColor(cardsInHand);
 
             expect(mostFrequentColor).toEqual({
                 color: Color.ORANGE,
@@ -222,7 +222,7 @@ describe('BotPickUpCardHandler', () => {
         });
     });
 
-    describe('getMostFrequentTribeInHand', () => {
+    describe('getMostFrequentTribe', () => {
         let gameState: IGameState;
 
         beforeEach(async () => {
@@ -250,7 +250,7 @@ describe('BotPickUpCardHandler', () => {
 
             const cardsInHand =  [...dwarfCards, ...minotaurCards, ...merfolkCards];
 
-            const mostFrequentColor = BotPickUpCardHandler.getMostFrequentTribeInHand(cardsInHand);
+            const mostFrequentColor = BotPickUpCardHandler.getMostFrequentTribe(cardsInHand);
 
             expect(mostFrequentColor).toEqual({
                 tribeName: TribeName.DWARVES,

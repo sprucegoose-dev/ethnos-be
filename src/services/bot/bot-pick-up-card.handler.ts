@@ -28,6 +28,26 @@ export default class BotPickUpCardHandler {
                     return true;
                 }
 
+                const mostFrequentColor = this.getMostFrequentColor(cardsInMarket);
+
+                if (mostFrequentColor.total >= 3) {
+                    await CommandService.handleAction(player.userId, player.gameId, {
+                        type: ActionType.PICK_UP_CARD,
+                        cardId: cardsInMarket.find(card => card.color === mostFrequentColor.color).id,
+                    });
+                    return true;
+                }
+
+                const mostFrequentTribe = this.getMostFrequentTribe(cardsInMarket);
+
+                if (mostFrequentTribe.total >= 3) {
+                    await CommandService.handleAction(player.userId, player.gameId, {
+                        type: ActionType.PICK_UP_CARD,
+                        cardId: cardsInMarket.find(card => card.tribe.name === mostFrequentTribe.tribeName).id,
+                    });
+                    return true;
+                }
+
                 await CommandService.handleAction(player.userId, player.gameId, {
                     type: ActionType.PICK_UP_CARD,
                     cardId: shuffle(cardsInMarket)[0].id
@@ -43,7 +63,7 @@ export default class BotPickUpCardHandler {
         return false;
     }
 
-    static getMostFrequentColorInHand(cards: Card[]): { color: Color, total: number } {
+    static getMostFrequentColor(cards: Card[]): { color: Color, total: number } {
         cards = cards.filter(card => card.tribe.name !== TribeName.SKELETONS);
 
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
@@ -68,7 +88,7 @@ export default class BotPickUpCardHandler {
         };
     }
 
-    static getMostFrequentTribeInHand(cards: Card[]): { tribeName: TribeName, total: number } {
+    static getMostFrequentTribe(cards: Card[]): { tribeName: TribeName, total: number } {
         cards = cards.filter(card => card.tribe.name !== TribeName.SKELETONS);
 
         const counts = cards.reduce<{[key: string]: number}>((acc, card) => {
@@ -127,7 +147,7 @@ export default class BotPickUpCardHandler {
             return cardToPickUpId;
         }
 
-        const mostFrequentColor = this.getMostFrequentColorInHand(cardsInHand);
+        const mostFrequentColor = this.getMostFrequentColor(cardsInHand);
 
         for (const card of cardsInMarket) {
             if (card.color === mostFrequentColor.color) {
@@ -135,7 +155,7 @@ export default class BotPickUpCardHandler {
             }
         }
 
-        const mostFrequentTribe = this.getMostFrequentTribeInHand(cardsInHand);
+        const mostFrequentTribe = this.getMostFrequentTribe(cardsInHand);
 
         if (!cardToPickUpId || mostFrequentTribe.total > mostFrequentColor.total) {
             for (const card of cardsInMarket) {
