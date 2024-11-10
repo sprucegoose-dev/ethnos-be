@@ -28,8 +28,13 @@ import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
+import ActionService from '../action/action.service';
 
 export default class CommandService {
+
+    static validateAction(payload: IActionPayload, validActions: IActionPayload[]): boolean {
+        return !!validActions.find(action => action.type === payload.type);
+    }
 
     static async handleAction(userId: number, gameId: number, payload: IActionPayload): Promise<void> {
         const transaction = await sequelize.transaction();
@@ -46,6 +51,12 @@ export default class CommandService {
 
             if (!activePlayer) {
                 throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
+            }
+
+            const validActions = await ActionService.getActions(gameId, activePlayer.userId);
+
+            if (!this.validateAction(payload, validActions)) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'This action is not valid');
             }
 
             let nextActions = [];

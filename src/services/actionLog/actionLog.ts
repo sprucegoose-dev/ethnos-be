@@ -18,14 +18,14 @@ export default class ActionLogService {
        gameId,
        regionId
     }: IActionLogParams): Promise<void> {
-        const actionType = await ActionLogType.findOne({
+        const actionLogType = await ActionLogType.findOne({
             where: {
                 type: payload.type,
             }
         });
 
         await ActionLog.create({
-            actionTypeId: actionType.id,
+            actionLogTypeId: actionLogType.id,
             gameId,
             playerId,
             leaderId: payload.type === ActionType.PLAY_BAND ? payload.leaderId : null,
