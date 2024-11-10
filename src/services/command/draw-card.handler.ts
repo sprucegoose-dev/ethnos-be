@@ -35,10 +35,6 @@ export default class DrawCardHandler {
         let nextCard = cardsInDeck[nextCardIndex];
 
         do {
-            if (!nextCard) {
-                break;
-            }
-
             if (nextCard.tribe.name === DRAGON) {
                 await Card.update({
                     state: CardState.REVEALED,

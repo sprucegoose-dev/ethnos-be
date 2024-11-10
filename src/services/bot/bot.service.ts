@@ -21,7 +21,6 @@ import GameService from '@services/game/game.service';
 import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
-import { BOT_DELAY_MS } from './constants';
 
 export default class BotService {
 
@@ -77,8 +76,6 @@ export default class BotService {
             if (player.id !== gameState.activePlayerId) {
                 return;
             }
-
-            await this.delayBot(BOT_DELAY_MS);
 
             const actions = await ActionService.getActions(gameId, player.userId, gameState);
             const regions = gameState.regions;
