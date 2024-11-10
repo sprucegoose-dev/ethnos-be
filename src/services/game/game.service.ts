@@ -923,8 +923,6 @@ export default class GameService {
     static async startNewAge(game: Game) {
         const scoringResults = await ScoringService.handleScoring(game);
 
-        await
-
         await this.dealCards(game.id, game.players, game.cards);
 
         await Player.update({

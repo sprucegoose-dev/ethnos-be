@@ -6,7 +6,7 @@ import {
     IPlayBandPayload
 } from '@interfaces/action.interface';
 import { CardState } from '@interfaces/card.interface';
-import { GameState } from '@interfaces/game.interface';
+import { GameState, IGameState } from '@interfaces/game.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 
@@ -20,8 +20,8 @@ export default class ActionService {
         return arrayA.every((value, index) => value === arrayB[index])
     }
 
-    static async getActions(gameId: number, userId: number): Promise<IActionPayload[]> {
-        const game = await GameService.getState(gameId);
+    static async getActions(gameId: number, userId: number, gameState?: IGameState): Promise<IActionPayload[]> {
+        const game = gameState || await GameService.getState(gameId);
 
         let actions: IActionPayload[] = [];
 
@@ -110,6 +110,8 @@ export default class ActionService {
             }
         }
 
-        return playBandActions;
+        return playBandActions.filter(action =>
+            action.cardIds.includes(action.leaderId)
+        );
     }
 }

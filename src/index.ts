@@ -59,7 +59,6 @@ app.get('/tribe/all', TribesController.getAll);
 
 export const gameSocket = io;
 
-
 let instance = '0';
 
 if (process.env.NODE_ENV === 'production') {

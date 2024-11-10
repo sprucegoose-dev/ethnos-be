@@ -145,6 +145,10 @@ export default class BotPickUpCardHandler {
             }
         }
 
+        if (!cardToPickUpId) {
+            cardToPickUpId = cardsInMarket.find(card => card.tribe.name === TribeName.SKELETONS)?.id;
+        }
+
         return cardToPickUpId;
     }
 }
