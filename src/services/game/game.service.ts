@@ -476,7 +476,6 @@ export default class GameService {
                             include: [
                                 Tribe,
                             ],
-                            order: [['index', 'asc']]
                         },
                     ],
                 },
@@ -499,20 +498,31 @@ export default class GameService {
                         }
                     ],
                 },
-                {
-                    model: Card,
-                    include: [
-                        Tribe,
-                    ],
-                    required: false,
-                }
             ],
             attributes: {
                 include: inclAttributes
             }
         });
 
-        return game?.toJSON();
+        const cards = await Card.findAll({
+            where: {
+                gameId,
+            },
+            include: [
+                Tribe,
+            ],
+        });
+
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
+
+        const gameState = game.toJSON();
+
+        gameState.cards = cards;
+
+        return gameState;
     }
 
     static async getStateResponse(gameId: number): Promise<IGameStateResponse> {
