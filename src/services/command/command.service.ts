@@ -57,7 +57,7 @@ export default class CommandService {
             });
 
             if (nextAction && nextAction.type !== payload.type) {
-                throw new CustomException(ERROR_BAD_REQUEST, 'This action is not valid');
+                throw new CustomException(ERROR_BAD_REQUEST, `This action is not valid ${JSON.stringify(payload)}`);
             }
 
             const regionColor = activePlayer.cards.find(card => card.id ===

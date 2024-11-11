@@ -371,54 +371,35 @@ export default class GameService {
     }
 
     static async getCardsInHand(userId: number, gameId: number): Promise<Card[]> {
-        const player = await Player.findOne({
+        return (await Player.findOne({
             where: {
                 userId,
                 gameId,
-            },
-        });
-
-        return await Card.findAll({
-            where: {
-                playerId: player.id,
-                state: CardState.IN_HAND
-            },
-            include: [
-                Tribe,
-            ],
-            order: [['index', 'asc']]
-        });
-    }
-
-    static async getPlayerHands(userId: number, gameId: number): Promise<{[playerId: number]: Card[]}> {
-        const player = await Player.findOne({
-            where: {
-                userId,
-                gameId,
-            },
-        });
-
-        const ownCards = await Card.findAll({
-            where: {
-                playerId: player.id,
-                state: CardState.IN_HAND
-            },
-            include: [
-                Tribe,
-            ],
-            order: [['index', 'asc']]
-        });
-
-        const otherPlayers = await Player.findAll({
-            where: {
-                gameId,
-                id: {
-                    [Op.not]: player.id
-                },
             },
             include: [
                 {
                     model: Card,
+                    required: false,
+                    where: {
+                        state: CardState.IN_HAND
+                    },
+                    include: [
+                        Tribe,
+                    ],
+                }
+            ],
+        })).cards;
+    }
+
+    static async getPlayerHands(gameId: number): Promise<{[playerId: number]: Card[]}> {
+        const players = await Player.findAll({
+            where: {
+                gameId,
+            },
+            include: [
+                {
+                    model: Card,
+                    required: false,
                     where: {
                         state: CardState.IN_HAND
                     },
@@ -427,15 +408,10 @@ export default class GameService {
             ],
         });
 
-        const cardsByPlayerId = otherPlayers.reduce<{ [playerId: number]: Card[] }>((acc, player) => {
+        return players.reduce<{ [playerId: number]: Card[] }>((acc, player) => {
             acc[player.id] = player.cards;
             return acc;
         }, {});
-
-        return {
-            [player.id]: ownCards,
-            ...cardsByPlayerId,
-        };
     }
 
     static getNextPlayerId(activePlayerId: number, turnOrder: number[]): number {

@@ -12,8 +12,12 @@ import { TRIBE_PRIORITY } from './constants';
 
 export default class BotPickUpCardHandler {
 
+    static canPickUpOrDraw(actions: IActionPayload[]) {
+        return actions.find(action => [ActionType.DRAW_CARD, ActionType.PICK_UP_CARD].includes(action.type));
+    }
+
     static async emptyHandPickUpOrDrawCard(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
-        if (!cardsInHand.length) {
+        if (this.canPickUpOrDraw(actions) && !cardsInHand.length) {
             if (cardsInMarket.length && actions.find(action => action.type === ActionType.PICK_UP_CARD)) {
 
                 const unclaimedOrcCard = cardsInMarket.find(card => card.tribe.name === TribeName.ORCS &&
@@ -117,8 +121,8 @@ export default class BotPickUpCardHandler {
         return cardsInHand.length > 0 && cardsInHand.every(card => card.tribe.name === TribeName.SKELETONS);
     }
 
-    static async pickUpOrDrawCard(cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
-        if (cardsInHand.length >= 10) {
+    static async pickUpOrDrawCard(actions: IActionPayload[], cardsInHand: Card[], cardsInMarket: Card[], player: Player): Promise<boolean> {
+        if (!this.canPickUpOrDraw(actions) || cardsInHand.length >= 10) {
             return false;
         }
 

@@ -94,7 +94,7 @@ export default class BotService {
 
             if (await BotPlayBandHandler.playHighValueBandAction(sortedPlayBandActions, cardsInHand, cardsInDeck, player)) return;
 
-            if (await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, player)) return;
+            if (await BotPickUpCardHandler.pickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player)) return;
 
             await BotPlayBandHandler.playBandFallbackAction(actions, cardsInHand, player);
 

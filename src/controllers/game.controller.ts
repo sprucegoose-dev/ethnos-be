@@ -60,9 +60,8 @@ class GamesController {
     }
 
     async getPlayerHands(req: AuthRequest, res: Response): Promise<void> {
-        const userId = req.userId;
         const gameId = req.params.id;
-        const playerHands = await GameService.getPlayerHands(userId, parseInt(gameId, 10));
+        const playerHands = await GameService.getPlayerHands(parseInt(gameId, 10));
         res.send(playerHands);
     }
 
