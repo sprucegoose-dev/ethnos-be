@@ -29,7 +29,7 @@ export default class ActionService {
             p.userId === userId
         );
 
-        if (game.state === GameState.ENDED) {
+        if (game.state !== GameState.STARTED) {
             return actions;
         }
 
