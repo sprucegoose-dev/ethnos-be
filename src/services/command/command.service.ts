@@ -28,13 +28,8 @@ import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
-import ActionService from '../action/action.service';
 
 export default class CommandService {
-
-    static validateAction(payload: IActionPayload, validActions: IActionPayload[]): boolean {
-        return !!validActions.find(action => action.type === payload.type);
-    }
 
     static async handleAction(userId: number, gameId: number, payload: IActionPayload): Promise<void> {
         const transaction = await sequelize.transaction();
@@ -53,11 +48,28 @@ export default class CommandService {
                 throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
             }
 
-            const validActions = await ActionService.getActions(gameId, activePlayer.userId);
+            const nextAction = await NextAction.findOne({
+                where: {
+                    gameId: game.id,
+                    state: NextActionState.PENDING,
+                },
+                order: [['id', 'DESC']]
+            });
 
-            if (!this.validateAction(payload, validActions)) {
+            if (nextAction && nextAction.type !== payload.type) {
                 throw new CustomException(ERROR_BAD_REQUEST, 'This action is not valid');
             }
+
+            const regionColor = activePlayer.cards.find(card => card.id ===
+                (payload as IPlayBandPayload).leaderId)?.color ||
+                (payload as IPlayBandPayload).regionColor;
+
+            await ActionLogService.log({
+                payload,
+                gameId,
+                playerId: activePlayer.id,
+                regionId: game.regions.find(region => region.color === regionColor)?.id
+            });
 
             let nextActions = [];
 
@@ -75,17 +87,6 @@ export default class CommandService {
                     await TokenHandler.addFreeTokenToRegion(game, activePlayer, payload);
                     break;
             }
-
-            const regionColor = activePlayer.cards.find(card => card.id ===
-                (payload as IPlayBandPayload).leaderId)?.color ||
-                (payload as IPlayBandPayload).regionColor;
-
-            await ActionLogService.log({
-                payload,
-                gameId,
-                playerId: activePlayer.id,
-                regionId: game.regions.find(region => region.color === regionColor)?.id
-            });
 
             if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
                 nextActions = await NextAction.findAll({

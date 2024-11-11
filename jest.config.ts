@@ -14,7 +14,8 @@ const config: Config.InitialOptions = {
         '^@services/(.*)$': '<rootDir>/services/$1',
         '^@tasks/(.*)$': '<rootDir>/tasks/$1',
         '^@interfaces/(.*)$': '<rootDir>/interfaces/$1',
-        '^@jest.setup$': '<rootDir>/../jest.setup'
+        '^@jest.setup$': '<rootDir>/../jest.setup',
+        '^@database/(.*)$': '<rootDir>/../database/$1'
       },
     preset: 'ts-jest',
     transform: {

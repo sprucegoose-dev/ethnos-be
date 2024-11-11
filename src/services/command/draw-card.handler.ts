@@ -12,6 +12,7 @@ import GameService from '../game/game.service';
 import Card from '../../models/card.model';
 import ActionLogService from '../actionLog/actionLog';
 import { ActionType } from '../../interfaces/action.interface';
+import { Op } from 'sequelize';
 
 const {
     DRAGON,
@@ -27,7 +28,7 @@ export default class DrawCardHandler {
         });
     }
 
-    static async handleDrawCard(game: Game, player: Player): Promise<void> {
+    static async handleDrawCard(game: Game, player: Player, quantity: number = 1): Promise<void> {
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
 
         if (cardsInHand.length === 10) {
@@ -44,22 +45,39 @@ export default class DrawCardHandler {
 
         let nextCard = cardsInDeck[nextCardIndex];
 
+        const revealedDragons: Card[] = [];
+        const cardsToDraw: Card[] = [];
+        let drawnCards = 0;
+
         do {
             if (nextCard.tribe.name === DRAGON) {
-                await Card.update({
-                    state: CardState.REVEALED,
-                    index: null,
-                }, {
-                    where: {
-                        id: nextCard.id
-                    }
-                });
+                revealedDragons.push(nextCard);
                 dragonsRemaining--;
-                nextCardIndex++;
-                nextCard = cardsInDeck[nextCardIndex];
+            } else {
+                cardsToDraw.push(nextCard);
+                drawnCards++;
+            }
+
+            nextCardIndex++;
+            nextCard = cardsInDeck[nextCardIndex];
+        } while (nextCard && dragonsRemaining > 1 && (nextCard.tribe.name === DRAGON || drawnCards < quantity))
+
+        if (revealedDragons.length) {
+            await Card.update({
+                state: CardState.REVEALED,
+                index: null,
+            }, {
+                where: {
+                    id: {
+                        [Op.in]: revealedDragons.map(card => card.id)
+                    }
+                }
+            });
+
+            for (const _dragon of revealedDragons) {
                 await this.logRevealedDragon(game.id, player.id);
             }
-        } while (nextCard && nextCard.tribe.name === DRAGON && dragonsRemaining > 1)
+        }
 
         if (!dragonsRemaining) {
             const finalAge = game.players.length >= 4 ? 3 : 2;
@@ -76,7 +94,9 @@ export default class DrawCardHandler {
                 index: cardsInHand.length,
             }, {
                 where: {
-                    id: nextCard.id
+                    id: {
+                        [Op.in]: cardsToDraw.map(card => card.id)
+                    }
                 }
             });
         }
