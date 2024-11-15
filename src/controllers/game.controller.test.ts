@@ -189,14 +189,9 @@ describe('GamesController', () => {
             const cardsByPlayerId: {[playerId: number]: Card[]} = {};
 
             updatedGame.players.map(player => {
-
-                if (player.id === playerA.id) {
-                    cardsByPlayerId[player.id] = player.cards;
-                } else {
-                    // @ts-ignore
-                    cardsByPlayerId[player.id] = player.cards.map(card => ({ id: card.id }));
-                }
-            })
+                // @ts-ignore
+                cardsByPlayerId[player.id] = player.cards.map(card => ({ id: card.id }));
+            });
 
             await GamesController.getPlayerHands(request, response);
 

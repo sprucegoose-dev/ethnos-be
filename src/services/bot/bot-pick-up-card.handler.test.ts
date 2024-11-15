@@ -432,11 +432,13 @@ describe('BotPickUpCardHandler', () => {
 
             updatedGame = await GameService.getState(gameState.id);
 
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+
             const cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
 
             expect(cardsInMarket.length).toBe(4);
 
-            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
 
             updatedGame = await GameService.getState(gameState.id);
 
@@ -525,7 +527,9 @@ describe('BotPickUpCardHandler', () => {
 
             expect(cardsInMarket.length).toBe(4);
 
-            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
 
             updatedGame = await GameService.getState(gameState.id);
 
@@ -596,7 +600,9 @@ describe('BotPickUpCardHandler', () => {
             const cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
             const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
 
-            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
 
             updatedGame = await GameService.getState(gameState.id);
 
@@ -614,7 +620,8 @@ describe('BotPickUpCardHandler', () => {
         it("should return 'false' if a player already has 10 cards in their hand", async () => {
             const cardsInMarket = gameState.cards.filter(card => card.state === CardState.IN_MARKET);
             const cardsInHand = gameState.cards.filter(card => card.tribe.name !== TribeName.DRAGON).slice(0, 10);
-            const result = await BotPickUpCardHandler.pickUpOrDrawCard(cardsInHand, cardsInMarket, playerA);
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+            const result = await BotPickUpCardHandler.pickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
             expect(result).toBe(false);
         });
     });

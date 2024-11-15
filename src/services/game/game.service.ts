@@ -517,7 +517,6 @@ export default class GameService {
             throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
         }
 
-
         const gameState = game.toJSON();
 
         gameState.cards = cards;

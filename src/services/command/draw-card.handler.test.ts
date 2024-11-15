@@ -29,16 +29,12 @@ describe('DrawCardHandler', () => {
     let gameId: number;
     let gameState: IGameState;
     let playerA: Player;
-    let playerB: Player;
-    let playerC: Player;
 
     describe('handleDrawCard', () => {
         beforeEach(async () => {
             const result = await createGame();
             gameId = result.gameId;
             playerA = result.playerA;
-            playerB = result.playerB;
-            playerC = result.playerC;
             gameState = result.gameState;
         });
 
@@ -255,11 +251,7 @@ describe('DrawCardHandler', () => {
 
             let updatedGame = await GameService.getState(gameId);
 
-            updatedGame.players = [
-                playerA,
-                playerB,
-                playerC,
-            ];
+            updatedGame.players = updatedGame.players.slice(0, 3);
 
             updatedGame.age = 2;
 

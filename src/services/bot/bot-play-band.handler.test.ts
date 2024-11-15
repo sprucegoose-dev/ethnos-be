@@ -23,6 +23,7 @@ import {
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotService from './bot.service';
 import PlayerService from '../player/player.service';
+import Card from '../../models/card.model';
 
 describe('BotPlayBandHandler', () => {
 
@@ -204,7 +205,7 @@ describe('BotPlayBandHandler', () => {
                 ]
             });
 
-            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
+            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA, gameState.age);
 
             expect(region.id).toBe(regions[0].id);
         });
@@ -239,7 +240,7 @@ describe('BotPlayBandHandler', () => {
                 ]
             });
 
-            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
+            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA, gameState.age);
 
             expect(region).toBe(null);
         });
@@ -276,7 +277,7 @@ describe('BotPlayBandHandler', () => {
 
             cardsInHand[0].tribe.name = TribeName.WINGFOLK;
 
-            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA);
+            const region = BotPlayBandHandler.getRegionIfUpgradeable(playBandAction, cardsInHand, updatedRegions, playerA, gameState.age);
 
             expect(region.id).not.toBe(regions[0].id);
         });
@@ -344,10 +345,17 @@ describe('BotPlayBandHandler', () => {
 
             await assignCardsToPlayer(playerA.id, cardIdsToAssign);
 
+            const cardsInDeck = await Card.findAll({
+                where: {
+                    gameId: gameState.id,
+                    state: CardState.IN_DECK,
+                }
+            });
+
             const actions = (await ActionService.getActions(gameState.id, playerA.userId))
                 .filter(action => action.type === ActionType.PLAY_BAND);
 
-            const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, playerA);
+            const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, cardsInDeck, playerA);
 
             expect(result).toBe(false);
         });

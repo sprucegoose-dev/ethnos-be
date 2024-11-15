@@ -60,14 +60,6 @@ export default class BotService {
         return [...centaurBandActions, ...elfBandActions, ...otherBandActions];
     }
 
-    static async delayBot(timeMs: number): Promise<void> {
-        await new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(true);
-            }, timeMs);
-        });
-    }
-
     static async takeTurn(gameId: number, playerId: number) {
         try {
             const gameState = await GameService.getState(gameId);
