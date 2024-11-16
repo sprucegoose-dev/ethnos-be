@@ -18,7 +18,7 @@ import {
 import GameService from '@services/game/game.service';
 import EventService from '@services/event/event.service';
 import BotService from '@services/bot/bot.service';
-import ActionLogService from '@services/actionLog/actionLog';
+import ActionLogService from '@services/actionLog/action-log.service';
 
 import NextAction from '@models/nextAction.model';
 import Game from '@models/game.model';
@@ -121,6 +121,11 @@ export default class CommandService {
             await transaction.commit();
 
             const updatedGameState = await GameService.getStateResponse(gameId);
+
+            EventService.emitEvent({
+                type: EVENT_GAME_UPDATE,
+                payload: updatedGameState
+            });
 
             EventService.emitEvent({
                 type: EVENT_GAME_UPDATE,

@@ -8,7 +8,7 @@ import Region from '@models/region.model';
 
 import { CustomException, ERROR_SERVER } from '@helpers/exception-handler';
 
-import { IActionLogParams, IActionLogPayload, LogType } from './actionLog.types';
+import { IActionLogParams, IActionLogPayload, LogType } from './action-log.types';
 
 export default class ActionLogService {
 
@@ -37,23 +37,23 @@ export default class ActionLogService {
     static formatLog(actionLog: ActionLog): IActionLogPayload {
         const actionType = actionLog.actionLogType.type;
         let username = actionLog.player.user.username;
-        let actionLabel = '';
+        let actionLabel = `${username} `;
 
         switch (actionType) {
             case LogType.ADD_FREE_TOKEN:
-                actionLabel = `${username} adds a free token to the ${actionLog.region.color} region`;
+                actionLabel += `adds a free token to the ${actionLog.region.color} region`;
                 break;
             case LogType.REVEAL_DRAGON:
-                actionLabel = `${username} reveals a dragon`;
+                actionLabel += `reveals a dragon`;
                 break;
             case LogType.DRAW_CARD:
-                actionLabel = `${username} draws a card`;
+                actionLabel += `draws a card`;
                 break;
             case LogType.PICK_UP_CARD:
-                actionLabel = `${username} picks up a card`;
+                actionLabel += `picks up a card`;
                 break;
             case LogType.PLAY_BAND:
-                actionLabel = `${username} picks up a card`;
+                actionLabel += `plays a band`;
                 break;
             default:
                 throw new CustomException(ERROR_SERVER, `Invalid action type: ${actionType}`);
@@ -61,7 +61,7 @@ export default class ActionLogService {
 
         return {
             id: actionLog.id,
-            label: `${username}${actionLabel}`,
+            label: actionLabel,
             cardId: actionLog.cardId,
             leaderId: actionLog.leaderId,
             playerColor: actionLog.player.color,
@@ -86,9 +86,7 @@ export default class ActionLogService {
                             model: User,
                             as: 'user',
                             attributes: [
-                                ['uuid', 'id'],
                                 'username',
-                                'deleted',
                             ],
                         }
                     ],

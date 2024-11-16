@@ -50,6 +50,7 @@ app.get('/game/:id/playerHands', GamesController.getPlayerHands);
 app.post('/game/:id/updateSettings', GamesController.updateSettings);
 app.post('/game/:id/join', GamesController.join);
 app.post('/game/:id/action', GamesController.handleAction);
+app.get('/game/:id/actionsLog', GamesController.getActionsLog);
 app.post('/game/:id/leave', GamesController.leave);
 app.post('/game/:id/orderCards', GamesController.orderCards);
 app.get('/game/:id', GamesController.getState);

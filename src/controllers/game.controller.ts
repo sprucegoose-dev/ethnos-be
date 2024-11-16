@@ -32,6 +32,12 @@ class GamesController {
         res.send(game);
     }
 
+    async getActionsLog(req: AuthRequest, res: Response): Promise<void> {
+        const gameId = req.params.id;
+        const actionsLog = await GameService.getActionsLog(parseInt(gameId, 10));
+        res.send(actionsLog);
+    }
+
     async handleAction(req: IActionRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;

@@ -38,6 +38,8 @@ import {
     ERROR_NOT_FOUND,
 } from '@helpers/exception-handler';
 import BotService from '../bot/bot.service';
+import { IActionLogPayload } from '../actionLog/action-log.types';
+import ActionLogService from '../actionLog/action-log.service';
 
 export default class GameService {
 
@@ -368,6 +370,10 @@ export default class GameService {
                 }
             ]
         });
+    }
+
+    static async getActionsLog(gameId: number): Promise<IActionLogPayload[]> {
+        return await ActionLogService.getActionLogs(gameId);
     }
 
     static async getCardsInHand(userId: number, gameId: number): Promise<Card[]> {

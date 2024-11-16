@@ -10,7 +10,7 @@ import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import GameService from '../game/game.service';
 import Card from '../../models/card.model';
-import ActionLogService from '../actionLog/actionLog';
+import ActionLogService from '../actionLog/action-log.service';
 import { ActionType } from '../../interfaces/action.interface';
 import { Op } from 'sequelize';
 
