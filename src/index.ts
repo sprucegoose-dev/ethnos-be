@@ -8,7 +8,6 @@ import TribesController from './controllers/tribe.controller';
 import AuthMiddleware from './middleware/auth.middleware';
 import {
     EVENT_JOIN_GAME,
-    EVENT_JOIN_GAME_PRIVATE,
     EVENT_LEAVE_GAME,
 } from './interfaces/event.interface';
 import '../database/connection';
@@ -76,10 +75,6 @@ if (process.env.NODE_ENV === 'production') {
 io.on('connection', (socket: Socket) => {
     socket.on(EVENT_JOIN_GAME, (gameId: number) => {
         socket.join(`game-${gameId}`);
-    });
-
-    socket.on(EVENT_JOIN_GAME_PRIVATE, (gameId: number, userId: number) => {
-        socket.join(`game-${gameId}-${userId}`);
     });
 
     socket.on(EVENT_LEAVE_GAME, (gameId: number) => {

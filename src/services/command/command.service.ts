@@ -28,6 +28,7 @@ import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
+import TribeHandler from './tribe.handler';
 
 export default class CommandService {
 
@@ -85,6 +86,9 @@ export default class CommandService {
                     break;
                 case ActionType.ADD_FREE_TOKEN:
                     await TokenHandler.addFreeTokenToRegion(game, activePlayer, payload);
+                    break;
+                case ActionType.KEEP_CARDS:
+                    await TribeHandler.handleElfKeepCards(activePlayer, payload, nextAction);
                     break;
             }
 

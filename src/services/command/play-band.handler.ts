@@ -100,13 +100,22 @@ export default class PlayBandHandler {
         band,
     }: IRemainingCardsOptions) {
         if (band.tribe === ELVES) {
-            const cardIdsToKeep = (playBandAction.cardIdsToKeep || []).length ?
-                playBandAction.cardIdsToKeep :
-                remainingCards.filter(card => !playBandAction.cardIds.includes(card.id))
-                    .slice(0, band.bandSize)
-                    .map(card => card.id);
 
-            remainingCards = this.filterOutCardsToKeep(remainingCards, cardIdsToKeep, band.bandSize);
+            if (band.bandSize >= remainingCards.length) {
+                remainingCards = [];
+            } else {
+                remainingCards = remainingCards.filter(card =>
+                    !playBandAction.cardIds.includes(card.id));
+
+                await NextAction.create({
+                    gameId: player.gameId,
+                    playerId: player.id,
+                    state: NextActionState.PENDING,
+                    type: ActionType.KEEP_CARDS,
+                    value: band.bandSize
+                });
+                return;
+            }
         }
 
         if (band.tribe === CENTAURS && tokenAdded) {

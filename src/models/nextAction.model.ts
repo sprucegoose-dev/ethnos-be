@@ -43,4 +43,9 @@ export default class NextAction extends Model {
     })
     state: NextActionState;
 
+
+    @Column({
+        defaultValue: null
+    })
+    value: number;
 }

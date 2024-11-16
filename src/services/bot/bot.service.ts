@@ -21,6 +21,7 @@ import GameService from '@services/game/game.service';
 import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
+import BotKeepCardsHandler from './bot-keep-cards.handler';
 
 export default class BotService {
 
@@ -77,6 +78,8 @@ export default class BotService {
             const sortedPlayBandActions = this.preSortBandActions(actions, cardsInHand);
 
             if (await BotTokenHandler.handleFreeTokenAction(actions, regions, player)) return;
+
+            if (await BotKeepCardsHandler.keepCards(actions, cardsInHand, player)) return;
 
             if (await BotPickUpCardHandler.emptyHandPickUpOrDrawCard(actions, cardsInHand, cardsInMarket, player)) return;
 

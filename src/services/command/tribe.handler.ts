@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import {
     ActionType,
     IBandDetails,
+    IKeepCardsPayload,
 } from '@interfaces/action.interface';
 
 import Game from '@models/game.model';
@@ -15,6 +16,8 @@ import { Color } from '@interfaces/game.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 
 import DrawCardHandler from './draw-card.handler';
+import { CustomException, ERROR_BAD_REQUEST } from '../../helpers/exception-handler';
+import Card from '../../models/card.model';
 
 const {
     GIANTS,
@@ -155,6 +158,44 @@ export default class TribeHandler {
             .sort((cardA, cardB) => cardA.index - cardB.index);
         const maxDrawSize = Math.min(bandSize, cardsInDeck.length);
         await DrawCardHandler.handleDrawCard(game, player, maxDrawSize);
+    }
+
+    static async handleElfKeepCards(player: Player, action: IKeepCardsPayload, nextAction: NextAction) {
+        if (!Array.isArray(action.cardIds)) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'cardIds must be an array');
+        }
+
+        if (action.cardIds.length !== nextAction.value) {
+            throw new CustomException(ERROR_BAD_REQUEST, `You must choose exactly ${nextAction.value} cards to keep`);
+        }
+
+        const cardInHandIds = player.cards.filter(card =>
+            card.state === CardState.IN_HAND
+        ).map(card => card.id);
+
+        if (!action.cardIds.every(cardId => cardInHandIds.includes(cardId))) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid card IDs supplied');
+        }
+
+        const cardIdsToDiscard = cardInHandIds.filter(cardId => !action.cardIds.includes(cardId));
+
+        await Card.update({
+            state: CardState.IN_MARKET
+        }, {
+            where: {
+                id: {
+                    [Op.in]: cardIdsToDiscard
+                }
+            }
+        });
+
+        await NextAction.update({
+            state: NextActionState.RESOLVED
+        }, {
+            where: {
+                id: nextAction.id
+            }
+        });
     }
 }
 

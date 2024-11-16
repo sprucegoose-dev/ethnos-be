@@ -10,10 +10,8 @@ export enum ActionType {
     ADD_FREE_TOKEN = 'add_free_token'
 }
 
-export interface IActionPayloadBase {
-    cardIds?: number[];
-    type: ActionType.DRAW_CARD |
-        ActionType.KEEP_CARDS;
+export interface IDrawCardPayload {
+    type: ActionType.DRAW_CARD;
 }
 
 export interface IPickUpCardPayload {
@@ -27,26 +25,34 @@ export interface IAddFreeTokenPayload {
     type: ActionType.ADD_FREE_TOKEN;
 }
 
+export interface IKeepCardsPayload {
+    nextActionId: number;
+    cardIds: number[];
+    type: ActionType.KEEP_CARDS;
+    value?: number;
+}
+
 export interface IPlayBandPayload {
     nextActionId?: number;
     cardIds?: number[];
-    cardIdsToKeep?: number[];
     leaderId: number;
     regionColor?: Color;
     type: ActionType.PLAY_BAND;
 }
 
-export type IActionPayload = IActionPayloadBase |
+export type IActionPayload =
+    IDrawCardPayload |
     IPlayBandPayload |
     IPickUpCardPayload |
-    IAddFreeTokenPayload;
+    IAddFreeTokenPayload |
+    IKeepCardsPayload;
 
 export interface INextActionPayload {
     type: ActionType;
 }
 
 export interface IActionRequest extends AuthRequest {
-    body: IActionPayloadBase;
+    body: IActionPayload;
 }
 
 export interface IBandDetails {

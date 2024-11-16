@@ -11,6 +11,7 @@ import { gameSocket } from '../..';
 
 import EventService from './event.service';
 import { createGame } from '../test-helpers';
+import PayloadCompressor from '../helpers/PayloadCompressor';
 
 jest.mock('../..', () => ({
     gameSocket: {
@@ -47,7 +48,7 @@ describe('EventService.emitEvent', () => {
         EventService.emitEvent(mockEvent);
 
         expect(gameSocket.to).toHaveBeenCalledWith('game-' + mockEvent.payload.id);
-        expect(gameSocket.to().emit).toHaveBeenCalledWith(EVENT_GAME_UPDATE, mockEvent.payload);
+        expect(gameSocket.emit).toHaveBeenCalledWith(EVENT_GAME_UPDATE, PayloadCompressor.gzip(mockEvent.payload));
     });
 
     it('should emit an active games update event globally', () => {

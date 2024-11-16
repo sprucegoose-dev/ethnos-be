@@ -925,7 +925,7 @@ describe('PlayBandHandler', () => {
                 throw new Error(UNEXPECTED_ERROR_MSG);
             } catch (error: any) {
                 expect(error.type).toBe(ERROR_BAD_REQUEST);
-                expect(error.message).toBe('Invalid band');
+                expect(error.message).toBe('The leader must be included in the band');
             }
         });
 

@@ -81,6 +81,15 @@ export default class ActionService {
             }];
         }
 
+        if (nextAction?.type === ActionType.KEEP_CARDS) {
+            actions = [{
+                type: ActionType.KEEP_CARDS,
+                nextActionId: nextAction.id,
+                cardIds: cardsInHand.map(card => card.id),
+                value: nextAction.value
+            }];
+        }
+
         return actions;
     }
 

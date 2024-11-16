@@ -47,6 +47,11 @@ module.exports = {
                 ],
                 defaultValue: 'pending',
             },
+            value: {
+                type: Sequelize.INTEGER,
+                defaultValue: null,
+                allowNull: true,
+            },
         };
 
         return queryInterface.createTable('next_actions', schema);
