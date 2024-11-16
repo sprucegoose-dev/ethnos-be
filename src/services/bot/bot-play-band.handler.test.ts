@@ -24,6 +24,8 @@ import BotPlayBandHandler from './bot-play-band.handler';
 import BotService from './bot.service';
 import PlayerService from '../player/player.service';
 import Card from '../../models/card.model';
+import { PlayerColor } from '../../interfaces/player.interface';
+import PlayBandHandler from '../command/play-band.handler';
 
 describe('BotPlayBandHandler', () => {
 
@@ -79,7 +81,7 @@ describe('BotPlayBandHandler', () => {
         it('should return return the combined value of the points in a region', () => {
             const region = gameState.regions[0];
             region.values = [2, 4, 8];
-            const totalRegionValue = BotPlayBandHandler.getTotalRegionValue(region)
+            const totalRegionValue = BotPlayBandHandler.getTotalRegionValue(region, gameState.age, PlayerColor.BLACK);
             expect(totalRegionValue).toBe(14);
         });
     });
@@ -304,10 +306,14 @@ describe('BotPlayBandHandler', () => {
 
         afterEach(async () => await Game.truncate());
 
-        it('should play a band if its value is 10 points or more', async () => {
+        it.each([
+            [10, 40, 5],
+            [6, 12, 4],
+            [3, 6, 3],
+        ])("should play a band worth %s points or more if there are %s cards left in the deck", async (expectedPoints, cardsLeftInDeck, targetBandSize) => {
             await returnPlayerCardsToDeck(playerA.id);
 
-            const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 5);
+            const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, targetBandSize);
             const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE &&
                 card.tribe.name !== TribeName.DRAGON
             ).slice(0, 3);
@@ -321,17 +327,122 @@ describe('BotPlayBandHandler', () => {
             const actions = (await ActionService.getActions(gameState.id, playerA.userId))
                 .filter(action => action.type === ActionType.PLAY_BAND);
 
-            const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, playerA);
+            const cardsInDeck = (await Card.findAll({
+                where: {
+                    gameId: gameState.id,
+                    state: CardState.IN_DECK
+                }
+            })).slice(0, cardsLeftInDeck);
+
+            const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, cardsInDeck, playerA);
 
             const updatedGame = await GameService.getState(gameState.id);
+            const playerWithCards = await PlayerService.getPlayerWithCards(playerA.id);
 
-            const updatedRegion = updatedGame.regions.find(region => region.color === Color.ORANGE);
+            const playedBand = playerWithCards.cards.filter(card => card.state === CardState.IN_BAND);
+
+            const leader = playedBand.find(card => card.id === playedBand[0].leaderId);
+
+            const bandDetails = PlayBandHandler.getBandDetails(leader, playedBand.map(card => card.id));
+
+            const updatedRegion = updatedGame.regions.find(region => region.color === leader.color);
 
             const playerTokensInRegion = updatedRegion.playerTokens.find(tokenData => tokenData.playerId === playerA.id);
 
             expect(result).toBe(true);
+            expect(bandDetails.points).toBeGreaterThanOrEqual(expectedPoints);
             expect(playerTokensInRegion.tokens).toBe(1);
         });
+
+        // it('should play a band if its value is 6 points or more if there are 12 or fewer cards in the deck', async () => {
+        //     await returnPlayerCardsToDeck(playerA.id);
+
+        //     const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 4);
+        //     const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE &&
+        //         card.tribe.name !== TribeName.DRAGON
+        //     ).slice(0, 3);
+
+        //     const cardsInHand = [...bandCards, ...otherCards];
+
+        //     const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+        //     await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+        //     const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+        //         .filter(action => action.type === ActionType.PLAY_BAND);
+
+        //     const cardsInDeck = (await Card.findAll({
+        //         where: {
+        //             gameId: gameState.id,
+        //             state: CardState.IN_DECK
+        //         }
+        //     })).slice(0, 12);
+
+        //     const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, cardsInDeck, playerA);
+
+        //     const updatedGame = await GameService.getState(gameState.id);
+
+        //     const playerWithCards = await PlayerService.getPlayerWithCards(playerA.id);
+
+        //     const playedBand = playerWithCards.cards.filter(card => card.state === CardState.IN_BAND);
+
+        //     const leader = playedBand.find(card => card.id === playedBand[0].leaderId);
+
+        //     const bandDetails = PlayBandHandler.getBandDetails(leader, playedBand.map(card => card.id));
+
+        //     const updatedRegion = updatedGame.regions.find(region => region.color === leader.color);
+
+        //     const playerTokensInRegion = updatedRegion.playerTokens.find(tokenData => tokenData.playerId === playerA.id);
+
+        //     expect(result).toBe(true);
+        //     expect(bandDetails.points).toBeGreaterThanOrEqual(6);
+        //     expect(playerTokensInRegion.tokens).toBe(1);
+        // });
+
+        // it('should play a band if its value is 3 points or more if there are 6 or fewer cards in the deck', async () => {
+        //     await returnPlayerCardsToDeck(playerA.id);
+
+        //     const bandCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 3);
+        //     const otherCards = gameState.cards.filter(card => card.color !== Color.ORANGE &&
+        //         card.tribe.name !== TribeName.DRAGON
+        //     ).slice(0, 3);
+
+        //     const cardsInHand = [...bandCards, ...otherCards];
+
+        //     const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+        //     await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+        //     const actions = (await ActionService.getActions(gameState.id, playerA.userId))
+        //         .filter(action => action.type === ActionType.PLAY_BAND);
+
+        //     const cardsInDeck = (await Card.findAll({
+        //         where: {
+        //             gameId: gameState.id,
+        //             state: CardState.IN_DECK
+        //         }
+        //     })).slice(0, 6);
+
+        //     const result = await BotPlayBandHandler.playHighValueBandAction(actions, cardsInHand, cardsInDeck, playerA);
+
+        //     const updatedGame = await GameService.getState(gameState.id);
+
+        //     const playerWithCards = await PlayerService.getPlayerWithCards(playerA.id);
+
+        //     const playedBand = playerWithCards.cards.filter(card => card.state === CardState.IN_BAND);
+
+        //     const leader = playedBand.find(card => card.id === playedBand[0].leaderId);
+
+        //     const bandDetails = PlayBandHandler.getBandDetails(leader, playedBand.map(card => card.id));
+
+        //     const updatedRegion = updatedGame.regions.find(region => region.color === leader.color);
+
+        //     const playerTokensInRegion = updatedRegion.playerTokens.find(tokenData => tokenData.playerId === playerA.id);
+
+        //     expect(result).toBe(true);
+        //     expect(bandDetails.points).toBeGreaterThanOrEqual(3);
+        //     expect(playerTokensInRegion.tokens).toBe(1);
+        // });
 
         it("should return 'false' if the player does not have a band worth 10 or more points in their hand", async () => {
             await returnPlayerCardsToDeck(playerA.id);
@@ -401,7 +512,7 @@ describe('BotPlayBandHandler', () => {
 
             const sortedPlayBandActions = BotService.preSortBandActions(actions, cardsInHand);
 
-            const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, gameState.regions, playerA);
+            const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, gameState.regions, playerA, gameState.age);
 
             const updatedGame = await GameService.getState(gameState.id);
 
@@ -440,7 +551,7 @@ describe('BotPlayBandHandler', () => {
 
             const sortedPlayBandActions = BotService.preSortBandActions(actions, cardsInHand);
 
-            const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, updatedGame.regions, playerA);
+            const result = await BotPlayBandHandler.playBestBandAction(sortedPlayBandActions, cardsInHand, updatedGame.regions, playerA, gameState.age);
 
             expect(result).toBe(false);
         });
@@ -470,9 +581,18 @@ describe('BotPlayBandHandler', () => {
         it("should play the largest in a player's hand", async () => {
             await returnPlayerCardsToDeck(playerA.id);
 
-            const orangeCards = gameState.cards.filter(card => card.color === Color.ORANGE).slice(0, 4);
-            const blueCard = gameState.cards.find(card => card.color === Color.BLUE);
-            const grayCard = gameState.cards.find(card => card.color === Color.GRAY);
+            const orangeCards = gameState.cards.filter(card =>
+                card.color === Color.ORANGE &&
+                ![TribeName.ELVES,  TribeName.MINOTAURS].includes(card.tribe.name)
+            ).slice(0, 4);
+            const blueCard = gameState.cards.find(card =>
+                card.color === Color.BLUE &&
+                card.tribe.name === TribeName.ELVES
+            );
+            const grayCard = gameState.cards.find(card =>
+                card.color === Color.GRAY &&
+                card.tribe.name === TribeName.MINOTAURS
+            );
 
             const cardsInHand = [...orangeCards, blueCard, grayCard];
 

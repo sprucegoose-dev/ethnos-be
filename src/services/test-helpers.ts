@@ -4,7 +4,7 @@ import Card from '@models/card.model';
 
 import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
-import { IGameSettings } from '@interfaces/game.interface';
+import { IGameSettings, IGameState } from '@interfaces/game.interface';
 
 import GameService from '@services/game/game.service';
 import PlayerService from '@services/player/player.service';
@@ -14,6 +14,7 @@ import {
     userC,
     userD,
 } from '@jest.setup';
+import Player from '../models/player.model';
 
 const defaultSettings = {
     tribes: [
@@ -26,7 +27,16 @@ const defaultSettings = {
     ]
 };
 
-export async function createGame(settings: IGameSettings = defaultSettings) {
+export interface ICreateGameResult {
+    gameId: number;
+    gameState: IGameState;
+    playerA: Player;
+    playerB: Player;
+    playerC: Player;
+    playerD: Player;
+}
+
+export async function createGame(settings: IGameSettings = defaultSettings): Promise<ICreateGameResult> {
     const game = await GameService.create(userA.id, false);
     const playerA = await PlayerService.create(userA.id, game.id);
     const playerB = await PlayerService.create(userB.id, game.id);

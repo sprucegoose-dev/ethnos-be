@@ -11,6 +11,7 @@ import PlayerService from '@services/player/player.service';
 import {
     assignCardsToPlayer,
     createGame,
+    ICreateGameResult,
     returnPlayerCardsToDeck,
 } from '../test-helpers';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
@@ -338,11 +339,12 @@ describe('BotPickUpCardHandler', () => {
     describe('pickUpOrDrawCard', () => {
         let gameState: IGameState;
         let playerA: Player;
+        let result: ICreateGameResult;
 
         beforeEach(async () => {
-            const result = await createGame({
+            result = await createGame({
                 tribes: [
-                    TribeName.SKELETONS,
+                    TribeName.WINGFOLK,
                     TribeName.DWARVES,
                     TribeName.MINOTAURS,
                     TribeName.MERFOLK,
@@ -565,13 +567,13 @@ describe('BotPickUpCardHandler', () => {
                 [TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name)
             ).slice(0, 4);
 
-            const blueCards = updatedGame.cards.filter(card =>
+            const blueCard = updatedGame.cards.find(card =>
                 card.state === CardState.IN_DECK &&
                 card.color === Color.BLUE &&
                 ![TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name),
-            ).slice(0, 1);
+            );
 
-            const cardsInHand = [...orangeCards, ...blueCards];
+            const cardsInHand = [...orangeCards, blueCard];
 
             const cardIdsToAssign = cardsInHand.map(card => card.id);
 
@@ -615,6 +617,103 @@ describe('BotPickUpCardHandler', () => {
             expect(updatedPlayerCards.length).toBe(6);
             expect(updatedCardsInDeck.length).toBe(cardsInDeck.length - 1);
             expect(result).toBe(true);
+        });
+
+        it("should pick up a Skeleton from the market if the market doesn't have cards matching the player's most frequent card color or tribe", async () => {
+            await Game.truncate();
+
+            result = await createGame({
+                tribes: [
+                    TribeName.SKELETONS,
+                    TribeName.DWARVES,
+                    TribeName.MINOTAURS,
+                    TribeName.MERFOLK,
+                    TribeName.CENTAURS,
+                    TribeName.ELVES,
+                ]
+            });
+            playerA = result.playerA;
+            gameState = result.gameState;
+
+            await Game.update({
+                activePlayerId: playerA.id,
+            }, {
+                where: {
+                    id: gameState.id,
+                }
+            });
+
+            await Card.update({
+                state: CardState.IN_DECK,
+                playerId: null,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    state: {
+                        [Op.in]: [CardState.IN_MARKET,  CardState.IN_HAND]
+                    }
+                }
+            });
+
+            let updatedGame = await GameService.getState(gameState.id);
+
+            let orangeCards = updatedGame.cards.filter(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.ORANGE &&
+                [TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name)
+            ).slice(0, 4);
+
+            const blueCard = updatedGame.cards.find(card =>
+                card.state === CardState.IN_DECK &&
+                card.color === Color.BLUE &&
+                ![TribeName.DWARVES, TribeName.MERFOLK].includes(card.tribe.name),
+            );
+
+            const cardsInHand = [...orangeCards, blueCard];
+
+            const cardIdsToAssign = cardsInHand.map(card => card.id);
+
+            await assignCardsToPlayer(playerA.id, cardIdsToAssign);
+
+            const nonMatchingCards = updatedGame.cards.filter(card =>
+                card.tribe.name === TribeName.SKELETONS &&
+                !cardIdsToAssign.includes(card.id)
+            ).slice(0, 3);
+
+            await Card.update({
+                state: CardState.IN_MARKET,
+            }, {
+                where: {
+                    gameId: gameState.id,
+                    id: {
+                        [Op.in]: nonMatchingCards.map(card => card.id),
+                    },
+                    state: CardState.IN_DECK,
+                }
+            });
+
+            updatedGame = await GameService.getState(gameState.id);
+
+            const cardsInMarket = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+            const cardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+
+            const actions = await ActionService.getActions(gameState.id, playerA.userId);
+
+            const actionResult = await BotPickUpCardHandler.pickUpOrDrawCard(actions, cardsInHand, cardsInMarket, playerA);
+
+            updatedGame = await GameService.getState(gameState.id);
+
+            const updatedCardsInDeck = updatedGame.cards.filter(card => card.state === CardState.IN_DECK);
+            const updatedMarketCards = updatedGame.cards.filter(card => card.state === CardState.IN_MARKET);
+
+            const updatedPlayer = await PlayerService.getPlayerWithCards(playerA.id);
+
+            const updatedPlayerCards = updatedPlayer.cards.filter(card => card.state === CardState.IN_HAND);
+
+            expect(updatedPlayerCards.length).toBe(6);
+            expect(updatedMarketCards.length).toBe(cardsInMarket.length - 1);
+            expect(updatedCardsInDeck.length).toBe(cardsInDeck.length);
+            expect(actionResult).toBe(true);
         });
 
         it("should return 'false' if a player already has 10 cards in their hand", async () => {
