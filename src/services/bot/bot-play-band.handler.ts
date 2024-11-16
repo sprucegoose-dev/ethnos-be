@@ -36,6 +36,10 @@ export default class BotPlayBandHandler {
     }
 
     static canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
+        if (bandDetails.tribe === TribeName.HALFLINGS) {
+            return false;
+        }
+
         return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);
     }
 
