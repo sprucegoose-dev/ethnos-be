@@ -50,6 +50,7 @@ export default class DrawCardHandler {
         let drawnCards = 0;
 
         do {
+
             if (nextCard.tribe.name === DRAGON) {
                 revealedDragons.push(nextCard);
                 dragonsRemaining--;
@@ -60,7 +61,7 @@ export default class DrawCardHandler {
 
             nextCardIndex++;
             nextCard = cardsInDeck[nextCardIndex];
-        } while (nextCard && dragonsRemaining > 1 && (nextCard.tribe.name === DRAGON || drawnCards < quantity))
+        } while (nextCard && drawnCards < quantity)
 
         if (revealedDragons.length) {
             await Card.update({

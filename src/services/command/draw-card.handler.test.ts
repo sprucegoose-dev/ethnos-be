@@ -79,7 +79,7 @@ describe('DrawCardHandler', () => {
             expect(updatedCardInDeckCount).toBe(cardsInDeckCount - 1);
         });
 
-        it("should skip a dragon card and instead draw the next card", async () => {
+        it('should skip a dragon card and instead draw the next card', async () => {
             let player = await PlayerService.getPlayerWithCards(playerA.id);
 
             let updatedGame = await GameService.getState(gameId);
