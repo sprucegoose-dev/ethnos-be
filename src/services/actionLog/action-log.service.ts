@@ -9,28 +9,31 @@ import Region from '@models/region.model';
 import { CustomException, ERROR_SERVER } from '@helpers/exception-handler';
 
 import { IActionLogParams, IActionLogPayload, LogType } from './action-log.types';
+import Card from '../../models/card.model';
+import Tribe from '../../models/tribe.model';
 
 export default class ActionLogService {
 
     static async log({
        payload,
+       type,
        playerId,
        gameId,
        regionId
     }: IActionLogParams): Promise<void> {
         const actionLogType = await ActionLogType.findOne({
             where: {
-                type: payload.type,
+                type: type || payload?.type
             }
         });
-
 
         await ActionLog.create({
             actionLogTypeId: actionLogType.id,
             gameId,
             playerId,
-            leaderId: payload.type === ActionType.PLAY_BAND ? payload.leaderId : null,
+            leaderId: payload?.type === ActionType.PLAY_BAND ? payload.leaderId : null,
             regionId,
+            cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
         });
     }
 
@@ -40,6 +43,9 @@ export default class ActionLogService {
         let actionLabel = `${username} `;
 
         switch (actionType) {
+            case LogType.ADD_TOKEN:
+                actionLabel += `adds a token to the ${actionLog.region.color} region`;
+                break;
             case LogType.ADD_FREE_TOKEN:
                 actionLabel += `adds a free token to the ${actionLog.region.color} region`;
                 break;
@@ -62,7 +68,7 @@ export default class ActionLogService {
         return {
             id: actionLog.id,
             label: actionLabel,
-            cardId: actionLog.cardId,
+            card: actionLog.card,
             leaderId: actionLog.leaderId,
             playerColor: actionLog.player.color,
         };
@@ -92,6 +98,7 @@ export default class ActionLogService {
                     ],
                     attributes: [
                         'id',
+                        'color',
                         'gameId',
                         'userId',
                     ]
@@ -99,6 +106,15 @@ export default class ActionLogService {
                 {
                     model: Region,
                     as: 'region',
+                },
+                {
+                    model: Card,
+                    include: [
+                        {
+                            model: Tribe
+                        }
+                    ],
+                    attributes: ['color']
                 },
                 {
                     model: ActionLogType,

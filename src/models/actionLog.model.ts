@@ -76,6 +76,9 @@ export default class ActionLog extends Model {
     })
     leaderId: number;
 
+    @BelongsTo(() => Card, 'cardId')
+    card: Card;
+
     @BelongsTo(() => Region, 'regionId')
     region: Region;
 

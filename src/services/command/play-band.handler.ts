@@ -28,6 +28,8 @@ import ScoringService from '@services/scoring/scoring.service';
 
 import TribeService from './tribe.handler';
 import NextActionHandler from './next-action.handler';
+import ActionLogService from '../actionLog/action-log.service';
+import { LogType } from '../actionLog/action-log.types';
 
 const {
     CENTAURS,
@@ -72,6 +74,15 @@ export default class PlayBandHandler {
                     type: ActionType.PLAY_BAND
                 });
             }
+        }
+
+        if (tokenAdded) {
+            await ActionLogService.log({
+                playerId: player.id,
+                gameId: game.id,
+                regionId: region.id,
+                type: LogType.ADD_TOKEN,
+            });
         }
 
         return tokenAdded;

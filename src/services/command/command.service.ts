@@ -69,7 +69,7 @@ export default class CommandService {
                 payload,
                 gameId,
                 playerId: activePlayer.id,
-                regionId: game.regions.find(region => region.color === regionColor)?.id
+                regionId: game.regions.find(region => region.color === regionColor)?.id,
             });
 
             let nextActions = [];

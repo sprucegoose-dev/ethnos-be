@@ -1,8 +1,10 @@
 import { PlayerColor } from '@interfaces/player.interface';
 import { IActionPayload } from '@interfaces/action.interface';
 
+import Card from '@models/card.model';
+
 export interface IActionLogPayload {
-    cardId: number;
+    card: Card;
     id: number,
     label: string,
     leaderId: number,
@@ -11,13 +13,15 @@ export interface IActionLogPayload {
 
 export interface IActionLogParams {
     gameId: number;
-    payload: IActionPayload;
+    payload?: IActionPayload;
+    type?: LogType;
     playerId: number;
     regionId?: number;
     snapshotId?: number
 }
 
 export enum LogType {
+    ADD_TOKEN = 'add_token',
     ADD_FREE_TOKEN = 'add_free_token',
     ADD_ORC_TOKEN = 'add_orc_token',
     ADVANCE_ON_MERFOLK_BOARD = 'advance_on_merfolk_board',
