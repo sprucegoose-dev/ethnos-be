@@ -19,6 +19,7 @@ export interface IRemainingCardsOptions {
 }
 
 export interface IScoringResults {
+    winnerId: number;
     totalPoints: {[playerId: number]: number};
     trollTokenTotals: {[playerId: number]: number};
 }

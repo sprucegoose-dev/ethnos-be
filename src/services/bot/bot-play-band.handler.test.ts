@@ -308,7 +308,7 @@ describe('BotPlayBandHandler', () => {
 
         it.each([
             [10, 40, 5],
-            [6, 12, 4],
+            [6, 10, 4],
             [3, 6, 3],
         ])("should play a band worth %s points or more if there are %s cards left in the deck", async (expectedPoints, cardsLeftInDeck, targetBandSize) => {
             await returnPlayerCardsToDeck(playerA.id);

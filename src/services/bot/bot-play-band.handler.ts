@@ -75,7 +75,7 @@ export default class BotPlayBandHandler {
 
         if (cardsInDeck.length <= 6) {
             pointsThreshold = 3;
-        } else if (cardsInDeck.length <= 12) {
+        } else if (cardsInDeck.length <= 10) {
             pointsThreshold = 6;
         }
 

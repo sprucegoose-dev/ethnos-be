@@ -12,6 +12,115 @@ import { TribeName } from '@interfaces/tribe.interface';
 
 export default class ScoringService {
 
+    static getControlMarkerTotals(players: Player[], regions: Region[]): {[playerId: number]: number} {
+        const controlMarkerTotals: {[playerId: number]: number} = {};
+
+        for (const player of players) {
+            let totalTokens = 0;
+
+            for (const region of regions) {
+                const playerTokens = region.playerTokens.find(tokenData => tokenData.playerId === player.id);
+                totalTokens += playerTokens?.tokens || 0;
+            }
+
+            controlMarkerTotals[player.id] = totalTokens;
+        }
+
+        return controlMarkerTotals;
+    }
+
+    static getWinnerByBandTiebreak(tiedPlayers: Player[]): number {
+        let playerBands: { [playerId: number]: number[] } = {};
+
+        for (const player of tiedPlayers) {
+            const bands = player.cards
+                .filter(card => card.state === CardState.IN_BAND)
+                .reduce((groups, card) => {
+                    if (!groups[card.leaderId]) groups[card.leaderId] = [];
+                    groups[card.leaderId].push(card);
+                    return groups;
+                }, {} as { [leaderId: number]: any[] });
+
+            const sortedBandSizes = Object.values(bands)
+                .map(band => band.length)
+                .sort((a, b) => b - a);
+
+            playerBands[player.id] = sortedBandSizes;
+        }
+
+        let winnerId: number = null;
+
+        while (tiedPlayers.some(player => playerBands[player.id].length > 0)) {
+            let largestBandSize = 0;
+            let tiedPlayerIds: number[] = [];
+
+            for (const [playerId, bandSizes] of Object.entries(playerBands)) {
+                const currentBandSize = bandSizes.shift() ?? 0;
+
+                if (currentBandSize > largestBandSize) {
+                    largestBandSize = currentBandSize;
+                    winnerId = Number(playerId);
+                    tiedPlayerIds = [];
+                } else if (currentBandSize === largestBandSize) {
+                    tiedPlayerIds.push(Number(playerId));
+                }
+            }
+
+            if (!tiedPlayerIds.length) {
+                return winnerId;
+            }
+
+            if (tiedPlayerIds.every(id => playerBands[id].length === 0)) {
+                return winnerId;
+            }
+        }
+    }
+
+    static calculateWinner(players: Player[], totalPoints: {[playerId: number]: number}, regions: Region[]): number {
+        let highestScore = 0;
+        let winnerId: number = null;
+        let tiedPlayerIds: number[] = [];
+        let tiedPlayers: Player[] = [];
+        let mostControlMarkers = 0;
+
+        for (const [playerId, points] of Object.entries(totalPoints)) {
+            if (points > highestScore) {
+                highestScore = points;
+                winnerId = Number(playerId);
+            } else if (points == highestScore) {
+                tiedPlayerIds.push(Number(playerId));
+            }
+        }
+
+        if (!tiedPlayerIds.length) {
+            return winnerId;
+        }
+
+        tiedPlayers = players.filter(player => [winnerId, ...tiedPlayerIds].includes(player.id));
+
+        tiedPlayerIds = [];
+
+        const controlMarkerTotals = this.getControlMarkerTotals(tiedPlayers, regions);
+
+        for (const [playerId, markers] of Object.entries(controlMarkerTotals)) {
+
+            if (markers > mostControlMarkers) {
+                mostControlMarkers = markers;
+                winnerId = Number(playerId);
+            } else if (markers == mostControlMarkers) {
+                tiedPlayerIds.push(Number(playerId));
+            }
+        }
+
+        if (!tiedPlayerIds.length) {
+            return winnerId;
+        }
+
+        tiedPlayers = players.filter(player => [winnerId, ...tiedPlayerIds].includes(player.id));
+
+        return ScoringService.getWinnerByBandTiebreak(tiedPlayers);
+    }
+
     static getTrollTokenTotals(players: Player[]) {
         const trollTokenTotals: { [playerId: number]: number } = {};
 
@@ -44,6 +153,7 @@ export default class ScoringService {
         const finalAge = players.length >= 4 ? 3 : 2;
         const trollTokenTotals = this.getTrollTokenTotals(players);
         const totalPoints: { [playerId: number]: number } = {};
+        let winnerId;
 
         for (const player of game.players) {
             totalPoints[player.id] = player.points;
@@ -84,7 +194,12 @@ export default class ScoringService {
             });
         }
 
+        if (finalAge) {
+            winnerId = this.calculateWinner(players, totalPoints, game.regions);
+        }
+
         return {
+            winnerId,
             totalPoints,
             trollTokenTotals,
         }

@@ -750,7 +750,6 @@ export default class GameService {
             case GameState.ENDED:
                 throw new CustomException(ERROR_BAD_REQUEST, 'You cannot leave a game that has ended');
             default:
-                game.winnerId = game.players.find(p => p.userId !== userId).userId;
                 game.state = GameState.ENDED;
                 await game.save();
         }
@@ -992,15 +991,18 @@ export default class GameService {
     };
 
     static async endFinalAge(game: Game) {
+        const { winnerId: winningPlayerId } = await ScoringService.handleScoring(game);
+
+        const winnerId = game.players.find(player => player.id === winningPlayerId)?.user.id;
+
         await Game.update({
-            state: GameState.ENDED
+            state: GameState.ENDED,
+            winnerId
         }, {
             where: {
                 id: game.id,
             }
         });
-
-        await ScoringService.handleScoring(game);
 
         const updatedGameState = await this.getStateResponse(game.id);
 
