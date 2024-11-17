@@ -21,6 +21,13 @@ export const COMPRESSED_KEY_MERFOLK_TRACK_SCORE = 'mt';
 export const COMPRESSED_KEY_TROLL_TOKENS = 'tt';
 export const COMPRESSED_KEY_ORC_TOKENS = 'ot';
 
+export const COMPRESSED_KEY_BLUE = 'b';
+export const COMPRESSED_KEY_GRAY = 'gy';
+export const COMPRESSED_KEY_GREEN = 'gn';
+export const COMPRESSED_KEY_ORANGE = 'o';
+export const COMPRESSED_KEY_PURPLE= 'p';
+export const COMPRESSED_KEY_RED = 'r';
+
 export const COMPRESSED_CARD_STATE_KEYS = {
     [CardState.IN_BAND]: COMPRESSED_KEY_IN_BAND,
     [CardState.IN_DECK]: COMPRESSED_KEY_IN_DECK,
@@ -29,13 +36,23 @@ export const COMPRESSED_CARD_STATE_KEYS = {
     [CardState.REVEALED]: COMPRESSED_KEY_REVEALED,
 }
 
-export const DECOMPRESSED_CARD_STATE_KEYS = {
-    [COMPRESSED_KEY_IN_BAND]: CardState.IN_HAND,
-    [COMPRESSED_KEY_IN_DECK]: CardState.IN_DECK,
-    [COMPRESSED_KEY_IN_HAND]: CardState.IN_HAND,
-    [COMPRESSED_KEY_IN_MARKET]: CardState.IN_MARKET,
-    [COMPRESSED_KEY_REVEALED]: CardState.REVEALED,
+export const COMPRESSED_COLOR_KEYS = {
+    [Color.BLUE]: COMPRESSED_KEY_BLUE,
+    [Color.GRAY]: COMPRESSED_KEY_GRAY,
+    [Color.GREEN]: COMPRESSED_KEY_GREEN,
+    [Color.ORANGE]: COMPRESSED_KEY_ORANGE,
+    [Color.PURPLE]: COMPRESSED_KEY_PURPLE,
+    [Color.RED]: COMPRESSED_KEY_RED,
 }
+
+export const DECOMPRESSED_COLOR_KEYS: {[key: string]: Color} = {
+    [COMPRESSED_KEY_BLUE]: Color.BLUE,
+    [COMPRESSED_KEY_GRAY]: Color.GRAY,
+    [COMPRESSED_KEY_GREEN]: Color.GREEN,
+    [COMPRESSED_KEY_ORANGE]: Color.ORANGE,
+    [COMPRESSED_KEY_PURPLE]: Color.PURPLE,
+    [COMPRESSED_KEY_RED]: Color.RED,
+};
 
 export const SNAPSHOT_FETCH_LIMIT = 20;
 
@@ -53,6 +70,10 @@ export interface ICompressedCards {
     [COMPRESSED_KEY_REVEALED]?: ICompressedCard[];
 }
 
+export interface ICompressedColor {
+
+}
+
 export interface ICompressedGame {
     [COMPRESSED_KEY_AGE]: number;
     [COMPRESSED_KEY_ACTIVE_PLAYER_ID]: number;
@@ -64,7 +85,7 @@ export interface ICompressedPlayer {
     [COMPRESSED_KEY_GIANT_TOKEN_VALUE]: number;
     [COMPRESSED_KEY_MERFOLK_TRACK_SCORE]: number;
     [COMPRESSED_KEY_TROLL_TOKENS]: number[];
-    [COMPRESSED_KEY_ORC_TOKENS]: Color[];
+    [COMPRESSED_KEY_ORC_TOKENS]: string[];
     [COMPRESSED_KEY_CARDS]: ICompressedCards,
 }
 

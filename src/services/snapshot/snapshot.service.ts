@@ -1,6 +1,7 @@
-import { IGameState } from '@interfaces/game.interface';
+import { Color, IGameState } from '@interfaces/game.interface';
 import {
     COMPRESSED_CARD_STATE_KEYS,
+    COMPRESSED_COLOR_KEYS,
     COMPRESSED_KEY_ACTIVE_PLAYER_ID,
     COMPRESSED_KEY_AGE,
     COMPRESSED_KEY_CARDS,
@@ -18,6 +19,7 @@ import {
     COMPRESSED_KEY_PLAYER_POINTS,
     COMPRESSED_KEY_REVEALED,
     COMPRESSED_KEY_TROLL_TOKENS,
+    DECOMPRESSED_COLOR_KEYS,
     ICompressedCard,
     ICompressedCards,
     ICompressedGame,
@@ -48,23 +50,12 @@ export default class SnapshotService {
         });
     }
 
-    static compressGame(gameState: IGameState): ICompressedGame {
+    static compress(gameState: IGameState): ICompressedSnapshot  {
         return {
-            [COMPRESSED_KEY_AGE]: gameState.age,
-            [COMPRESSED_KEY_ACTIVE_PLAYER_ID]: gameState.activePlayerId,
-        };
-    }
-
-    static compressPlayer(player: Player): ICompressedPlayer {
-        return {
-            id: player.id,
-            [COMPRESSED_KEY_PLAYER_POINTS]: player.points,
-            [COMPRESSED_KEY_GIANT_TOKEN_VALUE]: player.giantTokenValue,
-            [COMPRESSED_KEY_MERFOLK_TRACK_SCORE]: player.merfolkTrackScore,
-            [COMPRESSED_KEY_TROLL_TOKENS]: player.trollTokens,
-            [COMPRESSED_KEY_ORC_TOKENS]: player.orcTokens,
-            [COMPRESSED_KEY_CARDS]: SnapshotService.compressCards(player.cards, player.id)
-        };
+            [COMPRESSED_KEY_GAME]: SnapshotService.compressGame(gameState),
+            [COMPRESSED_KEY_PLAYERS]: gameState.players.map(SnapshotService.compressPlayer),
+            [COMPRESSED_KEY_CARDS]: SnapshotService.compressCards(gameState.cards)
+        }
     }
 
     static compressCards(cards: Card[], playerId?: number): ICompressedCards {
@@ -98,6 +89,29 @@ export default class SnapshotService {
         return compressedCards;
     }
 
+    static compressColor(color: Color) {
+        return COMPRESSED_COLOR_KEYS[color];
+    }
+
+    static compressGame(gameState: IGameState): ICompressedGame {
+        return {
+            [COMPRESSED_KEY_AGE]: gameState.age,
+            [COMPRESSED_KEY_ACTIVE_PLAYER_ID]: gameState.activePlayerId,
+        };
+    }
+
+    static compressPlayer(player: Player): ICompressedPlayer {
+        return {
+            id: player.id,
+            [COMPRESSED_KEY_PLAYER_POINTS]: player.points,
+            [COMPRESSED_KEY_GIANT_TOKEN_VALUE]: player.giantTokenValue,
+            [COMPRESSED_KEY_MERFOLK_TRACK_SCORE]: player.merfolkTrackScore,
+            [COMPRESSED_KEY_TROLL_TOKENS]: player.trollTokens,
+            [COMPRESSED_KEY_ORC_TOKENS]: player.orcTokens.map(SnapshotService.compressColor),
+            [COMPRESSED_KEY_CARDS]: SnapshotService.compressCards(player.cards, player.id)
+        };
+    }
+
     static async decompress(snapshot: ICompressedSnapshot): Promise<IDecompressedSnapshot>  {
         return {
             game: SnapshotService.decompressGame(snapshot[COMPRESSED_KEY_GAME]),
@@ -105,24 +119,6 @@ export default class SnapshotService {
             cards: SnapshotService.decompressCards(snapshot[COMPRESSED_KEY_CARDS]),
         }
 
-    }
-    static decompressGame(compressedGame: ICompressedGame): IDecompressedGame  {
-        return {
-            age: compressedGame[COMPRESSED_KEY_AGE],
-            activePlayerId: compressedGame[COMPRESSED_KEY_ACTIVE_PLAYER_ID],
-        }
-    }
-
-    static decompressPlayer(compressedPlayer: ICompressedPlayer): IDecompressedPlayer  {
-        return {
-            id: compressedPlayer.id,
-            points: compressedPlayer[COMPRESSED_KEY_PLAYER_POINTS],
-            giantTokenValue: compressedPlayer[COMPRESSED_KEY_GIANT_TOKEN_VALUE],
-            merfolkTrackScore: compressedPlayer[COMPRESSED_KEY_MERFOLK_TRACK_SCORE],
-            trollTokens: compressedPlayer[COMPRESSED_KEY_TROLL_TOKENS],
-            orcTokens: compressedPlayer[COMPRESSED_KEY_ORC_TOKENS],
-            cards: SnapshotService.decompressCards(compressedPlayer[COMPRESSED_KEY_CARDS]),
-        }
     }
 
     static decompressCard(compressedCard: ICompressedCard, playerId: number, state: CardState): IDecompressedCard {
@@ -163,11 +159,27 @@ export default class SnapshotService {
         return decompressedCards;
     }
 
-    static compress(gameState: IGameState): ICompressedSnapshot  {
+    static decompressColor(compressedColor: string): Color {
+        return DECOMPRESSED_COLOR_KEYS[compressedColor];
+    }
+
+    static decompressGame(compressedGame: ICompressedGame): IDecompressedGame  {
         return {
-            [COMPRESSED_KEY_GAME]: SnapshotService.compressGame(gameState),
-            [COMPRESSED_KEY_PLAYERS]: gameState.players.map(SnapshotService.compressPlayer),
-            [COMPRESSED_KEY_CARDS]: SnapshotService.compressCards(gameState.cards)
+            age: compressedGame[COMPRESSED_KEY_AGE],
+            activePlayerId: compressedGame[COMPRESSED_KEY_ACTIVE_PLAYER_ID],
         }
     }
+
+    static decompressPlayer(compressedPlayer: ICompressedPlayer): IDecompressedPlayer  {
+        return {
+            id: compressedPlayer.id,
+            points: compressedPlayer[COMPRESSED_KEY_PLAYER_POINTS],
+            giantTokenValue: compressedPlayer[COMPRESSED_KEY_GIANT_TOKEN_VALUE],
+            merfolkTrackScore: compressedPlayer[COMPRESSED_KEY_MERFOLK_TRACK_SCORE],
+            trollTokens: compressedPlayer[COMPRESSED_KEY_TROLL_TOKENS],
+            orcTokens: compressedPlayer[COMPRESSED_KEY_ORC_TOKENS].map(SnapshotService.decompressColor),
+            cards: SnapshotService.decompressCards(compressedPlayer[COMPRESSED_KEY_CARDS]),
+        }
+    }
+
 };
