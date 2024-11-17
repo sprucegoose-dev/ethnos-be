@@ -55,6 +55,9 @@ export default class ActionLogService {
             case LogType.DRAW_CARD:
                 actionLabel += `draws a card`;
                 break;
+            case LogType.KEEP_CARDS:
+                actionLabel += `keeps cards in their hand`;
+                break;
             case LogType.PICK_UP_CARD:
                 actionLabel += `picks up a card`;
                 break;
