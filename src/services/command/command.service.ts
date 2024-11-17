@@ -29,6 +29,7 @@ import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
 import TribeHandler from './tribe.handler';
+import SnapshotService from '../snapshot/snapshot.service';
 
 export default class CommandService {
 
@@ -71,6 +72,8 @@ export default class CommandService {
                 playerId: activePlayer.id,
                 regionId: game.regions.find(region => region.color === regionColor)?.id,
             });
+
+            await SnapshotService.create(game);
 
             let nextActions = [];
 

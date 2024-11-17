@@ -11,6 +11,7 @@ import PlayerRegion from '@models/playerRegion.model';
 import NextAction from '@models/nextAction.model';
 import ActionLogType from '../src/models/actionLogType.model';
 import ActionLog from '../src/models/actionLog.model';
+import Snapshot from '../src/models/snapshot.model';
 
 interface IDatabaseEnvVars {
     NODE_ENV: string;
@@ -53,6 +54,7 @@ const options = {
         NextAction,
         ActionLogType,
         ActionLog,
+        Snapshot,
     ],
 };
 
@@ -70,6 +72,7 @@ const sequelize = NODE_ENV === 'test' ?
             NextAction,
             ActionLogType,
             ActionLog,
+            Snapshot,
         ],
     }) :
     new Sequelize(DB_NAME, DB_USER, DB_PASS, options);
