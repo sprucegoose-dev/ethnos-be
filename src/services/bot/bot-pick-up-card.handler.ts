@@ -163,7 +163,6 @@ export default class BotPickUpCardHandler {
 
         if (!cardToPickUpId || mostFrequentTribe.total > mostFrequentColor.total) {
             for (const card of cardsInMarket) {
-
                 if (card.tribe.name === mostFrequentTribe.tribeName) {
                     cardToPickUpId = card.id;
                 }

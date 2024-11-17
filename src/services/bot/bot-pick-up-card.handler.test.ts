@@ -455,7 +455,7 @@ describe('BotPickUpCardHandler', () => {
             expect(result).toBe(true);
         });
 
-        it("should pick up a card from the market matching the most frequent tribe in a player's hand if theey exceed same-color cards", async () => {
+        it("should pick up a card from the market matching the most frequent tribe in a player's hand if they exceed same-color cards", async () => {
             await Card.update({
                 state: CardState.IN_DECK,
                 playerId: null,
@@ -472,22 +472,23 @@ describe('BotPickUpCardHandler', () => {
 
             let dwarfCards = updatedGame.cards.filter(card =>
                 card.state === CardState.IN_DECK &&
+                ![Color.BLUE, Color.GRAY].includes(card.color) &&
                 card.tribe.name === TribeName.DWARVES
             ).slice(0, 3);
 
-            const centuarCards = updatedGame.cards.filter(card =>
+            const centuarCard = updatedGame.cards.find(card =>
                 card.state === CardState.IN_DECK &&
                 card.color === Color.BLUE &&
                 card.tribe.name === TribeName.CENTAURS
-            ).slice(0, 1);
+            );
 
-            const merfolkCards = updatedGame.cards.filter(card =>
+            const merfolkCard = updatedGame.cards.find(card =>
                 card.state === CardState.IN_DECK &&
                 card.color === Color.GRAY &&
                 card.tribe.name === TribeName.MERFOLK
-            ).slice(0, 1);
+            );
 
-            const cardsInHand = [...dwarfCards, ...centuarCards, ...merfolkCards];
+            const cardsInHand = [...dwarfCards, centuarCard, merfolkCard];
 
             const cardIdsToAssign = cardsInHand.map(card => card.id);
 
@@ -499,7 +500,10 @@ describe('BotPickUpCardHandler', () => {
                 card.tribe.name === TribeName.DWARVES &&
                 !dwarfCardIds.includes(card.id)
             );
-            const nonDwarvesForMarket =  updatedGame.cards.filter(card => card.tribe.name !== TribeName.DWARVES).slice(0, 3);
+            const nonDwarvesForMarket =  updatedGame.cards.filter(card =>
+                card.tribe.name !== TribeName.DRAGON &&
+                card.tribe.name !== TribeName.DWARVES
+            ).slice(0, 3);
 
             await Card.update({
                 state: CardState.IN_MARKET,
