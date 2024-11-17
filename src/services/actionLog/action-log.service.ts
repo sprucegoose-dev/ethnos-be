@@ -8,7 +8,7 @@ import Region from '@models/region.model';
 
 import { CustomException, ERROR_SERVER } from '@helpers/exception-handler';
 
-import { IActionLogParams, IActionLogPayload, LogType } from './action-log.types';
+import { IActionLogParams, IActionLogPayload, LogType } from '../../interfaces/action-log.interface';
 import Card from '../../models/card.model';
 import Tribe from '../../models/tribe.model';
 

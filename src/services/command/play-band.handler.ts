@@ -29,7 +29,7 @@ import ScoringService from '@services/scoring/scoring.service';
 import TribeService from './tribe.handler';
 import NextActionHandler from './next-action.handler';
 import ActionLogService from '../actionLog/action-log.service';
-import { LogType } from '../actionLog/action-log.types';
+import { LogType } from '../../interfaces/action-log.interface';
 
 const {
     CENTAURS,

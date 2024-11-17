@@ -24,12 +24,12 @@ export default class BotPlayBandHandler {
     static getTotalRegionValue(region: Region, age: number, color: PlayerColor): number {
         let values = region.values;
 
-        if ([PlayerColor.PINK, PlayerColor.YELLOW].includes(color)) {
-            values = values .slice(0, age + 1);
-        }
-
         if ([PlayerColor.WHITE, PlayerColor.GREEN].includes(color)) {
             values = values.slice(0, age);
+        }
+
+        if ([PlayerColor.PINK, PlayerColor.YELLOW].includes(color)) {
+            values = values .slice(0, age + 1);
         }
 
         return values.reduce((total, value) => total + value, 0);

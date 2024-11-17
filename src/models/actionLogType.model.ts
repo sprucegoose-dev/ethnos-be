@@ -3,7 +3,7 @@ import {
     Model,
     Table,
 } from 'sequelize-typescript';
-import { LogType } from '@services/actionLog/action-log.types';
+import { LogType } from '@interfaces/action-log.interface';
 
 @Table({
     tableName: 'action_log_types',

@@ -38,6 +38,13 @@ class GamesController {
         res.send(actionsLog);
     }
 
+    async getAgeResults(req: AuthRequest, res: Response): Promise<void> {
+        const gameId = req.params.id;
+        const age = req.params.age;
+        const ageState = await GameService.getAgeResults(parseInt(gameId, 10), parseInt(age, 10));
+        res.send(ageState);
+    }
+
     async handleAction(req: IActionRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;

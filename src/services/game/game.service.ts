@@ -2,13 +2,12 @@ import { Op, Sequelize } from 'sequelize';
 import shuffle from 'lodash.shuffle';
 import bcrypt from 'bcrypt';
 
-import Card from '@models/card.model';
-import Tribe from '@models/tribe.model';
-import Game from '@models/game.model';
-import Player from '@models/player.model';
-import Region from '@models/region.model';
-import User from '@models/user.model';
-import PlayerRegion from '@models/playerRegion.model';
+import {
+    CustomException,
+    ERROR_BAD_REQUEST,
+    ERROR_FORBIDDEN,
+    ERROR_NOT_FOUND,
+} from '@helpers/exception-handler';
 
 import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
@@ -26,20 +25,23 @@ import {
 } from '@interfaces/event.interface';
 import { IScoringResults } from '@interfaces/command.interface';
 import { PLAYER_COLORS, PlayerColor } from '@interfaces/player.interface';
+import { IActionLogPayload } from '@interfaces/action-log.interface';
+
+import Card from '@models/card.model';
+import Tribe from '@models/tribe.model';
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import Region from '@models/region.model';
+import User from '@models/user.model';
+import PlayerRegion from '@models/playerRegion.model';
+import Snapshot from '@models/snapshot.model';
 
 import PlayerService from '@services/player/player.service';
 import EventService from '@services/event/event.service';
 import ScoringService from '@services/scoring/scoring.service';
-
-import {
-    CustomException,
-    ERROR_BAD_REQUEST,
-    ERROR_FORBIDDEN,
-    ERROR_NOT_FOUND,
-} from '@helpers/exception-handler';
-import BotService from '../bot/bot.service';
-import { IActionLogPayload } from '../actionLog/action-log.types';
-import ActionLogService from '../actionLog/action-log.service';
+import ActionLogService from '@services/actionLog/action-log.service';
+import BotService from '@services/bot/bot.service';
+import SnapshotService from '@services/snapshot/snapshot.service';
 
 export default class GameService {
 
@@ -375,6 +377,42 @@ export default class GameService {
     static async getActionsLog(gameId: number): Promise<IActionLogPayload[]> {
         return await ActionLogService.getActionLogs(gameId);
     }
+
+    static async getAgeResults(gameId: number, age: number): Promise<IGameStateResponse> {
+        const game = await this.getStateResponse(gameId);
+
+        if (!game) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
+        }
+
+        const snapshot = await Snapshot.findOne({
+            where: {
+                age,
+                gameId,
+            },
+            order: [['id', 'desc']]
+        });
+
+        if (!snapshot) {
+            throw new CustomException(ERROR_NOT_FOUND, 'Snapshot not found');
+        }
+
+        const decompressedSnapshot = await SnapshotService.decompress(snapshot.snapshot);
+
+        game.players.map(player => ({
+            ...player,
+            ...decompressedSnapshot.players.find(p => p.id === player.id),
+        }))
+
+        game.age = decompressedSnapshot.game.age;
+        game.activePlayerId = decompressedSnapshot.game.activePlayerId;
+        game.cards.map(card => ({
+            ...card,
+            ...decompressedSnapshot.cards.find(c => c.id === card.id),
+        }));
+
+        return game;
+    };
 
     static async getCardsInHand(userId: number, gameId: number): Promise<Card[]> {
         return (await Player.findOne({
