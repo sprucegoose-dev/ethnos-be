@@ -432,7 +432,7 @@ export default class GameService {
                     ],
                 }
             ],
-        })).cards;
+        }))?.cards || [];
     }
 
     static async getPlayerHands(gameId: number): Promise<{[playerId: number]: Card[]}> {

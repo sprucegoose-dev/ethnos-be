@@ -105,6 +105,7 @@ class UserService {
     static async delete(userId: number): Promise<void> {
         await User.update({
             deleted: true,
+            sessionId: uuid(),
         },{
             where: {
                 id: userId,

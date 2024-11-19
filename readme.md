@@ -1,6 +1,6 @@
 ## Prerequsites
 - Node v18+
-- MySQL 5.6
+- MySQL 5.6+
 
 ## Installation
 

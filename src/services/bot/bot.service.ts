@@ -99,31 +99,35 @@ export default class BotService {
     }
 
     static async activateStaleBots() {
-        const activeGames = await Game.findAll({
-            where: {
-                state: GameState.STARTED,
-            },
-            include: [
-                {
-                    model: Player,
-                    as: 'players',
-                    include: [
-                        {
-                            model: User,
-                        }
-                    ]
-                }
-            ]
-        });
+        try {
+            const activeGames = await Game.findAll({
+                where: {
+                    state: GameState.STARTED,
+                },
+                include: [
+                    {
+                        model: Player,
+                        as: 'players',
+                        include: [
+                            {
+                                model: User,
+                            }
+                        ]
+                    }
+                ]
+            });
 
-        for (const game of activeGames) {
-            const activePlayer = game.players.find(player => player.id === game.activePlayerId);
+            for (const game of activeGames) {
+                const activePlayer = game.players.find(player => player.id === game.activePlayerId);
 
-            if (activePlayer.user.isBot) {
-                if (moment().diff(game.updatedAt, 'seconds') > 5) {
-                    await BotService.takeTurn(game.id, activePlayer.id);
+                if (activePlayer.user.isBot) {
+                    if (moment().diff(game.updatedAt, 'seconds') > 5) {
+                        await BotService.takeTurn(game.id, activePlayer.id);
+                    }
                 }
             }
+        } catch (error) {
+            console.log(error);
         }
     }
 }
