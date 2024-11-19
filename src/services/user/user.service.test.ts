@@ -128,7 +128,7 @@ describe('UserService', () => {
                         id: user.id,
                     }
                 });
-                expect(deletedUser).toBeNull();
+                expect(deletedUser.deleted).toBe(true);
             } catch (error) {
                 console.log(error);
             }

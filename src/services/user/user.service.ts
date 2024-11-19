@@ -60,6 +60,10 @@ class UserService {
             throw new CustomException(ERROR_FORBIDDEN, 'Bot players cannot sign in');
         }
 
+        if (user.deleted) {
+            throw new CustomException(ERROR_FORBIDDEN, 'This account has been deleted');
+        }
+
         if (await bcrypt.compare(password, user.toJSON().password)) {
             user.sessionId = uuid();
             user.sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
@@ -99,7 +103,9 @@ class UserService {
     }
 
     static async delete(userId: number): Promise<void> {
-        await User.destroy({
+        await User.update({
+            deleted: true,
+        },{
             where: {
                 id: userId,
             }

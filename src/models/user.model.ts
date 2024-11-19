@@ -35,6 +35,9 @@ export default class User extends Model {
     @Column({ field: 'is_bot' })
     isBot: boolean;
 
+    @Column
+    deleted: boolean;
+
     @CreatedAt
     @Column({ field: 'created_at' })
     // @ts-ignore
