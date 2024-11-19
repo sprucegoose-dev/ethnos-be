@@ -120,8 +120,7 @@ export default class BotService {
             const activePlayer = game.players.find(player => player.id === game.activePlayerId);
 
             if (activePlayer.user.isBot) {
-
-                if (moment().diff(game.updatedAt, 'seconds') > 10) {
+                if (moment().diff(game.updatedAt, 'seconds') > 5) {
                     await BotService.takeTurn(game.id, activePlayer.id);
                 }
             }

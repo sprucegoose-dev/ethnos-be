@@ -715,6 +715,29 @@ export default class GameService {
         });
     }
 
+    static async replacePlayerWithBot(game: IGameState, player: Player) {
+        const inGameBotIds = game.players.filter(player => player.user.isBot).map(player => player.id);
+
+        const availableBots = await User.findAll({
+            where: {
+                isBot: true,
+                id: {
+                    [Op.notIn]: inGameBotIds
+                }
+            }
+        });
+
+        const bot = shuffle(availableBots)[0];
+
+        await Player.update({
+            userId: bot.id,
+        }, {
+            where: {
+                id: player.id
+            }
+        });
+    }
+
     static async leave(userId: number, gameId: number): Promise<void> {
         const game = await Game.findOne({
             where: {
@@ -724,6 +747,16 @@ export default class GameService {
                 {
                     model: Player,
                     as: 'players',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: [
+                                'id',
+                                'isBot'
+                            ]
+                        }
+                    ]
                 },
             ]
         });
@@ -745,7 +778,10 @@ export default class GameService {
                 if (game.creatorId === userId) {
                     game.state = GameState.CANCELLED;
                     await game.save();
+                } else if (!player.user.isBot) {
+                    await this.replacePlayerWithBot(game, player);
                 }
+
                 break;
             case GameState.ENDED:
                 throw new CustomException(ERROR_BAD_REQUEST, 'You cannot leave a game that has ended');
@@ -754,7 +790,7 @@ export default class GameService {
                 await game.save();
         }
 
-        if (game.players.length - 1 === 0) {
+        if (game.players.filter(player => !player.user.isBot).length - 1 === 0) {
             await game.destroy();
         } else {
             const updatedGameState = await this.getStateResponse(gameId);
