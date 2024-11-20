@@ -3,6 +3,6 @@ module.exports = {
       script: "dist/src/index.js",
       name: "api",
       instances: "max",
-      exec_mode: "cluster"
+      exec_mode: "cluster",
     }]
   }
