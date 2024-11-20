@@ -23,6 +23,7 @@
         "strictPropertyInitialization": false,
         "emitDecoratorMetadata": true,
         "allowJs": true,
+        "outDir": "dist",
         "strictNullChecks": false,
         "typeRoots": [
             "src/interfaces",
@@ -42,6 +43,10 @@
         }
     },
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "coverage",
+        "src/**/*.test.ts",
+        "database/migrations",
+        "database/seeders"
     ]
 }

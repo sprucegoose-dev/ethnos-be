@@ -20,7 +20,7 @@ module.exports = {
 
         return queryInterface.bulkInsert('action_log_types', actionLogTypes);
     },
-    down: (queryInterface, Sequelize) => {
+    down: (queryInterface) => {
         return queryInterface.bulkDelete('action_log_types');
     }
 };

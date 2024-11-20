@@ -48,7 +48,7 @@ function generateTribeSeeds() {
     return tribes;
 }
 
-export const botNames = [
+const botNames = [
     'Bismo',
     'Violet',
     'MacGruber',
