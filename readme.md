@@ -1,6 +1,6 @@
 ## Prerequsites
 - Node v18+
-- MySQL 5.6+
+- MySQL 8.0+
 
 ## Installation
 
@@ -113,6 +113,35 @@ On the production server:
         - `> CREATE USER '[username]'@'localhost' IDENTIFIED BY '[password]';`
         - `> GRANT ALL PRIVILEGES ON [database-name].* TO '[username]'@'localhost';`
         - `> exit`
+
+### Nginx Configuration
+
+1. Navigate to the `sites-available` folder:
+    - `cd /etc/nginx/sites-available`
+2. Rename the default configuration file:
+    - `sudo mv default _default`
+2. Create a new configuration file:
+    - `sudo touch default`
+3. Edit the configuration file:
+    - `sudo vim default`
+4. Copy the settings from `./nginx_config` on this repo
+5. Restart the nginx service:
+    - `sudo service nginx restart`
+
+### Installing an SSL Certificate with Certbot
+
+- sudo apt-get update
+- sudo apt-get install software-properties-common
+- sudo add-apt-repository universe
+- sudo add-apt-repository ppa:certbot/certbot
+- sudo apt-get update
+- sudo apt-get install certbot python3-certbot-nginx
+- sudo certbot --nginx
+- sudo service nginx restart
+
+* Ensure your domain's DNS is pointing to the server IP
+
+See full instructions [here][certbot].
 
 ### Deploying the app
 
