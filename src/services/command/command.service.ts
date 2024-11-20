@@ -42,6 +42,11 @@ export default class CommandService {
             if (!game) {
                 throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
             }
+
+            if ([GameState.CANCELLED, GameState.ENDED].includes(game.state)) {
+                throw new CustomException(ERROR_NOT_FOUND, 'The game has ended');
+            }
+
             const activePlayer = game.players.find(p =>
                 p.id === game.activePlayerId && p.userId === userId
             );
