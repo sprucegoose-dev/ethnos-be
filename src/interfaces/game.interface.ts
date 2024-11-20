@@ -37,7 +37,7 @@ export enum GameState {
 
 export interface IGameState extends Game {
     cards: Card[];
-    hasPassword?: number;
+    hasPassword?: boolean;
     players: Player[];
 }
 

@@ -1,4 +1,4 @@
-import { Op, Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
 import shuffle from 'lodash.shuffle';
 import bcrypt from 'bcrypt';
 
@@ -335,16 +335,11 @@ export default class GameService {
     }
 
     static async getActiveGames(): Promise<Omit<IGameState, 'cards'>[]> {
-        return await Game.findAll({
+        const games = await Game.unscoped().findAll({
             where: {
                 state: {
                     [Op.not]: [GameState.ENDED, GameState.CANCELLED]
                 },
-            },
-            attributes: {
-                include: [
-                    [Sequelize.literal('CASE WHEN game.password IS NOT NULL THEN true ELSE false END'), 'hasPassword']
-                ]
             },
             include: [
                 {
@@ -372,6 +367,8 @@ export default class GameService {
                 }
             ]
         });
+
+        return games.map(game => ({...game.toJSON(), hasPassword: Boolean(game.password), password: null }));
     }
 
     static async getActionsLog(gameId: number): Promise<IActionLogPayload[]> {
