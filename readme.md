@@ -89,6 +89,8 @@ On the production server:
         - sudo ufw allow 'Nginx Full'
     - git:
         - sudo apt install git
+    - unzip:
+        - sudo apt install unzip
     - mysql:
         - sudo apt update
         - sudo apt install mysql-server

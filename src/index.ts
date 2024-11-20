@@ -1,6 +1,10 @@
 import { Server, Socket } from 'socket.io';
 import { setupWorker } from '@socket.io/sticky';
 import { createAdapter } from '@socket.io/cluster-adapter';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.join(__dirname, './.env') });
 
 import UsersController from './controllers/user.controller';
 import GamesController from './controllers/game.controller';
