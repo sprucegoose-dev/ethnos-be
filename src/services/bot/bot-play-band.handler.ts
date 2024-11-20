@@ -14,6 +14,7 @@ import CommandService from '@services/command/command.service';
 import PlayBandHandler from '@services/command/play-band.handler';
 import { TRIBE_PRIORITY } from './constants';
 import { PlayerColor } from '../../interfaces/player.interface';
+import { MERFOLK_TRACK_CHECKPOINTS } from '../command/tribe.handler';
 
 export default class BotPlayBandHandler {
 
@@ -38,6 +39,14 @@ export default class BotPlayBandHandler {
     static canAddTokenToRegion(region: Region, bandDetails: IBandDetails, player: Player): boolean {
         if (bandDetails.tribe === TribeName.HALFLINGS) {
             return false;
+        }
+
+        if (bandDetails.tribe === TribeName.MERFOLK) {
+            const nextMerfolkCheckpoint = MERFOLK_TRACK_CHECKPOINTS.find(checkpoint => checkpoint > player.merfolkTrackScore);
+
+            if (nextMerfolkCheckpoint && (player.merfolkTrackScore + bandDetails.bandSize) >= nextMerfolkCheckpoint) {
+                return true;
+            }
         }
 
         return bandDetails.bandSize > this.getPlayerTokensInRegion(region, player);

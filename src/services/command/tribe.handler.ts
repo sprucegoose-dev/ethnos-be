@@ -27,6 +27,8 @@ const {
     WIZARDS,
 } = TribeName;
 
+export const MERFOLK_TRACK_CHECKPOINTS = [3, 7, 12, 18];
+
 export default class TribeHandler {
 
     static async handleGiantBand(player: Player, bandSize: number) {
@@ -65,11 +67,10 @@ export default class TribeHandler {
     }
 
     static async handleMerfolkTrack(player: Player, bandSize: number): Promise<void> {
-        const merfolkTrackCheckpoints = [3, 7, 12, 18];
         let freeTokens = 0;
 
         for (let i = 1; i <= bandSize; i++) {
-            if (merfolkTrackCheckpoints.includes(player.merfolkTrackScore + i)) {
+            if (MERFOLK_TRACK_CHECKPOINTS.includes(player.merfolkTrackScore + i)) {
                 freeTokens++;
             }
         }
