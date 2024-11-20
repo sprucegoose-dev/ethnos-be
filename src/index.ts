@@ -22,15 +22,6 @@ const app = require('express')();
 const cors = require('cors');
 const http = require('http');
 
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origin: '*',
-        methods: ['GET','HEAD','PUT','PATCH','POST','DELETE']
-    },
-    transports: ['websocket'],
-});
-
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -62,6 +53,15 @@ app.get('/game/:id', GamesController.getState);
 app.post('/game/create', GamesController.create);
 
 app.get('/tribe/all', TribesController.getAll);
+
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: '*',
+        methods: ['GET','HEAD','PUT','PATCH','POST','DELETE']
+    },
+    transports: ['websocket'],
+});
 
 export const gameSocket = io;
 
