@@ -91,6 +91,8 @@ On the production server:
         - sudo apt install git
     - unzip:
         - sudo apt install unzip
+    - update the timezone:
+        - timedatectl set-timezone UTC
     - mysql:
         - sudo apt update
         - sudo apt install mysql-server
@@ -166,6 +168,8 @@ On the production server:
     - `cp .env.example .env`
 
 - Enter the database credentials in the `.env` file
+
+- Set the `NODE_ENV` variable to `production`
 
 - Run `npm run migrate`
 

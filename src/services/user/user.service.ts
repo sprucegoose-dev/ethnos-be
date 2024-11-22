@@ -35,7 +35,7 @@ class UserService {
         const sessionExp = moment().add(7, 'days').format('YYYY-MM-DD HH:mm:ss');
         const user = await User.create({
             username,
-            email,
+            email: email.toLowerCase(),
             password: await bcrypt.hash(password, 10),
             sessionId,
             sessionExp,
@@ -50,7 +50,7 @@ class UserService {
     }
 
     static async login(email: string, password: string): Promise<IUserResponse> {
-        const user = await User.unscoped().findOne({ where: { email }});
+        const user = await User.unscoped().findOne({ where: { email: email.toLowerCase() }});
 
         if (!user) {
             throw new CustomException(ERROR_NOT_FOUND, 'The provided email does not exist');

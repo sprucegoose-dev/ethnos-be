@@ -158,7 +158,7 @@ export default class TribeHandler {
         const cardsInDeck = game.cards.filter(card => card.state === CardState.IN_DECK)
             .sort((cardA, cardB) => cardA.index - cardB.index);
         const maxDrawSize = Math.min(bandSize, cardsInDeck.length);
-        await DrawCardHandler.handleDrawCard(game, player, maxDrawSize);
+        await DrawCardHandler.handleDrawCard(game, player, maxDrawSize, false);
     }
 
     static async handleElfKeepCards(player: Player, action: IKeepCardsPayload, nextAction: NextAction) {

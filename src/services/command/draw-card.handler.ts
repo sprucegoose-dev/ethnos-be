@@ -28,10 +28,10 @@ export default class DrawCardHandler {
         });
     }
 
-    static async handleDrawCard(game: Game, player: Player, quantity: number = 1): Promise<void> {
+    static async handleDrawCard(game: Game, player: Player, quantity: number = 1, validateHandSize = true): Promise<void> {
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
 
-        if (cardsInHand.length === 10) {
+        if (validateHandSize && cardsInHand.length === 10) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Cannot exceed hand limit of 10 cards');
         }
 
