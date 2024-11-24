@@ -69,7 +69,7 @@ export default class SnapshotService {
 
         cards = cards.filter(card => playerId ?
             [CardState.IN_HAND, CardState.IN_BAND].includes(card.state) :
-            [CardState.IN_MARKET, CardState.IN_DECK, CardState.IN_MARKET].includes(card.state)
+            [CardState.IN_MARKET, CardState.IN_DECK, CardState.REVEALED].includes(card.state)
         )
 
         for (const card of cards) {
@@ -83,7 +83,7 @@ export default class SnapshotService {
             }
 
             // @ts-ignore
-            compressedCards[COMPRESSED_CARD_STATE_KEYS[card.state]].push(card.id);
+            compressedCards[COMPRESSED_CARD_STATE_KEYS[card.state]].push(compressedCard);
         }
 
         return compressedCards;
@@ -178,7 +178,7 @@ export default class SnapshotService {
             merfolkTrackScore: compressedPlayer[COMPRESSED_KEY_MERFOLK_TRACK_SCORE],
             trollTokens: compressedPlayer[COMPRESSED_KEY_TROLL_TOKENS],
             orcTokens: compressedPlayer[COMPRESSED_KEY_ORC_TOKENS].map(SnapshotService.decompressColor),
-            cards: SnapshotService.decompressCards(compressedPlayer[COMPRESSED_KEY_CARDS]),
+            cards: SnapshotService.decompressCards(compressedPlayer[COMPRESSED_KEY_CARDS], compressedPlayer.id),
         }
     }
 
