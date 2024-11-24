@@ -54,14 +54,14 @@ export default class PlayBandHandler {
         let playerRegion = await this.getPlayerRegion(region, player);
         let tokenAdded = false;
 
-        if (!playerRegion && tribe !== HALFLINGS) {
+        if (tribe !== HALFLINGS && !playerRegion) {
             playerRegion = await PlayerRegion.create({
                 playerId: player.id,
                 regionId: region.id,
             });
         }
 
-        if (bandSize > playerRegion.tokens && tribe !== HALFLINGS) {
+        if (tribe !== HALFLINGS && bandSize > playerRegion.tokens) {
             await playerRegion.update({ tokens: playerRegion.tokens + 1 });
 
             tokenAdded = true;
