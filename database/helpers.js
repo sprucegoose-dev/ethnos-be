@@ -28,9 +28,9 @@ function generateTribeSeeds() {
         'This band counts as X+1 for placing a marker on the board.',
         'Place a marker on the matching space of the Orc Board.',
         "Can't be a leader. Can be used with any band of allies. Must be discarded before end of age scoring.",
-        'Take an unclaimed Troll token with a value up to X',
+        'Take an unclaimed Troll token with a value up to X.',
         'You can place your marker on any kingdom of the board.',
-        'Draw X cards from the deck',
+        'Draw X cards from the deck.',
     ];
 
     for (let i = 0; i < tribeNames.length; i++) {

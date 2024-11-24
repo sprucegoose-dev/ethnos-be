@@ -7,12 +7,14 @@ import {
     Table,
 } from 'sequelize-typescript';
 
+import { Color } from '@interfaces/game.interface';
+import { IPointsBreakdown, PlayerColor } from '@interfaces/player.interface';
+
 import Game from './game.model';
 import User from './user.model';
-import { Color } from '@interfaces/game.interface';
-import Card from './card.model';
-import { PlayerColor } from '../interfaces/player.interface';
 import PlayerRegion from './playerRegion.model';
+import Card from './card.model';
+
 
 @Table({
     tableName: 'players',
@@ -76,6 +78,13 @@ export default class Player extends Model {
 
     @Column({ defaultValue: 0 })
     points: number;
+
+    @Column({
+        field: 'points_breakdown',
+        type: DataType.JSON,
+        defaultValue: {}
+    })
+    pointsBreakdown: IPointsBreakdown;
 
     @BelongsTo(() => Game, 'gameId')
     game: Game;

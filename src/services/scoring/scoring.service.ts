@@ -9,6 +9,7 @@ import PlayerRegion from '@models/playerRegion.model';
 import { CardState, IGroupedCards } from '@interfaces/card.interface';
 import { IScoringResults } from '@interfaces/command.interface';
 import { TribeName } from '@interfaces/tribe.interface';
+import { IPointsBreakdown } from '../../interfaces/player.interface';
 
 export default class ScoringService {
 
@@ -153,21 +154,25 @@ export default class ScoringService {
         const finalAge = players.length >= 4 ? 3 : 2;
         const trollTokenTotals = this.getTrollTokenTotals(players);
         const totalPoints: { [playerId: number]: number } = {};
+        const bandPoints: { [playerId: number]: number } = {};
+        const orcPoints: { [playerId: number]: number } = {};
         let winnerId;
 
         for (const player of game.players) {
             totalPoints[player.id] = player.points;
             totalPoints[player.id] += this.scoreBands(player);
+            bandPoints[player.id] = this.scoreBands(player);
 
             if (game.age === finalAge) {
                 totalPoints[player.id] += this.scoreOrcBoard(player);
+                orcPoints[player.id] = this.scoreOrcBoard(player);
             }
         }
 
-        const giantsScore = this.scoreGiantToken(players, game.age);
+        const giantPoints = this.scoreGiantToken(players, game.age);
 
-        if (giantsScore) {
-            totalPoints[giantsScore.playerId] += giantsScore.points;
+        if (giantPoints) {
+            totalPoints[giantPoints.playerId] += giantPoints.points;
         }
 
         const merfolkPoints = this.scoreMerfolkTrack(game, trollTokenTotals);
@@ -184,12 +189,24 @@ export default class ScoringService {
             totalPoints[Number(playerId)] += points;
         }
 
-        for (const [playerId, points] of Object.entries(totalPoints)) {
+        for (const player of players) {
+            const pointsBreakdown: IPointsBreakdown = {
+                ...player.pointsBreakdown,
+                [`${game.age}`]: {
+                    regions: regionPoints[Number(player.id)] || 0,
+                    orcs: orcPoints[Number(player.id)] || 0,
+                    giants: giantPoints.playerId === Number(player.id) ? giantPoints.points : 0,
+                    merfolk: merfolkPoints[Number(player.id)] || 0,
+                    bands: bandPoints[Number(player.id)] || 0,
+                }
+            };
+
             await Player.update({
-                points
+                points: totalPoints[player.id],
+                pointsBreakdown,
             }, {
                 where: {
-                    id: playerId
+                    id: player.id
                 }
             });
         }
@@ -223,7 +240,10 @@ export default class ScoringService {
     }
 
     static scoreBands(player: Player): number {
-        const cardsInBands = player.cards.filter(card => card.state === CardState.IN_BAND);
+        const cardsInBands = player.cards.filter(card =>
+            card.state === CardState.IN_BAND &&
+            card.tribe.name !== TribeName.SKELETONS
+        );
         const bands = this.groupCardsByLeader(cardsInBands);
         let points = 0;
         let leader;

@@ -14,4 +14,16 @@ export const PLAYER_COLORS = [
     PlayerColor.PINK,
     PlayerColor.WHITE,
     PlayerColor.YELLOW,
-]
+];
+
+export interface IAgePointsBreakdown {
+    bands: number;
+    giants: number;
+    orcs: number;
+    merfolk: number;
+    regions: number;
+}
+
+export interface IPointsBreakdown {
+    [age: string]: IAgePointsBreakdown;
+}
