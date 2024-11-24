@@ -390,20 +390,46 @@ export default class GameService {
             order: [['id', 'desc']]
         });
 
+        const cards = await Card.findAll({
+            where: {
+                gameId,
+            },
+            include: [
+                Tribe,
+            ],
+        });
+        const cardsById = cards.reduce<{ [cardId: number]: Card }>((acc, card) => {
+            acc[card.id] = card;
+            return acc;
+          }, {});
+
         if (!snapshot) {
             throw new CustomException(ERROR_NOT_FOUND, 'Snapshot not found');
         }
 
         const decompressedSnapshot = await SnapshotService.decompress(snapshot.snapshot);
 
-        game.players.map(player => ({
-            ...player,
-            ...decompressedSnapshot.players.find(p => p.id === player.id),
-        }))
+        // @ts-ignore
+        game.players = game.players.map(player => {
+            const decompressedPlayer = decompressedSnapshot.players.find(p => p.id === player.id);
+
+            decompressedPlayer.cards = decompressedPlayer.cards.map(card => ({
+                ...card,
+                color:  cardsById[card.id].color,
+                tribe: cardsById[card.id].tribe,
+            }));
+
+            return {
+                ...player,
+                ...decompressedPlayer,
+            }
+        });
 
         game.age = decompressedSnapshot.game.age;
         game.activePlayerId = decompressedSnapshot.game.activePlayerId;
-        game.cards.map(card => ({
+
+         // @ts-ignore
+        game.cards = game.cards.map(card => ({
             ...card,
             ...decompressedSnapshot.cards.find(c => c.id === card.id),
         }));

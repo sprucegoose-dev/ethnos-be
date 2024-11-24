@@ -75,8 +75,11 @@ export default class SnapshotService {
         for (const card of cards) {
             const compressedCard: ICompressedCard  = {
                 id: card.id,
-                [COMPRESSED_KEY_INDEX]: card.index,
             };
+
+            if (typeof card.index === 'number') {
+                compressedCard[COMPRESSED_KEY_INDEX] = card.index;
+            }
 
             if (card.leaderId) {
                 compressedCard[COMPRESSED_KEY_LEADER_ID] = card.leaderId;
