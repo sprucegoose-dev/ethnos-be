@@ -1,7 +1,7 @@
 import { ActionType } from '@interfaces/action.interface';
 
-import ActionLogType from '@models/actionLogType.model';
-import ActionLog from '@models/actionLog.model';
+import ActionLogType from '@models/action-log-type.model';
+import ActionLog from '@models/action-log.model';
 import Player from '@models/player.model';
 import User from '@models/user.model';
 import Region from '@models/region.model';

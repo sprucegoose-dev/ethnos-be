@@ -1,8 +1,8 @@
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
-import PlayerRegion from '@models/playerRegion.model';
-import NextAction from '@models/nextAction.model';
+import PlayerRegion from '@models/player-region.model';
+import NextAction from '@models/next-aciton.model';
 
 import { IAddFreeTokenPayload } from '@interfaces/action.interface';
 import { NextActionState } from '@interfaces/next-action.interface';

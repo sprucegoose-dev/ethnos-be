@@ -8,7 +8,7 @@ import {
 } from 'sequelize-typescript';
 import Game from './game.model';
 import { Color } from '@interfaces/game.interface';
-import PlayerRegion from './playerRegion.model';
+import PlayerRegion from './player-region.model';
 
 @Table({
     tableName: 'regions',

@@ -40,6 +40,7 @@ app.post('/game/:id/assignColor', GamesController.assignPlayerColor);
 app.get('/game/all', GamesController.getActiveGames);
 app.get('/game/:id/actions', GamesController.getActions);
 app.post('/game/:id/start', GamesController.start);
+app.get('/game/:id/cards', GamesController.getGameCards);
 app.get('/game/:id/hand', GamesController.getCardsInHand);
 app.get('/game/:id/playerHands', GamesController.getPlayerHands);
 app.post('/game/:id/updateSettings', GamesController.updateSettings);

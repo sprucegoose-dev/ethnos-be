@@ -33,7 +33,7 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
 import User from '@models/user.model';
-import PlayerRegion from '@models/playerRegion.model';
+import PlayerRegion from '@models/player-region.model';
 import Snapshot from '@models/snapshot.model';
 
 import PlayerService from '@services/player/player.service';
@@ -458,6 +458,25 @@ export default class GameService {
                 }
             ],
         }))?.cards || [];
+    }
+
+    static async getGameCards(gameId: number): Promise<Card[]> {
+        return await Card.findAll({
+            where: {
+                gameId,
+            },
+            include: [
+                {
+                    model: Tribe,
+                    attributes: ['name']
+                }
+            ],
+            attributes: [
+                'color',
+                'id',
+                'leaderId',
+            ]
+        });
     }
 
     static async getPlayerHands(gameId: number): Promise<{[playerId: number]: Card[]}> {

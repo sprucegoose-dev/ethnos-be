@@ -7,7 +7,7 @@ import {
 import Card from '@models/card.model';
 
 import CommandService from '@services/command/command.service';
-import NextAction from '../../models/nextAction.model';
+import NextAction from '../../models/next-aciton.model';
 import Player from '../../models/player.model';
 
 export default class BotKeepCardsHandler {

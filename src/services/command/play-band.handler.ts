@@ -20,8 +20,8 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Card from '@models/card.model';
 import Region from '@models/region.model';
-import PlayerRegion from '@models/playerRegion.model';
-import NextAction from '@models/nextAction.model';
+import PlayerRegion from '@models/player-region.model';
+import NextAction from '@models/next-aciton.model';
 
 import ActionService from '@services/action/action.service';
 import ScoringService from '@services/scoring/scoring.service';

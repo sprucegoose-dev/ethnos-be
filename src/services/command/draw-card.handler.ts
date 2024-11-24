@@ -11,8 +11,8 @@ import { TribeName } from '@interfaces/tribe.interface';
 import GameService from '../game/game.service';
 import Card from '../../models/card.model';
 import ActionLogService from '../actionLog/action-log.service';
-import { ActionType } from '../../interfaces/action.interface';
 import { Op } from 'sequelize';
+import { LogType } from '../../interfaces/action-log.interface';
 
 const {
     DRAGON,
@@ -22,7 +22,7 @@ export default class DrawCardHandler {
 
     static async logRevealedDragon(gameId: number, playerId: number) {
         await ActionLogService.log({
-            payload: { type: ActionType.DRAW_CARD },
+            type: LogType.REVEAL_DRAGON,
             gameId,
             playerId,
         });

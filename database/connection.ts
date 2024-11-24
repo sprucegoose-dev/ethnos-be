@@ -7,10 +7,10 @@ import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
 import User from '@models/user.model';
-import PlayerRegion from '@models/playerRegion.model';
-import NextAction from '@models/nextAction.model';
-import ActionLogType from '../src/models/actionLogType.model';
-import ActionLog from '../src/models/actionLog.model';
+import PlayerRegion from '@models/player-region.model';
+import NextAction from '@models/next-aciton.model';
+import ActionLogType from '../src/models/action-log-type.model';
+import ActionLog from '../src/models/action-log.model';
 import Snapshot from '../src/models/snapshot.model';
 
 interface IDatabaseEnvVars {

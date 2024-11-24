@@ -5,11 +5,10 @@ import {
     Table,
 } from 'sequelize-typescript';
 
-
 import Game from './game.model';
 import Card from './card.model';
 import Region from './region.model';
-import ActionLogType from './actionLogType.model';
+import ActionLogType from './action-log-type.model';
 import Player from './player.model';
 
 @Table({
@@ -38,7 +37,6 @@ export default class ActionLog extends Model {
     })
     playerId: number;
 
-
     @Column({
         field: 'action_log_type_id',
         references: {
@@ -47,7 +45,6 @@ export default class ActionLog extends Model {
         }
     })
     actionLogTypeId: number;
-
 
     @Column({
         field: 'region_id',

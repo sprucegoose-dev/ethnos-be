@@ -12,7 +12,7 @@ import { IPointsBreakdown, PlayerColor } from '@interfaces/player.interface';
 
 import Game from './game.model';
 import User from './user.model';
-import PlayerRegion from './playerRegion.model';
+import PlayerRegion from './player-region.model';
 import Card from './card.model';
 
 
