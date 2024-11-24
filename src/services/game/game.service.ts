@@ -422,7 +422,9 @@ export default class GameService {
             return {
                 ...player,
                 ...decompressedPlayer,
-            }
+                points: player.points,
+                pointsBreakdown: player.pointsBreakdown,
+            };
         });
 
         game.age = decompressedSnapshot.game.age;
