@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
+import { Op } from 'sequelize';
 
 import {
     CustomException,
@@ -10,15 +11,21 @@ import {
     ERROR_UNAUTHORIZED,
 } from '@helpers/exception-handler';
 
-import User from '@models/user.model';
-
 import {
+    IMatch,
+    IMatchesResponse,
     IUserRequest,
     IUserResponse,
     PASSWORD_MIN_CHARS,
     USERNAME_MAX_CHARS,
     USERNAME_MIN_CHARS,
 } from '@interfaces/user.interface';
+import { GameState } from '@interfaces/game.interface';
+
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import User from '@models/user.model';
+
 
 class UserService {
 
@@ -129,6 +136,90 @@ class UserService {
 
     static async getAll(): Promise<User[]> {
         return (await User.findAll()).map(user => user.toJSON());
+    }
+
+    static async getMatches(username: string, page: number = 1): Promise<IMatchesResponse> {
+        const user = await User.findOne({
+            where: {
+                username,
+            }
+        });
+
+        if (!user) {
+            throw new CustomException(ERROR_NOT_FOUND, 'User not found');
+        }
+
+        const players = await Player.findAll({
+            where: {
+                userId: user.id
+            },
+            attributes: [
+                'gameId',
+            ],
+        });
+
+        const gameIds = players.map(playerInGame => playerInGame.gameId);
+
+        const limit = 10;
+        page = isNaN(page) || page <= 0 ? 1 : page;
+        let offset = (page - 1) * limit;
+
+        if (offset > gameIds.length) {
+            offset = gameIds.length - limit;
+        }
+
+        const gamesQuery = {
+            id: {
+                [Op.in]: gameIds,
+            },
+            state: GameState.ENDED,
+        };
+
+        const totalGames = await Game.count({
+            where: gamesQuery,
+        });
+
+        const games = await Game.findAll({
+            where: gamesQuery,
+            include: [
+                {
+                    model: Player,
+                    as: 'players',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: [
+                                'id',
+                                'deleted',
+                                'isBot',
+                                'username',
+                            ],
+                        },
+                    ],
+                    attributes: [
+                        'id',
+                        'color',
+                        'gameId',
+                    ]
+                },
+            ],
+            order: [ [ 'id', 'DESC' ] ],
+            attributes: [
+                'id',
+                'createdAt',
+                'creatorId',
+                'settings',
+                'winnerId',
+            ],
+            limit,
+            offset,
+        });
+
+        return {
+            data: games as unknown as IMatch[],
+            pages: Math.ceil(totalGames / limit),
+        };
     }
 
     static async findBySessionId(sessionId: string, asJson: boolean = true): Promise<User> {

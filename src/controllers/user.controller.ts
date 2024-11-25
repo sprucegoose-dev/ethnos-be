@@ -31,6 +31,13 @@ class UsersController {
         const response = await UserService.getOne(req.userId);
         res.send(response);
     }
+
+    async getMatches(req: AuthRequest, res: Response): Promise<void> {
+        const username = req.params.username;
+        const { page } = req.query as any;
+        const matches = await UserService.getMatches(username, parseInt(page, 10));
+        res.send(matches);
+    }
 }
 
 export default new UsersController;

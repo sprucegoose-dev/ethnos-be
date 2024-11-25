@@ -30,6 +30,7 @@ app.use(AuthMiddleware.isAuthenticated);
 
 app.post('/user/create', UsersController.create);
 app.post('/user/login', UsersController.login);
+app.get('/user/:username/matches', UsersController.getMatches);
 app.get('/user', UsersController.getDetails);
 app.patch('/user', UsersController.update);
 app.delete('/user', UsersController.delete);
