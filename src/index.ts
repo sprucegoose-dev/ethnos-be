@@ -8,6 +8,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 import UsersController from './controllers/user.controller';
 import GamesController from './controllers/game.controller';
+import ChatsController from './controllers/chat.controller';
 import TribesController from './controllers/tribe.controller';
 import AuthMiddleware from './middleware/auth.middleware';
 import {
@@ -34,6 +35,9 @@ app.get('/user/:username/matches', UsersController.getMatches);
 app.get('/user', UsersController.getDetails);
 app.patch('/user', UsersController.update);
 app.delete('/user', UsersController.delete);
+
+app.get('/chat/:gameId/messages', ChatsController.getMessages);
+app.post('/chat/:gameId/message', ChatsController.sendMessage);
 
 app.post('/game/:id/addBot', GamesController.addBotPlayer);
 app.delete('/game/:id/removeBot/:botPlayerId', GamesController.removeBotPlayer);

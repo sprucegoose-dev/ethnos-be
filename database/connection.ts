@@ -12,6 +12,7 @@ import NextAction from '@models/next-aciton.model';
 import ActionLogType from '../src/models/action-log-type.model';
 import ActionLog from '../src/models/action-log.model';
 import Snapshot from '../src/models/snapshot.model';
+import ChatMessage from '../src/models/chat-message.model';
 
 interface IDatabaseEnvVars {
     NODE_ENV: string;
@@ -55,6 +56,7 @@ const options = {
         ActionLogType,
         ActionLog,
         Snapshot,
+        ChatMessage,
     ],
 };
 
@@ -73,6 +75,7 @@ const sequelize = NODE_ENV === 'test' ?
             ActionLogType,
             ActionLog,
             Snapshot,
+            ChatMessage,
         ],
     }) :
     new Sequelize(DB_NAME, DB_USER, DB_PASS, options);

@@ -249,6 +249,10 @@ class UserService {
 
         // TODO: add bad words validation to the username
 
+        if (/[\/\\*.]/.test(payload.username)) {
+            throw new CustomException(ERROR_BAD_REQUEST, "Username contains invalid characters ('/', '\\', '*', '.')");
+        }
+
         if (payload.username.length < USERNAME_MIN_CHARS) {
             throw new CustomException(ERROR_BAD_REQUEST, `Username must be at least ${USERNAME_MIN_CHARS} characters`);
         }
@@ -256,6 +260,8 @@ class UserService {
         if (payload.username.length > USERNAME_MAX_CHARS) {
             throw new CustomException(ERROR_BAD_REQUEST, `Username cannot be more than ${USERNAME_MAX_CHARS} characters`);
         }
+
+
     }
 };
 
