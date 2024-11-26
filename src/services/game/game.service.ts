@@ -390,6 +390,10 @@ export default class GameService {
             order: [['id', 'desc']]
         });
 
+        if (!snapshot) {
+            return game;
+        }
+
         const cards = await Card.findAll({
             where: {
                 gameId,
