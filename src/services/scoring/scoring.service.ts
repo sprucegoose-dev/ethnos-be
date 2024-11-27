@@ -9,7 +9,7 @@ import PlayerRegion from '@models/player-region.model';
 import { CardState, IGroupedCards } from '@interfaces/card.interface';
 import { IScoringResults } from '@interfaces/command.interface';
 import { TribeName } from '@interfaces/tribe.interface';
-import { IPointsBreakdown } from '../../interfaces/player.interface';
+import { IPointsBreakdown } from '@interfaces/player.interface';
 
 export default class ScoringService {
 
@@ -275,22 +275,22 @@ export default class ScoringService {
             .sort((playerA, playerB) => playerB.tokens - playerA.tokens)
             .map(playerRegion => {
                 const rankKey = `${playerRegion.tokens}.${trollTokenTotals[playerRegion.playerId]}`;
-
                 if (regionRankings[rankKey]) {
                     regionRankings[rankKey].push(playerRegion.playerId);
                 } else {
                     regionRankings[rankKey] = [playerRegion.playerId];
                 }
-            });
+        });
 
         const regionPoints = region.values.slice(0, age).sort((a, b) => b - a);
 
-        for (const playerIds of Object.values(regionRankings)) {
-            if (!regionPoints.length) {
-                continue;
-            }
+        const sortedRankings = Object.keys(regionRankings).sort((a, b) => Number(b) - Number(a));
 
-            const totalValue = regionPoints.splice(0, playerIds.length).reduce<number>((acc, currentValue) => acc += currentValue, 0);
+        for (const rankKey of sortedRankings) {
+            if (!regionPoints.length) break;
+
+            const playerIds = regionRankings[rankKey];
+            const totalValue = regionPoints.splice(0, playerIds.length).reduce<number>((acc, currentValue) => acc + currentValue, 0);
 
             const pointsPerPlayer = Math.floor(totalValue / playerIds.length);
 
@@ -301,6 +301,7 @@ export default class ScoringService {
 
         return totalPoints;
     }
+
 
     static async scoreRegions(game: Game, trollTokenTotals: { [playerId: number]: number }): Promise<{[playerId: number]: number}> {
         const regions = await Region.findAll({
@@ -398,13 +399,15 @@ export default class ScoringService {
 
         const totalPoints: { [playerId: number]: number } = {};
 
-        for (const playerIds of Object.values(merfolkRankings)) {
+        const sortedRankings = Object.keys(merfolkRankings).sort((a, b) => Number(b) - Number(a));
+
+        for (const rankKey of sortedRankings) {
+            const playerIds = merfolkRankings[rankKey];
             const pointsPerPlayer = Math.floor(firstPlaceValue / playerIds.length);
 
             for (const playerId of playerIds) {
                 totalPoints[playerId] = pointsPerPlayer;
             }
-
             break;
         }
 

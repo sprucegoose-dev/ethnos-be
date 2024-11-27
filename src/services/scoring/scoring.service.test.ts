@@ -5,12 +5,13 @@ import GameService from '@services/game/game.service';
 
 import { TribeName } from '@interfaces/tribe.interface';
 import { Color, IGameState } from '@interfaces/game.interface';
+import { CardState } from '@interfaces/card.interface';
+
+import Region from '@models/region.model';
+import PlayerRegion from '@models/player-region.model';
 
 import { createGame, returnPlayerCardsToDeck } from '../test-helpers';
 import ScoringService from './scoring.service';
-import { CardState } from '@interfaces/card.interface';
-import Region from '../../models/region.model';
-import PlayerRegion from '../../models/playerRegion.model';
 
 describe('ScoringService', () => {
 

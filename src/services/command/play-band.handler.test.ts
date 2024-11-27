@@ -1,8 +1,8 @@
 import { Op } from 'sequelize';
 
 import Game from '@models/game.model';
-import PlayerRegion from '@models/playerRegion.model';
-import NextAction from '@models/nextAction.model';
+import PlayerRegion from '@models/player-region.model';
+import NextAction from '@models/next-aciton.model';
 import Card from '@models/card.model';
 import Player from '@models/player.model';
 
@@ -186,7 +186,7 @@ describe('PlayBandHandler', () => {
 
             const playerRegion = await PlayBandHandler.getPlayerRegion(region, player);
 
-            expect(playerRegion.tokens).toBe(0);
+            expect(playerRegion).toBe(null);
         });
     });
 

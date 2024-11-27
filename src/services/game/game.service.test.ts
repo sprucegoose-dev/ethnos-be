@@ -353,7 +353,7 @@ describe('GameService', () => {
             const activeGames = await GameService.getActiveGames();
 
             expect(activeGames[0].id).toBe(gameState.id);
-            expect(activeGames[0].toJSON().hasPassword).toBe(1);
+            expect(activeGames[0].hasPassword).toBe(true);
         });
     });
 

@@ -6,9 +6,9 @@ import {
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 import PlayerService from '../player/player.service';
-import PlayerRegion from '@models/playerRegion.model';
+import PlayerRegion from '@models/player-region.model';
 import Region from '@models/region.model';
-import NextAction from '@models/nextAction.model';
+import NextAction from '@models/next-aciton.model';
 
 import GameService from '@services/game/game.service';
 

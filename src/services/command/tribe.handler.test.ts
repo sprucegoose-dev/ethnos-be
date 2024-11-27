@@ -1,6 +1,6 @@
 import Game from '@models/game.model';
 import Player from '@models/player.model';
-import NextAction from '@models/nextAction.model';
+import NextAction from '@models/next-aciton.model';
 
 import GameService from '@services/game/game.service';
 import PlayerService from '@services/player/player.service';

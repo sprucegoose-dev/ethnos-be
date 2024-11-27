@@ -206,7 +206,7 @@ describe('UsersController', () => {
                 }
             });
 
-            expect(deletedUser).toBe(null);
+            expect(deletedUser.deleted).toBe(true);
         });
     });
 

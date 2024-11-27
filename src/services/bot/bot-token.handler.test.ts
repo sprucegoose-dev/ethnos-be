@@ -3,8 +3,8 @@ import { Op } from 'sequelize';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
-import NextAction from '@models/nextAction.model';
-import PlayerRegion from '@models/playerRegion.model';
+import NextAction from '@models/next-aciton.model';
+import PlayerRegion from '@models/player-region.model';
 
 import { ActionType } from '@interfaces/action.interface';
 
