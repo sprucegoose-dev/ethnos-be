@@ -290,7 +290,7 @@ export default class GameService {
         return cards;
     }
 
-    static async generateRegions(gameId: number) {
+    static async generateRegions(gameId: number, playersCount: number) {
         const colors = [
             Color.BLUE,
             Color.GRAY,
@@ -300,25 +300,35 @@ export default class GameService {
             Color.RED
         ];
 
-        const values = shuffle([
+        let values = playersCount >= 4 ? [
             0, 0,
             2, 2,
             4, 4, 4, 4,
             6, 6, 6, 6, 6,
             8, 8, 8,
             10, 10
-        ]);
+        ] : [
+            0,
+            2, 2,
+            4, 4,
+            6, 6, 6,
+            8, 8, 8,
+            10,
+        ];
+
+        values = shuffle(values);
 
         const valueSets = [];
 
         let setCount = 0;
+        let setLimit = playersCount >= 4 ? 3 : 2;
         let set = [];
 
         for (const value of values) {
             set.push(value);
             setCount++;
 
-            if (setCount === 3) {
+            if (setCount === setLimit) {
                 valueSets.push(set.sort((a, b) => a - b));
                 set = [];
                 setCount = 0;
@@ -990,7 +1000,7 @@ export default class GameService {
 
         const startingPlayerId = turnOrder[0];
 
-        await this.generateRegions(gameId);
+        await this.generateRegions(gameId, players.length);
 
         await this.assignPlayerColors(players);
 
