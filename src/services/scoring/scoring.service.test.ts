@@ -298,6 +298,7 @@ describe('ScoringService', () => {
             };
 
             const gameAge = 1;
+            const totalPlayers = 4;
 
             playerARegion = await PlayerRegion.create({
                 playerId: playerA.id,
@@ -319,7 +320,11 @@ describe('ScoringService', () => {
 
             region.values = [2, 6, 10];
 
-            const totalPoints = ScoringService.scoreRegion(region, [playerARegion, playerBRegion, playerCRegion], trollTokenTotals, gameAge);
+            const totalPoints = ScoringService.scoreRegion(region, [
+                playerARegion,
+                playerBRegion,
+                playerCRegion
+            ], trollTokenTotals, gameAge, totalPlayers);
 
             expect(totalPoints).toEqual({ [playerA.id]: region.values[0] });
         });
@@ -332,6 +337,7 @@ describe('ScoringService', () => {
             });
 
             const gameAge = 3;
+            const totalPlayers = 4;
 
             playerARegion = await PlayerRegion.create({
                 playerId: playerA.id,
@@ -364,7 +370,7 @@ describe('ScoringService', () => {
                 playerBRegion,
                 playerCRegion,
                 playerDRegion
-            ], trollTokenTotals, gameAge);
+            ], trollTokenTotals, gameAge, totalPlayers);
 
             expect(totalPoints).toEqual({
                 [playerC.id]: region.values[0],
@@ -381,6 +387,7 @@ describe('ScoringService', () => {
             });
 
             const gameAge = 3;
+            const totalPlayers = 4;
 
             playerARegion = await PlayerRegion.create({
                 playerId: playerA.id,
@@ -413,7 +420,7 @@ describe('ScoringService', () => {
                 playerBRegion,
                 playerCRegion,
                 playerDRegion
-            ], trollTokenTotals, gameAge);
+            ], trollTokenTotals, gameAge, totalPlayers);
 
             expect(totalPoints).toEqual({
                 [playerC.id]: 2,
@@ -430,6 +437,7 @@ describe('ScoringService', () => {
             });
 
             const gameAge = 3;
+            const totalPlayers = 4;
 
             playerARegion = await PlayerRegion.create({
                 playerId: playerA.id,
@@ -462,7 +470,7 @@ describe('ScoringService', () => {
                 playerBRegion,
                 playerCRegion,
                 playerDRegion
-            ], trollTokenTotals, gameAge);
+            ], trollTokenTotals, gameAge, totalPlayers);
 
             expect(totalPoints).toEqual({
                 [playerA.id]: 6,
@@ -479,6 +487,7 @@ describe('ScoringService', () => {
             });
 
             const gameAge = 3;
+            const totalPlayers = 4;
 
             playerARegion = await PlayerRegion.create({
                 playerId: playerA.id,
@@ -518,7 +527,7 @@ describe('ScoringService', () => {
                 playerBRegion,
                 playerCRegion,
                 playerDRegion
-            ], trollTokenTotals, gameAge);
+            ], trollTokenTotals, gameAge, totalPlayers);
 
             expect(totalPoints).toEqual({
                 [playerA.id]: 10,

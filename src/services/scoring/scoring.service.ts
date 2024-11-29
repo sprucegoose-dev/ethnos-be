@@ -267,7 +267,7 @@ export default class ScoringService {
         return points;
     }
 
-    static scoreRegion(region: Region, playersInRegion: PlayerRegion[], trollTokenTotals: { [playerId: number]: number }, age: number) {
+    static scoreRegion(region: Region, playersInRegion: PlayerRegion[], trollTokenTotals: { [playerId: number]: number }, age: number, totalPlayers: number) {
         const regionRankings: { [rank: string]: number[] } = {};
         const totalPoints: { [playerId: number]: number } = {};
 
@@ -286,16 +286,23 @@ export default class ScoringService {
 
         const sortedRankings = Object.keys(regionRankings).sort((a, b) => Number(b) - Number(a));
 
+        const isTwoPlayerFinalAge = totalPlayers === 2 && age === 2;
+
         for (const rankKey of sortedRankings) {
             if (!regionPoints.length) break;
 
             const playerIds = regionRankings[rankKey];
-            const totalValue = regionPoints.splice(0, playerIds.length).reduce<number>((acc, currentValue) => acc + currentValue, 0);
+            const playersInRank = isTwoPlayerFinalAge && playersInRegion.length === 1 ? 2 : playerIds.length;
+            let totalValue = regionPoints.splice(0, playersInRank).reduce<number>((acc, currentValue) => acc + currentValue, 0);
 
             const pointsPerPlayer = Math.floor(totalValue / playerIds.length);
 
             for (const playerId of playerIds) {
                 totalPoints[playerId] = pointsPerPlayer;
+            }
+
+            if (isTwoPlayerFinalAge) {
+                break;
             }
         }
 
@@ -329,7 +336,7 @@ export default class ScoringService {
                 playerRegion.regionId === region.id
             );
 
-            const regionPoints = this.scoreRegion(region, playersInRegion, trollTokenTotals, game.age);
+            const regionPoints = this.scoreRegion(region, playersInRegion, trollTokenTotals, game.age, game.players.length);
 
             for (const [playerId, points] of Object.entries(regionPoints)) {
                 totalPoints[Number(playerId)] += points;
