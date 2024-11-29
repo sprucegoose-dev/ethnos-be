@@ -980,7 +980,9 @@ export default class GameService {
             throw new CustomException(ERROR_BAD_REQUEST, 'The game must have at least two players');
         }
 
-        if (!this.validateSettings(settings)) {
+        const tribesLimit = players.length >=4 ? 6 : 5;
+
+        if (!this.validateSettings(settings, tribesLimit)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Invalid game settings');
         }
 
