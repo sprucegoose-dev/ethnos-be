@@ -16,7 +16,10 @@ import {
     COMPRESSED_KEY_MERFOLK_TRACK_SCORE,
     COMPRESSED_KEY_ORC_TOKENS,
     COMPRESSED_KEY_PLAYERS,
+    COMPRESSED_KEY_PLAYER_ID,
     COMPRESSED_KEY_PLAYER_POINTS,
+    COMPRESSED_KEY_PLAYER_REGIONS,
+    COMPRESSED_KEY_REGION_ID,
     COMPRESSED_KEY_REVEALED,
     COMPRESSED_KEY_TROLL_TOKENS,
     DECOMPRESSED_COLOR_KEYS,
@@ -24,22 +27,33 @@ import {
     ICompressedCards,
     ICompressedGame,
     ICompressedPlayer,
+    ICompressedPlayerRegion,
     ICompressedSnapshot,
     IDecompressedCard,
     IDecompressedGame,
     IDecompressedPlayer,
+    IDecompressedPlayerRegion,
     IDecompressedSnapshot,
 } from './snapshot.interface';
-
 import { CardState } from '@interfaces/card.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
 
 import Player from '@models/player.model';
 import Card from '@models/card.model';
 import Snapshot from '@models/snapshot.model';
+import Region from '@models/region.model';
+import Game from '@models/game.model';
+import NextAction from '@models/next-aciton.model';
+
+import sequelize from '@database/connection';
+
+import { CustomException, ERROR_NOT_FOUND } from '@helpers/exception-handler';
+import { Op } from 'sequelize';
+import PlayerRegion from '../../models/player-region.model';
 
 export default class SnapshotService {
 
-    static async create(gameState: IGameState): Promise<void> {
+    static async create(gameState: IGameState, resetPoint: boolean): Promise<void> {
         const snapshot = SnapshotService.compress(gameState)
 
         await Snapshot.create({
@@ -47,6 +61,7 @@ export default class SnapshotService {
             age: gameState.age,
             playerId: gameState.activePlayerId,
             snapshot,
+            resetPoint,
         });
     }
 
@@ -54,8 +69,9 @@ export default class SnapshotService {
         return {
             [COMPRESSED_KEY_GAME]: SnapshotService.compressGame(gameState),
             [COMPRESSED_KEY_PLAYERS]: gameState.players.map(SnapshotService.compressPlayer),
-            [COMPRESSED_KEY_CARDS]: SnapshotService.compressCards(gameState.cards)
-        }
+            [COMPRESSED_KEY_CARDS]: SnapshotService.compressCards(gameState.cards),
+            [COMPRESSED_KEY_PLAYER_REGIONS]: SnapshotService.compressPlayerRegions(gameState.regions)
+        };
     }
 
     static compressCards(cards: Card[], playerId?: number): ICompressedCards {
@@ -115,13 +131,29 @@ export default class SnapshotService {
         };
     }
 
-    static async decompress(snapshot: ICompressedSnapshot): Promise<IDecompressedSnapshot>  {
+    static compressPlayerRegions(regions: Region[]): ICompressedPlayerRegion[] {
+        const playerRegions = [];
+
+        for (const region of regions) {
+            for (const playerRegion of region.playerTokens) {
+                playerRegions.push({
+                    id: playerRegion.id,
+                    [COMPRESSED_KEY_REGION_ID]: playerRegion.regionId,
+                    [COMPRESSED_KEY_PLAYER_ID]: playerRegion.playerId,
+                });
+            }
+        }
+
+        return playerRegions;
+    }
+
+    static decompress(snapshot: ICompressedSnapshot): IDecompressedSnapshot {
         return {
             game: SnapshotService.decompressGame(snapshot[COMPRESSED_KEY_GAME]),
             players: snapshot[COMPRESSED_KEY_PLAYERS].map(SnapshotService.decompressPlayer),
             cards: SnapshotService.decompressCards(snapshot[COMPRESSED_KEY_CARDS]),
-        }
-
+            playerRegions: SnapshotService.decompressPlayerRegions(snapshot[COMPRESSED_KEY_PLAYER_REGIONS])
+        };
     }
 
     static decompressCard(compressedCard: ICompressedCard, playerId: number, state: CardState): IDecompressedCard {
@@ -182,7 +214,98 @@ export default class SnapshotService {
             trollTokens: compressedPlayer[COMPRESSED_KEY_TROLL_TOKENS],
             orcTokens: compressedPlayer[COMPRESSED_KEY_ORC_TOKENS].map(SnapshotService.decompressColor),
             cards: SnapshotService.decompressCards(compressedPlayer[COMPRESSED_KEY_CARDS], compressedPlayer.id),
-        }
+        };
     }
 
+    static decompressPlayerRegions(compressedPlayerRegions: ICompressedPlayerRegion[]): IDecompressedPlayerRegion[]  {
+        return compressedPlayerRegions.map(compressedPlayerRegion => ({
+            id: compressedPlayerRegion.id,
+            playerId: compressedPlayerRegion[COMPRESSED_KEY_PLAYER_ID],
+            regionId: compressedPlayerRegion[COMPRESSED_KEY_REGION_ID],
+        }));
+    }
+
+    static async restore(snapshotId: number) {
+        const transaction = await sequelize.transaction();
+
+        try {
+            const snapshot = await Snapshot.findOne({
+                where: {
+                    id: snapshotId,
+                }
+            });
+
+            if (!snapshot) {
+                throw new CustomException(ERROR_NOT_FOUND, 'Snapshot not found');
+            }
+
+            const decompressedSnapshot = SnapshotService.decompress(snapshot.snapshot);
+
+            await Game.update(decompressedSnapshot.game, {
+                where: {
+                    id: snapshot.gameId,
+                }
+            });
+
+            for (const player of decompressedSnapshot.players) {
+                await Player.update(player, {
+                    where: {
+                        id: player.id,
+                    }
+                });
+            }
+
+            for (const card of decompressedSnapshot.cards) {
+                await Card.update(card, {
+                    where: {
+                        id: card.id,
+                    }
+                });
+            }
+
+            const playerRegionIds: number[] = [];
+
+            for (const playerRegion of decompressedSnapshot.playerRegions) {
+                playerRegionIds.push(playerRegion.id);
+
+                await PlayerRegion.update(playerRegion, {
+                    where: {
+                        id: playerRegion.id,
+                    }
+                });
+            }
+
+            await PlayerRegion.destroy({
+                where: {
+                    playerId: {
+                        [Op.in]: decompressedSnapshot.players.map(player => player.id),
+                    },
+                    regionId: {
+                        [Op.notIn]: playerRegionIds
+                    }
+                }
+            });
+
+            await NextAction.destroy({
+                where: {
+                    gameId: snapshot.gameId,
+                    state: NextActionState
+                }
+            });
+
+            await Snapshot.destroy({
+                where: {
+                    gameId: snapshot.gameId,
+                    id: {
+                        [Op.gte]: snapshotId,
+                    }
+                }
+            });
+
+            await transaction.commit();
+        } catch (error: any) {
+            await transaction.rollback();
+            throw new CustomException(error.type, error.message);
+        }
+    }
 };

@@ -5,9 +5,12 @@ export const COMPRESSED_KEY_ACTIVE_PLAYER_ID = 'apid';
 export const COMPRESSED_KEY_GAME = 'g';
 export const COMPRESSED_KEY_LEADER_ID = 'lid';
 export const COMPRESSED_KEY_PLAYER_ID = 'pid';
+export const COMPRESSED_KEY_REGION_ID = 'rid';
 export const COMPRESSED_KEY_PLAYERS = 'p';
 export const COMPRESSED_KEY_CARDS = 'c';
+export const COMPRESSED_KEY_PLAYER_REGIONS = 'pr';
 export const COMPRESSED_KEY_AGE = 'a';
+export const COMPRESSED_KEY_TOKENS = 't';
 
 export const COMPRESSED_KEY_IN_BAND = 'b';
 export const COMPRESSED_KEY_IN_DECK = 'd';
@@ -89,10 +92,17 @@ export interface ICompressedPlayer {
     [COMPRESSED_KEY_CARDS]: ICompressedCards,
 }
 
+export interface ICompressedPlayerRegion {
+    id: number;
+    [COMPRESSED_KEY_REGION_ID]: number;
+    [COMPRESSED_KEY_PLAYER_ID]: number;
+}
+
 export interface ICompressedSnapshot {
     [COMPRESSED_KEY_GAME]: ICompressedGame;
     [COMPRESSED_KEY_PLAYERS]: ICompressedPlayer[];
     [COMPRESSED_KEY_CARDS]: ICompressedCards;
+    [COMPRESSED_KEY_PLAYER_REGIONS]: ICompressedPlayerRegion[];
 }
 
 export interface IDecompressedGame {
@@ -118,10 +128,17 @@ export interface IDecompressedPlayer {
     cards: IDecompressedCard[];
 }
 
+export interface IDecompressedPlayerRegion {
+    id: number;
+    regionId: number;
+    playerId: number;
+}
+
 export interface IDecompressedSnapshot {
     game: IDecompressedGame;
     players: IDecompressedPlayer[];
     cards: IDecompressedCard[];
+    playerRegions: IDecompressedPlayerRegion[];
 }
 
 export interface ISnapshotResponse extends IGameStateResponse {

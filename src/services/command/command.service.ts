@@ -78,7 +78,7 @@ export default class CommandService {
                 regionId: game.regions.find(region => region.color === regionColor)?.id,
             });
 
-            await SnapshotService.create(game);
+            await SnapshotService.create(game, Boolean(nextAction));
 
             let nextActions = [];
 
