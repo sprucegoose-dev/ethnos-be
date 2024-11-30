@@ -3,7 +3,6 @@ import sequelize from '@database/connection';
 import { GameState } from '@interfaces/game.interface';
 import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import {
-    ICanRequestUndo,
     IUndoApprovalOption,
     IUndoRequestResponse,
     UndoRequestState
@@ -26,14 +25,9 @@ import GameService from '@services/game/game.service';
 import EventService from '@services/event/event.service';
 import SnapshotService from '@services/snapshot/snapshot.service';
 
-export default class UndoRequestService {
+export default class UndoService {
 
-    static async canRequestUndo(gameId: number, playerId: number): Promise<ICanRequestUndo> {
-        let validation: ICanRequestUndo = {
-            canRequest: false,
-            error: null,
-        }
-
+    static async vallidateUndoRequest(gameId: number, playerId: number): Promise<void> {
         const undoRequest = await UndoRequest.findOne({
             where: {
                 gameId,
@@ -44,35 +38,25 @@ export default class UndoRequestService {
         const latestSnapshot = await Snapshot.findOne({
             where: {
                 gameId,
+                playerId,
                 resetPoint: true,
             },
             order: [ [ 'id', 'DESC' ] ],
         });
 
         if (!latestSnapshot) {
-            validation.error = 'There is no snapshot available';
-            return validation;
+            throw new CustomException(ERROR_BAD_REQUEST, 'There is no snapshot available');
         }
 
-        if (undoRequest && undoRequest.snapshotId === latestSnapshot.id) {
+        if (undoRequest) {
             if (undoRequest.state === UndoRequestState.PENDING) {
-                validation.error = 'There is currently a pending undo request';
+                throw new CustomException(ERROR_BAD_REQUEST, 'There is currently a pending undo request');
             }
 
-            if (undoRequest.state === UndoRequestState.REJECTED) {
-                validation.error = 'Your request to undo this move has been denied.';
-            }
-        }
-
-        if ((!undoRequest || undoRequest.snapshotId !== latestSnapshot.id)) {
-            if (latestSnapshot.playerId === playerId) {
-                validation.canRequest = true;
-            } else {
-                validation.error = 'You cannot request to undo an action at this time.';
+            if (undoRequest.snapshotId === latestSnapshot.id && undoRequest.state === UndoRequestState.REJECTED) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'Your request to undo this move has been denied.');
             }
         }
-
-        return validation;
     }
 
     static async create(userId: number, gameId: number): Promise<UndoRequest> {
@@ -84,6 +68,11 @@ export default class UndoRequestService {
                 {
                     model: Player.unscoped(),
                     as: 'players',
+                    include: [
+                        {
+                            model: User,
+                        }
+                    ]
                 }
             ]
         });
@@ -97,17 +86,33 @@ export default class UndoRequestService {
             throw new CustomException(ERROR_BAD_REQUEST, errorMsg);
         }
 
-        const player = game.players.filter(player => player.userId === userId)[0];
+        const player = game.players.find(player => player.userId === userId);
 
         if (!player) {
             throw new CustomException(ERROR_BAD_REQUEST, 'You must be in the game to undo an action.');
         }
 
-        const canRequestUndo = await this.canRequestUndo(gameId, player.id);
+        const botOnlyGame = game.players.every(player => player.userId === userId || player.user.isBot);
 
-        if (!canRequestUndo.canRequest) {
-            throw new CustomException(ERROR_BAD_REQUEST, canRequestUndo.error);
+        if (botOnlyGame) {
+            const snapshot = await Snapshot.findOne({
+                where: {
+                    gameId,
+                    playerId: player.id,
+                    resetPoint: true,
+                },
+                order: [ [ 'id', 'DESC' ] ],
+            });
+
+            if (snapshot) {
+                await SnapshotService.restore(snapshot.id);
+                return;
+            } else {
+                throw new CustomException(ERROR_BAD_REQUEST, "You can only request to undo after you have made at least one move");
+            }
         }
+
+        await this.vallidateUndoRequest(gameId, player.id);
 
         const transaction = await sequelize.transaction();
 
@@ -115,6 +120,7 @@ export default class UndoRequestService {
             const snapshot = await Snapshot.findOne({
                 where: {
                     gameId,
+                    playerId: player.id,
                     resetPoint: true,
                 },
                 order: [ [ 'id', 'DESC' ] ],
@@ -199,10 +205,9 @@ export default class UndoRequestService {
             order: [['id', 'DESC']],
         });
 
-        const requestingPlayer = undoRequest ?
-            game.players.filter(player => player.id === undoRequest.playerId)[0] : null;
+        const requestingPlayer = game.players.find(player => player.id === undoRequest?.playerId);
 
-        const username = requestingPlayer ? requestingPlayer.user.username : 'A player';
+        const username = requestingPlayer?.user?.username ?? 'A player';
 
         const description = `${username} has requested to undo their last move. Do you approve it?'`;
         const options: IUndoApprovalOption[] = [
@@ -230,16 +235,14 @@ export default class UndoRequestService {
             };
         }
 
-        const canRequestUndo = await this.canRequestUndo(gameId, player.id);
-
         return {
             description,
             options,
-            canRequestUndo: canRequestUndo.canRequest,
-            undoRequestId: undoRequest ? undoRequest.id : null,
+            canRequestUndo: !undoRequest,
+            undoRequestId: undoRequest?.id,
             requiredApprovals: undoRequest ? undoRequest.undoApprovals : [],
-            state: undoRequest ? undoRequest.state : null,
-            playerId: undoRequest ? undoRequest.playerId : null,
+            state: undoRequest?.state,
+            playerId: undoRequest?.playerId,
         }
     }
 
@@ -263,7 +266,7 @@ export default class UndoRequestService {
             ]
         });
 
-        const player = game.players.filter(player => player.userId === userId)[0];
+        const player = game.players.find(player => player.userId === userId);
 
         if (!player) {
             throw new CustomException(ERROR_BAD_REQUEST, 'You must be in the game to approve an undo request.');
@@ -281,7 +284,7 @@ export default class UndoRequestService {
             throw new CustomException(ERROR_BAD_REQUEST, 'Undo approval not found.');
         }
 
-        if (![PENDING, APPROVED, REJECTED].includes(state)) {
+        if (![APPROVED, REJECTED].includes(state)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Invalid decision value.');
         }
 

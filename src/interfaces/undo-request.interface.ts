@@ -40,8 +40,3 @@ export interface IUndoRequestResponse {
     state: UndoRequestState;
     undoRequestId: number;
 }
-
-export interface ICanRequestUndo {
-    canRequest: boolean;
-    error: string;
-}
