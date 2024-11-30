@@ -8,7 +8,7 @@ import {
 
 import Game from '@models/game.model';
 import Player from '@models/player.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 
 import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';

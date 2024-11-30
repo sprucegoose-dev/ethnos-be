@@ -20,7 +20,7 @@ import EventService from '@services/event/event.service';
 import BotService from '@services/bot/bot.service';
 import ActionLogService from '@services/actionLog/action-log.service';
 
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 
@@ -78,7 +78,7 @@ export default class CommandService {
                 regionId: game.regions.find(region => region.color === regionColor)?.id,
             });
 
-            await SnapshotService.create(game, Boolean(nextAction));
+            await SnapshotService.create(game, !nextAction);
 
             let nextActions = [];
 

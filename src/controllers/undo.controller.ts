@@ -9,6 +9,7 @@ import UndoService from '../services/undo/undo.service';
 class UndoController {
 
     async requestUndo(req: AuthRequest, res: Response) {
+        console.log('got here');
         const { userId } = req;
         const { gameId } = req.params;
         const response = await UndoService.create(userId, parseInt(gameId, 10));

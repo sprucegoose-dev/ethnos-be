@@ -21,6 +21,7 @@ import {
     COMPRESSED_KEY_PLAYER_REGIONS,
     COMPRESSED_KEY_REGION_ID,
     COMPRESSED_KEY_REVEALED,
+    COMPRESSED_KEY_TOKENS,
     COMPRESSED_KEY_TROLL_TOKENS,
     DECOMPRESSED_COLOR_KEYS,
     ICompressedCard,
@@ -43,7 +44,7 @@ import Card from '@models/card.model';
 import Snapshot from '@models/snapshot.model';
 import Region from '@models/region.model';
 import Game from '@models/game.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 
 import sequelize from '@database/connection';
 
@@ -137,9 +138,9 @@ export default class SnapshotService {
         for (const region of regions) {
             for (const playerRegion of region.playerTokens) {
                 playerRegions.push({
-                    id: playerRegion.id,
                     [COMPRESSED_KEY_REGION_ID]: playerRegion.regionId,
                     [COMPRESSED_KEY_PLAYER_ID]: playerRegion.playerId,
+                    [COMPRESSED_KEY_TOKENS]: playerRegion.tokens,
                 });
             }
         }
@@ -219,9 +220,9 @@ export default class SnapshotService {
 
     static decompressPlayerRegions(compressedPlayerRegions: ICompressedPlayerRegion[]): IDecompressedPlayerRegion[]  {
         return compressedPlayerRegions.map(compressedPlayerRegion => ({
-            id: compressedPlayerRegion.id,
             playerId: compressedPlayerRegion[COMPRESSED_KEY_PLAYER_ID],
             regionId: compressedPlayerRegion[COMPRESSED_KEY_REGION_ID],
+            tokens: compressedPlayerRegion[COMPRESSED_KEY_TOKENS],
         }));
     }
 
@@ -263,14 +264,15 @@ export default class SnapshotService {
                 });
             }
 
-            const playerRegionIds: number[] = [];
+            const regionIds: number[] = [];
 
             for (const playerRegion of decompressedSnapshot.playerRegions) {
-                playerRegionIds.push(playerRegion.id);
+                regionIds.push(playerRegion.regionId);
 
                 await PlayerRegion.update(playerRegion, {
                     where: {
-                        id: playerRegion.id,
+                        regionId: playerRegion.regionId,
+                        playerId: playerRegion.playerId,
                     }
                 });
             }
@@ -281,7 +283,7 @@ export default class SnapshotService {
                         [Op.in]: decompressedSnapshot.players.map(player => player.id),
                     },
                     regionId: {
-                        [Op.notIn]: playerRegionIds
+                        [Op.notIn]: regionIds
                     }
                 }
             });

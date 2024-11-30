@@ -93,9 +93,9 @@ export interface ICompressedPlayer {
 }
 
 export interface ICompressedPlayerRegion {
-    id: number;
     [COMPRESSED_KEY_REGION_ID]: number;
     [COMPRESSED_KEY_PLAYER_ID]: number;
+    [COMPRESSED_KEY_TOKENS]: number;
 }
 
 export interface ICompressedSnapshot {
@@ -129,9 +129,9 @@ export interface IDecompressedPlayer {
 }
 
 export interface IDecompressedPlayerRegion {
-    id: number;
     regionId: number;
     playerId: number;
+    tokens: number;
 }
 
 export interface IDecompressedSnapshot {

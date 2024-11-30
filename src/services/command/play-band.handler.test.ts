@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 
 import Game from '@models/game.model';
 import PlayerRegion from '@models/player-region.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 import Card from '@models/card.model';
 import Player from '@models/player.model';
 

@@ -8,7 +8,7 @@ import Player from '@models/player.model';
 import PlayerService from '../player/player.service';
 import PlayerRegion from '@models/player-region.model';
 import Region from '@models/region.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 
 import GameService from '@services/game/game.service';
 

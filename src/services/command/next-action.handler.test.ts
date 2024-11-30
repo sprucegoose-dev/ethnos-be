@@ -1,5 +1,5 @@
 import Game from '@models/game.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 import Player from '@models/player.model';
 
 import { NextActionState } from '@interfaces/next-action.interface';
