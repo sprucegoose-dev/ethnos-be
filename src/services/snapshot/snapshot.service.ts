@@ -157,7 +157,7 @@ export default class SnapshotService {
         };
     }
 
-    static decompressCard(compressedCard: ICompressedCard, playerId: number, state: CardState): IDecompressedCard {
+    static decompressCard(compressedCard: ICompressedCard, state: CardState, playerId?: number): IDecompressedCard {
         return {
             id: compressedCard.id,
             index: compressedCard[COMPRESSED_KEY_INDEX],
@@ -172,23 +172,23 @@ export default class SnapshotService {
 
         if (playerId) {
             for (const card of compressedCards[COMPRESSED_KEY_IN_BAND]) {
-                decompressedCards.push(SnapshotService.decompressCard(card, playerId, CardState.IN_BAND));
+                decompressedCards.push(SnapshotService.decompressCard(card, CardState.IN_BAND, playerId));
             }
 
             for (const card of compressedCards[COMPRESSED_KEY_IN_HAND]) {
-                decompressedCards.push(SnapshotService.decompressCard(card, playerId, CardState.IN_HAND));
+                decompressedCards.push(SnapshotService.decompressCard(card, CardState.IN_HAND, playerId));
             }
         } else {
             for (const card of compressedCards[COMPRESSED_KEY_IN_MARKET]) {
-                decompressedCards.push(SnapshotService.decompressCard(card, null, CardState.IN_MARKET));
+                decompressedCards.push(SnapshotService.decompressCard(card, CardState.IN_MARKET));
             }
 
             for (const card of compressedCards[COMPRESSED_KEY_IN_DECK]) {
-                decompressedCards.push(SnapshotService.decompressCard(card, null, CardState.IN_DECK));
+                decompressedCards.push(SnapshotService.decompressCard(card, CardState.IN_DECK));
             }
 
             for (const card of compressedCards[COMPRESSED_KEY_REVEALED]) {
-                decompressedCards.push(SnapshotService.decompressCard(card, null, CardState.REVEALED));
+                decompressedCards.push(SnapshotService.decompressCard(card, CardState.REVEALED));
             }
         }
 
@@ -254,6 +254,14 @@ export default class SnapshotService {
                         id: player.id,
                     }
                 });
+
+                for (const card of player.cards) {
+                    await Card.update(card, {
+                        where: {
+                            id: card.id,
+                        }
+                    });
+                }
             }
 
             for (const card of decompressedSnapshot.cards) {

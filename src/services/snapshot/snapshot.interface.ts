@@ -61,8 +61,8 @@ export const SNAPSHOT_FETCH_LIMIT = 20;
 
 export interface ICompressedCard {
     id: number;
-    [COMPRESSED_KEY_LEADER_ID]?: number;
     [COMPRESSED_KEY_INDEX]?: number;
+    [COMPRESSED_KEY_LEADER_ID]?: number;
 }
 
 export interface ICompressedCards {
