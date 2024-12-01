@@ -32,6 +32,23 @@ const {
     DB_HOST
 } = process.env as unknown as IDatabaseEnvVars;
 
+const models =[
+    User,
+    Player,
+    Game,
+    Tribe,
+    Card,
+    Region,
+    PlayerRegion,
+    NextAction,
+    ActionLogType,
+    Snapshot,
+    ActionLog,
+    ChatMessage,
+    UndoRequest,
+    UndoApproval,
+];
+
 const options = {
     host: DB_HOST,
     dialect: 'mysql' as Dialect,
@@ -46,43 +63,13 @@ const options = {
         charset: 'utf8',
         collate: 'utf8_general_ci',
     },
-    models: [
-        User,
-        Player,
-        Game,
-        Tribe,
-        Card,
-        Region,
-        PlayerRegion,
-        NextAction,
-        ActionLogType,
-        ActionLog,
-        Snapshot,
-        ChatMessage,
-        UndoRequest,
-        UndoApproval,
-    ],
+    models,
 };
 
 const sequelize = NODE_ENV === 'test' ?
     new Sequelize('sqlite::memory:', {
         logging: false,
-        models: [
-            User,
-            Player,
-            Game,
-            Tribe,
-            Card,
-            Region,
-            PlayerRegion,
-            NextAction,
-            ActionLogType,
-            ActionLog,
-            Snapshot,
-            ChatMessage,
-            UndoRequest,
-            UndoApproval,
-        ],
+        models,
     }) :
     new Sequelize(DB_NAME, DB_USER, DB_PASS, options);
 

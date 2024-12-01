@@ -10,6 +10,7 @@ import Card from './card.model';
 import Region from './region.model';
 import ActionLogType from './action-log-type.model';
 import Player from './player.model';
+import Snapshot from './snapshot.model';
 
 @Table({
     tableName: 'action_logs',
@@ -72,6 +73,15 @@ export default class ActionLog extends Model {
         }
     })
     leaderId: number;
+
+    @Column({
+        field: 'snapshot_id',
+        references: {
+            model: Snapshot,
+            key: 'id',
+        }
+    })
+    snapshotId: number;
 
     @BelongsTo(() => Card, 'cardId')
     card: Card;

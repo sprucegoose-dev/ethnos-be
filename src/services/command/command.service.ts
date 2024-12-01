@@ -71,14 +71,15 @@ export default class CommandService {
                 (payload as IPlayBandPayload).leaderId)?.color ||
                 (payload as IPlayBandPayload).regionColor;
 
+            const snapshot = await SnapshotService.create(game, !nextAction);
+
             await ActionLogService.log({
                 payload,
                 gameId,
                 playerId: activePlayer.id,
                 regionId: game.regions.find(region => region.color === regionColor)?.id,
+                snapshotId: snapshot.id,
             });
-
-            await SnapshotService.create(game, !nextAction);
 
             let nextActions = [];
 

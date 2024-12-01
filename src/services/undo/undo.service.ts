@@ -59,6 +59,32 @@ export default class UndoService {
         }
     }
 
+    static async autoUndo(gameId: number, playerId: number): Promise<void>{
+        const snapshot = await Snapshot.findOne({
+            where: {
+                gameId,
+                playerId,
+                resetPoint: true,
+            },
+            order: [ [ 'id', 'DESC' ] ],
+        });
+
+        if (snapshot) {
+            await SnapshotService.restore(snapshot.id);
+
+            const updatedGameState = await GameService.getStateResponse(gameId);
+
+            EventService.emitEvent({
+                type: EVENT_GAME_UPDATE,
+                payload: updatedGameState,
+            });
+
+            return;
+        } else {
+            throw new CustomException(ERROR_BAD_REQUEST, "You can only request to undo after you have made at least one move");
+        }
+    }
+
     static async create(userId: number, gameId: number): Promise<UndoRequest> {
         const game = await Game.findOne({
             where: {
@@ -95,21 +121,8 @@ export default class UndoService {
         const botOnlyGame = game.players.every(player => player.userId === userId || player.user.isBot);
 
         if (botOnlyGame) {
-            const snapshot = await Snapshot.findOne({
-                where: {
-                    gameId,
-                    playerId: player.id,
-                    resetPoint: true,
-                },
-                order: [ [ 'id', 'DESC' ] ],
-            });
-
-            if (snapshot) {
-                await SnapshotService.restore(snapshot.id);
-                return;
-            } else {
-                throw new CustomException(ERROR_BAD_REQUEST, "You can only request to undo after you have made at least one move");
-            }
+          await this.autoUndo(game.id, player.id);
+          return;
         }
 
         await this.vallidateUndoRequest(gameId, player.id);

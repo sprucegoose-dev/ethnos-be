@@ -54,10 +54,10 @@ import PlayerRegion from '../../models/player-region.model';
 
 export default class SnapshotService {
 
-    static async create(gameState: IGameState, resetPoint: boolean): Promise<void> {
+    static async create(gameState: IGameState, resetPoint: boolean): Promise<Snapshot> {
         const snapshot = SnapshotService.compress(gameState)
 
-        await Snapshot.create({
+        return await Snapshot.create({
             gameId: gameState.id,
             age: gameState.age,
             playerId: gameState.activePlayerId,
@@ -291,7 +291,7 @@ export default class SnapshotService {
             await NextAction.destroy({
                 where: {
                     gameId: snapshot.gameId,
-                    state: NextActionState
+                    state: NextActionState.PENDING
                 }
             });
 
