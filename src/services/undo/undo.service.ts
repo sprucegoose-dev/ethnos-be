@@ -1,7 +1,7 @@
 import sequelize from '@database/connection';
 
 import { GameState } from '@interfaces/game.interface';
-import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
+import { EVENT_GAME_UPDATE, EVENT_UNDO_REQUEST } from '@interfaces/event.interface';
 import {
     IUndoApprovalOption,
     IUndoRequestResponse,
@@ -45,7 +45,7 @@ export default class UndoService {
         });
 
         if (!latestSnapshot) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'There is no snapshot available');
+            throw new CustomException(ERROR_BAD_REQUEST, 'You must make at least one move to request to undo');
         }
 
         if (undoRequest) {
@@ -159,11 +159,9 @@ export default class UndoService {
 
             await transaction.commit();
 
-            const updatedGameState = await GameService.getStateResponse(gameId);
-
             EventService.emitEvent({
-                type: EVENT_GAME_UPDATE,
-                payload: updatedGameState,
+                type: EVENT_UNDO_REQUEST,
+                gameId,
             });
 
             return undoRequest.toJSON();
@@ -234,7 +232,7 @@ export default class UndoService {
             }
         ];
 
-        const player = game.players.filter(player => player.userId === userId)[0];
+        const player = game.players.find(player => player.userId === userId);
 
         if (!player) {
             return {

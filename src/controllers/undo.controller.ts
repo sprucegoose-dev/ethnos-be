@@ -17,9 +17,9 @@ class UndoController {
 
     async recordDecision(req: AuthRequest, res: Response) {
         const { userId } = req;
-        const { state, undoApprovalId } = req.body;
+        const { decision, undoApprovalId } = req.body;
         const { gameId } = req.params;
-        const response = await UndoService.recordDecision(userId, parseInt(gameId, 10), undoApprovalId, state);
+        const response = await UndoService.recordDecision(userId, parseInt(gameId, 10), undoApprovalId, decision);
         res.send(response);
     }
 

@@ -118,7 +118,7 @@ export default class ChatService {
         const messages = await this.queryGetMessages(gameId);
 
         EventService.emitEvent({
-            channelId: gameId,
+            gameId: gameId,
             type: EVENT_CHAT_UPDATE,
             payload: messages,
         });
