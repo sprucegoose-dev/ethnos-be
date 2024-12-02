@@ -19,6 +19,8 @@ export default class BotTokenHandler {
 
         let highestValue = 0;
         let regionColor: Color;
+        let fallbackHighestValue =  0;
+        let fallbackRegionColor: Color;
 
         // out of those regions, find the most valuable one
         // exclude regions where the player already has a token advantage of 2 tokens or more
@@ -29,7 +31,14 @@ export default class BotTokenHandler {
                 highestValue = regionTotalValue;
                 regionColor = region.color;
             }
+
+            if (regionTotalValue > fallbackHighestValue) {
+                fallbackHighestValue = regionTotalValue;
+                fallbackRegionColor = region.color;
+            }
         }
+
+        regionColor = regionColor || fallbackRegionColor;
 
         const action: IAddFreeTokenPayload = {
             type: ActionType.ADD_FREE_TOKEN,
