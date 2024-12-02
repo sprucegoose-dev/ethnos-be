@@ -10,6 +10,7 @@ import UsersController from './controllers/user.controller';
 import GamesController from './controllers/game.controller';
 import ChatsController from './controllers/chat.controller';
 import TribesController from './controllers/tribe.controller';
+import UndoController from './controllers/undo.controller';
 import AuthMiddleware from './middleware/auth.middleware';
 import {
     EVENT_JOIN_GAME,
@@ -59,6 +60,11 @@ app.get('/game/:id', GamesController.getState);
 app.post('/game/create', GamesController.create);
 
 app.get('/tribe/all', TribesController.getAll);
+
+app.get('/undo/:gameId', UndoController.getUndoState);
+app.post('/undo/:gameId/request', UndoController.requestUndo);
+app.post('/undo/:gameId/decision', UndoController.recordDecision);
+app.get('/undo/:undoRequestId/request', UndoController.getUndoRequest);
 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {

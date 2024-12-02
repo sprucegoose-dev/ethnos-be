@@ -1,6 +1,6 @@
 import { NextActionState } from '@interfaces/next-action.interface';
 
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 
 export default class NextActionHandler {
 

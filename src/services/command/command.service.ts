@@ -6,6 +6,7 @@ import {
 import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 import { GameState } from '@interfaces/game.interface';
+import { UndoRequestState } from '@interfaces/undo-request.interface';
 
 import sequelize from '@database/connection';
 
@@ -19,17 +20,18 @@ import GameService from '@services/game/game.service';
 import EventService from '@services/event/event.service';
 import BotService from '@services/bot/bot.service';
 import ActionLogService from '@services/actionLog/action-log.service';
+import SnapshotService from '@services/snapshot/snapshot.service';
 
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
+import UndoRequest from '@models/undo-request.model';
 
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
 import TribeHandler from './tribe.handler';
-import SnapshotService from '../snapshot/snapshot.service';
 
 export default class CommandService {
 
@@ -55,6 +57,18 @@ export default class CommandService {
                 throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
             }
 
+            const undoState = await UndoRequest.findOne({
+                where: {
+                    gameId: game.id,
+                    state: UndoRequestState.PENDING
+                },
+                order: [['id', 'DESC']]
+            });
+
+            if (undoState) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'There is currently a pending undo request');
+            }
+
             const nextAction = await NextAction.findOne({
                 where: {
                     gameId: game.id,
@@ -71,14 +85,15 @@ export default class CommandService {
                 (payload as IPlayBandPayload).leaderId)?.color ||
                 (payload as IPlayBandPayload).regionColor;
 
+            const snapshot = await SnapshotService.create(game, !nextAction);
+
             await ActionLogService.log({
                 payload,
                 gameId,
                 playerId: activePlayer.id,
                 regionId: game.regions.find(region => region.color === regionColor)?.id,
+                snapshotId: snapshot.id,
             });
-
-            await SnapshotService.create(game);
 
             let nextActions = [];
 

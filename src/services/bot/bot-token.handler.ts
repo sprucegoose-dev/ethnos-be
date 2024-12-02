@@ -3,6 +3,7 @@ import { Color } from '@interfaces/game.interface';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
 import CommandService from '@services/command/command.service';
+import PlayerRegion from '../../models/player-region.model';
 
 export default class BotTokenHandler {
 
@@ -20,10 +21,11 @@ export default class BotTokenHandler {
         let regionColor: Color;
 
         // out of those regions, find the most valuable one
+        // exclude regions where the player already has a token advantage of 2 tokens or more
         for (const region of sortedRegions) {
             const regionTotalValue = region.values.reduce((acc, num) => acc + num, 0);
 
-            if (regionTotalValue > highestValue) {
+            if (regionTotalValue > highestValue && !BotTokenHandler.playerHasTokenAdvantage(player.id, region.playerTokens)) {
                 highestValue = regionTotalValue;
                 regionColor = region.color;
             }
@@ -36,6 +38,17 @@ export default class BotTokenHandler {
         };
 
         await CommandService.handleAction(player.userId, player.gameId, action);
+    }
+
+
+    static playerHasTokenAdvantage(playerId: number, playerRegion: PlayerRegion[], tokenAdvantage: number = 2): boolean {
+        const playerTokens = playerRegion.find(tokenData => tokenData.playerId === playerId)?.tokens || 0;
+
+        const maxOtherTokens = playerRegion
+            .filter(tokenData => tokenData.playerId !== playerId)
+            .reduce((max, tokenData) => Math.max(max, tokenData.tokens), 0);
+
+        return playerTokens >= maxOtherTokens + tokenAdvantage;
     }
 
     static async handleFreeTokenAction(actions: IActionPayload[], regions: Region[], player: Player): Promise<boolean> {

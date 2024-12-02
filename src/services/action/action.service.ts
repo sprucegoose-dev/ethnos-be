@@ -12,7 +12,7 @@ import { NextActionState } from '@interfaces/next-action.interface';
 
 import GameService from '@services/game/game.service';
 
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 
 export default class ActionService {
 

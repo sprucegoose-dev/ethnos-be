@@ -1,5 +1,5 @@
 import Game from '@models/game.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 import PlayerRegion from '@models/player-region.model';
 import Region from '@models/region.model';
 

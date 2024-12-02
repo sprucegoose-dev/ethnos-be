@@ -8,11 +8,13 @@ import Player from '@models/player.model';
 import Region from '@models/region.model';
 import User from '@models/user.model';
 import PlayerRegion from '@models/player-region.model';
-import NextAction from '@models/next-aciton.model';
+import NextAction from '@models/next-action.model';
 import ActionLogType from '../src/models/action-log-type.model';
 import ActionLog from '../src/models/action-log.model';
 import Snapshot from '../src/models/snapshot.model';
 import ChatMessage from '../src/models/chat-message.model';
+import UndoRequest from '../src/models/undo-request.model';
+import UndoApproval from '../src/models/undo-approval.model';
 
 interface IDatabaseEnvVars {
     NODE_ENV: string;
@@ -30,6 +32,23 @@ const {
     DB_HOST
 } = process.env as unknown as IDatabaseEnvVars;
 
+const models =[
+    User,
+    Player,
+    Game,
+    Tribe,
+    Card,
+    Region,
+    PlayerRegion,
+    NextAction,
+    ActionLogType,
+    Snapshot,
+    ActionLog,
+    ChatMessage,
+    UndoRequest,
+    UndoApproval,
+];
+
 const options = {
     host: DB_HOST,
     dialect: 'mysql' as Dialect,
@@ -44,39 +63,13 @@ const options = {
         charset: 'utf8',
         collate: 'utf8_general_ci',
     },
-    models: [
-        User,
-        Player,
-        Game,
-        Tribe,
-        Card,
-        Region,
-        PlayerRegion,
-        NextAction,
-        ActionLogType,
-        ActionLog,
-        Snapshot,
-        ChatMessage,
-    ],
+    models,
 };
 
 const sequelize = NODE_ENV === 'test' ?
     new Sequelize('sqlite::memory:', {
         logging: false,
-        models: [
-            User,
-            Player,
-            Game,
-            Tribe,
-            Card,
-            Region,
-            PlayerRegion,
-            NextAction,
-            ActionLogType,
-            ActionLog,
-            Snapshot,
-            ChatMessage,
-        ],
+        models,
     }) :
     new Sequelize(DB_NAME, DB_USER, DB_PASS, options);
 

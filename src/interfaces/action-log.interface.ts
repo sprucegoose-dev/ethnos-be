@@ -17,7 +17,7 @@ export interface IActionLogParams {
     type?: LogType;
     playerId: number;
     regionId?: number;
-    snapshotId?: number
+    snapshotId?: number;
 }
 
 export enum LogType {
