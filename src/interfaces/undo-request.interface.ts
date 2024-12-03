@@ -33,7 +33,6 @@ export enum UndoRequestState {
 
 export interface IUndoRequestResponse {
     description: string;
-    options: IUndoApprovalOption[];
     canRequestUndo: boolean;
     playerId: number;
     requiredApprovals: IUndoApproval[];

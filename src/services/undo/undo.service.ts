@@ -3,7 +3,6 @@ import sequelize from '@database/connection';
 import { GameState } from '@interfaces/game.interface';
 import { EVENT_GAME_UPDATE, EVENT_UNDO_REQUEST } from '@interfaces/event.interface';
 import {
-    IUndoApprovalOption,
     IUndoRequestResponse,
     UndoRequestState
 } from '@interfaces/undo-request.interface';
@@ -221,23 +220,12 @@ export default class UndoService {
         const username = requestingPlayer?.user?.username ?? 'A player';
 
         const description = `${username} has requested to undo their last move. Do you approve it?'`;
-        const options: IUndoApprovalOption[] = [
-            {
-                label: 'Yes',
-                value: UndoRequestState.APPROVED,
-            },
-            {
-                label: 'No',
-                value: UndoRequestState.REJECTED,
-            }
-        ];
 
         const player = game.players.find(player => player.userId === userId);
 
         if (!player) {
             return {
                 description,
-                options,
                 canRequestUndo: false,
                 undoRequestId: null,
                 requiredApprovals: [],
@@ -248,7 +236,6 @@ export default class UndoService {
 
         return {
             description,
-            options,
             canRequestUndo: !undoRequest,
             undoRequestId: undoRequest?.id,
             requiredApprovals: undoRequest ? undoRequest.undoApprovals : [],
