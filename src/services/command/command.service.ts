@@ -81,20 +81,6 @@ export default class CommandService {
                 throw new CustomException(ERROR_BAD_REQUEST, `This action is not valid ${JSON.stringify(payload)}`);
             }
 
-            const regionColor = activePlayer.cards.find(card => card.id ===
-                (payload as IPlayBandPayload).leaderId)?.color ||
-                (payload as IPlayBandPayload).regionColor;
-
-            const snapshot = await SnapshotService.create(game, !nextAction);
-
-            await ActionLogService.log({
-                payload,
-                gameId,
-                playerId: activePlayer.id,
-                regionId: game.regions.find(region => region.color === regionColor)?.id,
-                snapshotId: snapshot.id,
-            });
-
             let nextActions = [];
 
             switch (payload.type) {
@@ -153,6 +139,20 @@ export default class CommandService {
             EventService.emitEvent({
                 type: EVENT_GAME_UPDATE,
                 payload: updatedGameState
+            });
+
+            const regionColor = activePlayer.cards.find(card => card.id ===
+                (payload as IPlayBandPayload).leaderId)?.color ||
+                (payload as IPlayBandPayload).regionColor;
+
+            const snapshot = await SnapshotService.create(game, !nextAction);
+
+            await ActionLogService.log({
+                payload,
+                gameId,
+                playerId: activePlayer.id,
+                regionId: game.regions.find(region => region.color === regionColor)?.id,
+                snapshotId: snapshot.id,
             });
 
             if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {

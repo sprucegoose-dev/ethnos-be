@@ -1,16 +1,18 @@
 import { ActionType } from '@interfaces/action.interface';
+import { IActionLogParams, IActionLogPayload, LogType } from '@interfaces/action-log.interface';
+import { EVENT_ACTIONS_LOG_UPDATE } from '@interfaces/event.interface';
 
 import ActionLogType from '@models/action-log-type.model';
 import ActionLog from '@models/action-log.model';
 import Player from '@models/player.model';
 import User from '@models/user.model';
 import Region from '@models/region.model';
+import Card from '@models/card.model';
+import Tribe from '@models/tribe.model';
 
 import { CustomException, ERROR_SERVER } from '@helpers/exception-handler';
 
-import { IActionLogParams, IActionLogPayload, LogType } from '../../interfaces/action-log.interface';
-import Card from '../../models/card.model';
-import Tribe from '../../models/tribe.model';
+import EventService from '@services/event/event.service';
 
 export default class ActionLogService {
 
@@ -36,6 +38,14 @@ export default class ActionLogService {
             regionId,
             cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
             snapshotId,
+        });
+
+        const actionLogs = await this.getActionLogs(gameId);
+
+        EventService.emitEvent({
+            type: EVENT_ACTIONS_LOG_UPDATE,
+            gameId,
+            payload: actionLogs
         });
     }
 
@@ -73,7 +83,7 @@ export default class ActionLogService {
         return {
             id: actionLog.id,
             label: actionLabel,
-            card: actionLog.card,
+            card: actionLog.card?.toJSON(),
             leaderId: actionLog.leaderId,
             playerColor: actionLog.player.color,
         };

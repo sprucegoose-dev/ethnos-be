@@ -2,6 +2,7 @@ import {
     EVENT_ACTIVE_GAMES_UPDATE,
     EVENT_CHAT_UPDATE,
     EVENT_GAME_UPDATE,
+    EVENT_ACTIONS_LOG_UPDATE,
     EVENT_UNDO_REQUEST,
     IEventType,
 } from '@interfaces/event.interface';
@@ -21,6 +22,9 @@ export default class EventService {
                 break;
             case EVENT_GAME_UPDATE:
                 gameSocket.to(`game-${event.payload.id}`).emit(EVENT_GAME_UPDATE, PayloadCompressor.gzip(event.payload));
+                break;
+            case EVENT_ACTIONS_LOG_UPDATE:
+                gameSocket.to(`game-${event.gameId}`).emit(EVENT_ACTIONS_LOG_UPDATE, event.payload);
                 break;
             case EVENT_UNDO_REQUEST:
                 gameSocket.to(`game-${event.gameId}`).emit(EVENT_UNDO_REQUEST);
