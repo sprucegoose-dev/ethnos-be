@@ -6,7 +6,7 @@ import {
 import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 import { GameState } from '@interfaces/game.interface';
-import { UndoRequestState } from '@interfaces/undo-request.interface';
+// import { UndoRequestState } from '@interfaces/undo-request.interface';
 
 import sequelize from '@database/connection';
 
@@ -25,7 +25,7 @@ import SnapshotService from '@services/snapshot/snapshot.service';
 import NextAction from '@models/next-action.model';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
-import UndoRequest from '@models/undo-request.model';
+// import UndoRequest from '@models/undo-request.model';
 
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
@@ -57,17 +57,17 @@ export default class CommandService {
                 throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
             }
 
-            const undoState = await UndoRequest.findOne({
-                where: {
-                    gameId: game.id,
-                    state: UndoRequestState.PENDING
-                },
-                order: [['id', 'DESC']]
-            });
+            // const undoState = await UndoRequest.findOne({
+            //     where: {
+            //         gameId: game.id,
+            //         state: UndoRequestState.PENDING
+            //     },
+            //     order: [['id', 'DESC']]
+            // });
 
-            if (undoState) {
-                throw new CustomException(ERROR_BAD_REQUEST, 'There is currently a pending undo request');
-            }
+            // if (undoState) {
+            //     throw new CustomException(ERROR_BAD_REQUEST, 'There is currently a pending undo request');
+            // }
 
             const nextAction = await NextAction.findOne({
                 where: {
