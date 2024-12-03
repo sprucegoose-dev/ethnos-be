@@ -375,7 +375,8 @@ export default class GameService {
                         'username'
                     ]
                 }
-            ]
+            ],
+            order: [['id', 'desc']]
         });
 
         return games.map(game => ({...game.toJSON(), hasPassword: Boolean(game.password), password: null }));
