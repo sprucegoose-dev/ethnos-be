@@ -23,6 +23,7 @@ export default class ActionLogService {
        gameId,
        regionId,
        snapshotId,
+       emit = false
     }: IActionLogParams): Promise<void> {
         const actionLogType = await ActionLogType.findOne({
             where: {
@@ -40,13 +41,15 @@ export default class ActionLogService {
             snapshotId,
         });
 
-        const actionLogs = await this.getActionLogs(gameId);
+        if (emit) {
+            const actionLogs = await this.getActionLogs(gameId);
 
-        EventService.emitEvent({
-            type: EVENT_ACTIONS_LOG_UPDATE,
-            gameId,
-            payload: actionLogs
-        });
+            EventService.emitEvent({
+                type: EVENT_ACTIONS_LOG_UPDATE,
+                gameId,
+                payload: actionLogs
+            });
+        }
     }
 
     static formatLog(actionLog: ActionLog): IActionLogPayload {

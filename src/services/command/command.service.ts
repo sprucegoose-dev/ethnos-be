@@ -153,6 +153,7 @@ export default class CommandService {
                 playerId: activePlayer.id,
                 regionId: game.regions.find(region => region.color === regionColor)?.id,
                 snapshotId: snapshot.id,
+                emit: true,
             });
 
             if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {
