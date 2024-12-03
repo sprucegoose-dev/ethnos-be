@@ -107,5 +107,5 @@ httpServer.listen(port, () => {
 });
 
 if (instance === '0') {
-    setInterval(BotService.activateStaleBots, 3000);
+    setInterval(BotService.activateStaleBots, 5000);
 }
