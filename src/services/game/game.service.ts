@@ -555,7 +555,7 @@ export default class GameService {
         return firstPlayerId;
     }
 
-    static async getState(gameId: number, inclAttributes: string[] = []): Promise<IGameState> {
+    static async getState(gameId: number, inclAttributes: { [key: string]: string[] } = {}): Promise<IGameState> {
         const game = await Game.findOne({
             where: {
                 id: gameId,
@@ -581,6 +581,9 @@ export default class GameService {
                             ],
                         },
                     ],
+                    attributes: {
+                        include: inclAttributes.player || []
+                    }
                 },
                 {
                     model: User,
@@ -603,7 +606,7 @@ export default class GameService {
                 },
             ],
             attributes: {
-                include: inclAttributes
+                include: inclAttributes.game || []
             }
         });
 
@@ -741,7 +744,7 @@ export default class GameService {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before joining a new one.')
         }
 
-        const game = await this.getState(gameId, ['password']);
+        const game = await this.getState(gameId, { game: ['password'] });
 
         if (!game) {
             throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
@@ -1113,6 +1116,15 @@ export default class GameService {
         EventService.emitEvent({
             type: EVENT_ACTIVE_GAMES_UPDATE,
             payload: activeGames
+        });
+
+
+        await Player.update({
+            validActions: [],
+        }, {
+            where: {
+                gameId: game.id,
+            }
         });
     }
 

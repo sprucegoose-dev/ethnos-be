@@ -9,6 +9,7 @@ import {
 
 import { Color } from '@interfaces/game.interface';
 import { IPointsBreakdown, PlayerColor } from '@interfaces/player.interface';
+import { IActionPayload } from '@interfaces/action.interface';
 
 import Game from './game.model';
 import User from './user.model';
@@ -25,6 +26,11 @@ import Card from './card.model';
             fields: ['user_id', 'game_id'],
         },
     ],
+    defaultScope: {
+        attributes: {
+            exclude: ['validActions'],
+        },
+    },
 })
 export default class Player extends Model {
     @Column({ primaryKey: true, autoIncrement: true })
@@ -85,6 +91,13 @@ export default class Player extends Model {
         defaultValue: {}
     })
     pointsBreakdown: IPointsBreakdown;
+
+    @Column({
+        field: 'valid_actions',
+        type: DataType.JSON,
+        defaultValue: [],
+    })
+    validActions: IActionPayload[];
 
     @BelongsTo(() => Game, 'gameId')
     game: Game;

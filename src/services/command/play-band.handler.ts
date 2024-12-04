@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 
 import {
     ActionType,
+    IActionPayload,
     IBandDetails,
     IPlayBandPayload
 } from '@interfaces/action.interface';
@@ -210,7 +211,7 @@ export default class PlayBandHandler {
         const cardsInHand = player.cards.filter(card => card.state === CardState.IN_HAND);
         let remainingCards = this.getRemainingCards(cardsInHand, payload.cardIds);
 
-        this.validateBand(cardsInHand, payload.cardIds, leader);
+        this.validateBand(cardsInHand, payload.cardIds, leader, player.validActions);
 
         await NextActionHandler.resolvePendingNextAction(payload.nextActionId);
 
@@ -229,7 +230,7 @@ export default class PlayBandHandler {
         });
     }
 
-    static validateBand(cardsInHand: Card[], bandCardIds: number[], leader: Card): boolean {
+    static validateBand(cardsInHand: Card[], bandCardIds: number[], leader: Card, validActions: IActionPayload[] = null): boolean {
         if (leader.tribe.name === SKELETONS) {
             throw new CustomException(ERROR_BAD_REQUEST, 'A Skeleton cannot be the leader of a band');
         }
@@ -238,11 +239,12 @@ export default class PlayBandHandler {
             throw new CustomException(ERROR_BAD_REQUEST, 'The leader must be included in the band');
         }
 
-        const validActions = ActionService.getPlayBandActions(cardsInHand);
+        const validPlayBandActions = validActions?.filter(action => action.type == ActionType.PLAY_BAND) ||
+            ActionService.getPlayBandActions(cardsInHand);
 
         let isValid = false;
 
-        for (const action of validActions) {
+        for (const action of validPlayBandActions) {
             const validCardIds = action.cardIds;
 
             if (bandCardIds.every(cardId => validCardIds.includes(cardId))) {

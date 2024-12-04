@@ -39,7 +39,7 @@ export default class CommandService {
         const transaction = await sequelize.transaction();
 
         try {
-            const game = await GameService.getState(gameId);
+            const game = await GameService.getState(gameId, { player: ['validActions'] });
 
             if (!game) {
                 throw new CustomException(ERROR_NOT_FOUND, 'Game not found');
@@ -160,7 +160,6 @@ export default class CommandService {
                 await BotService.takeTurn(game.id, nextPlayer.id);
             }
         } catch (error: any) {
-            console.log(error);
             await transaction.rollback();
             throw new CustomException(error.type, error.message);
         }

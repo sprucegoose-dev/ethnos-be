@@ -13,6 +13,7 @@ import { NextActionState } from '@interfaces/next-action.interface';
 import GameService from '@services/game/game.service';
 
 import NextAction from '@models/next-action.model';
+import Player from '@models/player.model';
 
 export default class ActionService {
 
@@ -89,6 +90,14 @@ export default class ActionService {
                 value: nextAction.value
             }];
         }
+
+        await Player.update({
+            validActions: actions
+        }, {
+            where: {
+                id: activePlayer.id
+            }
+        });
 
         return actions;
     }
