@@ -7,7 +7,8 @@ export enum ActionType {
     PICK_UP_CARD = 'pick_up_card',
     PLAY_BAND = 'play_band',
     KEEP_CARDS = 'keep_cards',
-    ADD_FREE_TOKEN = 'add_free_token'
+    ADD_FREE_TOKEN = 'add_free_token',
+    REMOVE_ORC_TOKENS = 'remove_orc_tokens'
 }
 
 export interface IDrawCardPayload {
@@ -40,12 +41,18 @@ export interface IPlayBandPayload {
     type: ActionType.PLAY_BAND;
 }
 
+export interface IRemoveOrcTokensPayload {
+    tokens: Color[];
+    type: ActionType.REMOVE_ORC_TOKENS;
+}
+
 export type IActionPayload =
     IDrawCardPayload |
     IPlayBandPayload |
     IPickUpCardPayload |
     IAddFreeTokenPayload |
-    IKeepCardsPayload;
+    IKeepCardsPayload |
+    IRemoveOrcTokensPayload;
 
 export interface INextActionPayload {
     type: ActionType;

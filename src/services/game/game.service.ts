@@ -1059,6 +1059,25 @@ export default class GameService {
             }
         });
 
+        if (game.settings.tribes.includes(TribeName.ORCS)) {
+            const orcTokenRemovalPlayerIds = game.players.filter(player =>
+                !player.user.isBot &&
+                player.orcTokens.length
+            ).map(player => player.id);
+
+            if (orcTokenRemovalPlayerIds.length) {
+                await Player.update({
+                    canRemoveOrcTokens: true,
+                }, {
+                    where: {
+                        id: {
+                            [Op.in]: orcTokenRemovalPlayerIds,
+                        }
+                    }
+                });
+            }
+        }
+
         const nextPlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
         const nextPlayer = game.players.find(player => player.id === nextPlayerId);
 

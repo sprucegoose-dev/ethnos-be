@@ -74,6 +74,9 @@ export default class ActionLog extends Model {
     })
     leaderId: number;
 
+    @Column
+    value: number;
+
     @Column({
         field: 'snapshot_id',
         references: {

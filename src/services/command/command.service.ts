@@ -99,6 +99,9 @@ export default class CommandService {
                 case ActionType.KEEP_CARDS:
                     await TribeHandler.handleElfKeepCards(activePlayer, payload, nextAction);
                     break;
+                case ActionType.REMOVE_ORC_TOKENS:
+                    await TribeHandler.removeAndScoreOrcTokens(activePlayer, payload);
+                    break;
             }
 
             if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
@@ -113,7 +116,7 @@ export default class CommandService {
             let nextPlayerId: number = activePlayer.id;
             let nextPlayer: Player = activePlayer;
 
-            if (!nextActions.length) {
+            if (!nextActions.length && payload.type !== ActionType.REMOVE_ORC_TOKENS) {
                 nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
                 nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
@@ -123,6 +126,16 @@ export default class CommandService {
                     where: {
                         id: game.id,
                         age: game.age // if the age has already advanced, this query will intenationally fail
+                    }
+                });
+            }
+
+            if (activePlayer.canRemoveOrcTokens) {
+                await Player.update({
+                    canRemoveOrcTokens: false,
+                }, {
+                    where: {
+                        id: activePlayer.id
                     }
                 });
             }

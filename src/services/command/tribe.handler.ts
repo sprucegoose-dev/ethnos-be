@@ -4,6 +4,7 @@ import {
     ActionType,
     IBandDetails,
     IKeepCardsPayload,
+    IRemoveOrcTokensPayload,
 } from '@interfaces/action.interface';
 
 import Game from '@models/game.model';
@@ -18,6 +19,8 @@ import { NextActionState } from '@interfaces/next-action.interface';
 import DrawCardHandler from './draw-card.handler';
 import { CustomException, ERROR_BAD_REQUEST } from '../../helpers/exception-handler';
 import Card from '../../models/card.model';
+import ScoringService from '../scoring/scoring.service';
+import ActionLogService from '../actionLog/action-log.service';
 
 const {
     GIANTS,
@@ -196,6 +199,36 @@ export default class TribeHandler {
             where: {
                 id: nextAction.id
             }
+        });
+    }
+
+    static async removeAndScoreOrcTokens(player: Player, action: IRemoveOrcTokensPayload) {
+        if (!player.canRemoveOrcTokens) {
+            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid action');
+        }
+
+        for (const token of action.tokens) {
+            if (!player.orcTokens.includes(token)) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'Invalid token color');
+            }
+        }
+
+        const orcBoardPoints = ScoringService.scoreOrcBoard(action.tokens);
+
+        await Player.update({
+            orcTokens: player.orcTokens.filter(token => !action.tokens.includes(token)),
+            points: player.points + orcBoardPoints,
+            canRemoveOrcTokens: false,
+        }, {
+            where: {
+                id: player.id
+            }
+        });
+
+        await ActionLogService.log({
+            playerId: player.id,
+            gameId: player.gameId,
+            payload: action,
         });
     }
 }

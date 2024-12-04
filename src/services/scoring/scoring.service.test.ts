@@ -883,7 +883,7 @@ describe('ScoringService', () => {
 
         it('should return the points for the player with the largest giant band', () => {
             playerA.orcTokens = [Color.RED, Color.BLUE];
-            const points = ScoringService.scoreOrcBoard(playerA);
+            const points = ScoringService.scoreOrcBoard(playerA.orcTokens);
             expect(points).toEqual(3);
         });
     });

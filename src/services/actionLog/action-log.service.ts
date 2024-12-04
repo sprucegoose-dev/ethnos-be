@@ -39,6 +39,7 @@ export default class ActionLogService {
             regionId,
             cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
             snapshotId,
+            value: payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens.length : null,
         });
 
         if (emit) {
@@ -78,6 +79,9 @@ export default class ActionLogService {
                 break;
             case LogType.PLAY_BAND:
                 actionLabel += `plays a band`;
+                break;
+            case LogType.REMOVE_ORC_TOKENS:
+                actionLabel += `removes ${actionLog.value} tokens from the Orc Board`;
                 break;
             default:
                 throw new CustomException(ERROR_SERVER, `Invalid action type: ${actionType}`);

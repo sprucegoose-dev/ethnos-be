@@ -22,6 +22,7 @@ module.exports = {
                     'keep_cards',
                     'pick_up_card',
                     'play_band',
+                    'remove_orc_tokens',
                     'reveal_dragon',
                     'wizard_draw_cards',
                 ],

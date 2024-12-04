@@ -34,4 +34,5 @@ export enum LogType {
     PLAY_BAND = 'play_band',
     REVEAL_DRAGON = 'reveal_dragon',
     WIZARD_DRAW_CARDS = 'wizard_draw_cards',
+    REMOVE_ORC_TOKENS = 'remove_orc_tokens',
 }

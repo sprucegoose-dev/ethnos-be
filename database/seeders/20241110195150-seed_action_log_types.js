@@ -16,6 +16,7 @@ module.exports = {
             'play_band',
             'reveal_dragon',
             'wizard_draw_cards',
+            'remove_orc_tokens'
         ].map(type => ({ type }));
 
         return queryInterface.bulkInsert('action_log_types', actionLogTypes);

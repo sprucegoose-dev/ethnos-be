@@ -70,6 +70,12 @@ export default class Player extends Model {
     orcTokens: Color[];
 
     @Column({
+        defaultValue: false,
+        field: 'can_remove_orc_tokens',
+    })
+    canRemoveOrcTokens: boolean;
+
+    @Column({
         defaultValue: [],
         field: 'troll_tokens',
         type: DataType.JSON,

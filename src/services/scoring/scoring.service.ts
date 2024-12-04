@@ -10,6 +10,7 @@ import { CardState, IGroupedCards } from '@interfaces/card.interface';
 import { IScoringResults } from '@interfaces/command.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { IPointsBreakdown } from '@interfaces/player.interface';
+import { Color } from '../../interfaces/game.interface';
 
 export default class ScoringService {
 
@@ -164,8 +165,8 @@ export default class ScoringService {
             bandPoints[player.id] = this.scoreBands(player);
 
             if (game.age === finalAge) {
-                totalPoints[player.id] += this.scoreOrcBoard(player);
-                orcPoints[player.id] = this.scoreOrcBoard(player);
+                totalPoints[player.id] += this.scoreOrcBoard(player.orcTokens);
+                orcPoints[player.id] = this.scoreOrcBoard(player.orcTokens);
             }
         }
 
@@ -421,7 +422,7 @@ export default class ScoringService {
         return totalPoints;
     }
 
-    static scoreOrcBoard(player: Player): number {
+    static scoreOrcBoard(orcTokens: Color[] = []): number {
         const orcBoardPoints: {[tokens: number]: number} = {
             0: 0,
             1: 1,
@@ -432,6 +433,6 @@ export default class ScoringService {
             6: 20,
         };
 
-        return orcBoardPoints[player.orcTokens.length];
+        return orcBoardPoints[orcTokens.length];
     }
 }
