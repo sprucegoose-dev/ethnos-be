@@ -5,6 +5,7 @@ import Card from '@models/card.model';
 
 export interface IActionLogPayload {
     card: Card;
+    cardIds: number[];
     id: number,
     label: string,
     leaderId: number,

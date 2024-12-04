@@ -56,6 +56,7 @@ export default class BotPickUpCardHandler {
                     type: ActionType.PICK_UP_CARD,
                     cardId: shuffle(cardsInMarket)[0].id
                 });
+
                 return true;
             }
 

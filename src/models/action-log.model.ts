@@ -1,6 +1,7 @@
 import {
     BelongsTo,
     Column,
+    DataType,
     Model,
     Table,
 } from 'sequelize-typescript';
@@ -64,6 +65,13 @@ export default class ActionLog extends Model {
         }
     })
     cardId: number;
+
+    @Column({
+        field: 'card_ids',
+        type: DataType.JSON,
+        defaultValue: [],
+    })
+    cardIds: number[];
 
     @Column({
         field: 'leader_id',

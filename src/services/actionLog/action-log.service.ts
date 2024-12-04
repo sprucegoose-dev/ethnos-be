@@ -38,6 +38,7 @@ export default class ActionLogService {
             leaderId: payload?.type === ActionType.PLAY_BAND ? payload.leaderId : null,
             regionId,
             cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
+            cardIds: payload?.type === ActionType.PLAY_BAND ? payload.cardIds : null,
             snapshotId,
             value: payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens.length : null,
         });
@@ -91,6 +92,7 @@ export default class ActionLogService {
             id: actionLog.id,
             label: actionLabel,
             card: actionLog.card?.toJSON(),
+            cardIds: actionLog.cardIds || [],
             leaderId: actionLog.leaderId,
             playerColor: actionLog.player.color,
         };
