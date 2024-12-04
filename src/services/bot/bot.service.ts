@@ -77,6 +77,8 @@ export default class BotService {
             const cardsInDeck = this.getCardsInDeck(gameState);
             const sortedPlayBandActions = this.preSortBandActions(actions, cardsInHand);
 
+            await BotTokenHandler.removeOrcTokens(player);
+
             if (await BotTokenHandler.handleFreeTokenAction(actions, regions, player)) return;
 
             if (await BotKeepCardsHandler.keepCards(actions, cardsInHand, player)) return;

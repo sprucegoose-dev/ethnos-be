@@ -1061,7 +1061,6 @@ export default class GameService {
 
         if (game.settings.tribes.includes(TribeName.ORCS)) {
             const orcTokenRemovalPlayerIds = game.players.filter(player =>
-                !player.user.isBot &&
                 player.orcTokens.length
             ).map(player => player.id);
 
