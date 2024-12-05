@@ -20,6 +20,7 @@ export default class ActionLogService {
        gameId,
        regionId,
        snapshotId,
+       value,
     }: IActionLogParams): Promise<ActionLog> {
         const actionLogType = await ActionLogType.findOne({
             where: {
@@ -36,7 +37,7 @@ export default class ActionLogService {
             cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
             cardIds: payload?.type === ActionType.PLAY_BAND ? payload.cardIds : null,
             snapshotId,
-            value: payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens.length : null,
+            value,
         });
 
         return actionLog;
@@ -51,6 +52,9 @@ export default class ActionLogService {
             case LogType.ADD_TOKEN:
                 actionLabel += `adds a token to the ${actionLog.region.color} region`;
                 break;
+            case LogType.ADD_ORC_TOKEN:
+                actionLabel += `adds a token to their Orc Board`;
+                break;
             case LogType.ADD_FREE_TOKEN:
                 actionLabel += `adds a free token to the ${actionLog.region.color} region`;
                 break;
@@ -59,6 +63,12 @@ export default class ActionLogService {
                 break;
             case LogType.DRAW_CARD:
                 actionLabel += `draws a card`;
+                break;
+            case LogType.GAIN_GIANT_TOKEN:
+                actionLabel += `gains the Giant Token`;
+                break;
+            case LogType.GAIN_TROLL_TOKEN:
+                actionLabel += `gains a Troll Token (${actionLog.value})`;
                 break;
             case LogType.KEEP_CARDS:
                 actionLabel += `keeps cards in their hand`;

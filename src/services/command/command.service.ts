@@ -93,7 +93,6 @@ export default class CommandService {
                 gameId,
                 playerId: activePlayer.id,
                 regionId: regionColor ? game.regions.find(region => region.color === regionColor)?.id : null,
-                emit: true,
             });
 
             let nextActions = [];

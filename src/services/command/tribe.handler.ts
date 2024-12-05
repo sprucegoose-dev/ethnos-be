@@ -10,17 +10,20 @@ import {
 import Game from '@models/game.model';
 import Player from '@models/player.model';
 import NextAction from '@models/next-action.model';
+import Card from '@models/card.model';
 
 import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
 import { Color } from '@interfaces/game.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
+import { LogType } from '@interfaces/action-log.interface';
+
+import ScoringService from '@services/scoring/scoring.service';
+import ActionLogService from '@services/actionLog/action-log.service';
+
+import { CustomException, ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import DrawCardHandler from './draw-card.handler';
-import { CustomException, ERROR_BAD_REQUEST } from '../../helpers/exception-handler';
-import Card from '../../models/card.model';
-import ScoringService from '../scoring/scoring.service';
-import ActionLogService from '../actionLog/action-log.service';
 
 const {
     GIANTS,
@@ -53,6 +56,12 @@ export default class TribeHandler {
                     id: player.id,
                 }
             });
+
+            await ActionLogService.log({
+                type: LogType.GAIN_GIANT_TOKEN,
+                gameId: player.gameId,
+                playerId: player.id,
+            });
         }
     }
 
@@ -66,6 +75,12 @@ export default class TribeHandler {
                     }
                 }
             );
+
+            await ActionLogService.log({
+                type: LogType.ADD_ORC_TOKEN,
+                gameId: player.gameId,
+                playerId: player.id,
+            });
         }
     }
 
@@ -125,6 +140,7 @@ export default class TribeHandler {
 
     static async handleTrollTokens(game: Game, player: Player, bandSize: number) {
         let claimedTokens: number[] = [];
+        let tokenGained = null;
 
         game.players.map(player => {
             claimedTokens = [...claimedTokens, ...player.trollTokens]
@@ -140,7 +156,9 @@ export default class TribeHandler {
                         id: player.id,
                     }
                 }
-            )
+            );
+
+            tokenGained = bandSize;
         } else {
             const smallerToken = trollTokens.find(token => token < bandSize);
 
@@ -153,7 +171,18 @@ export default class TribeHandler {
                         }
                     }
                 );
+
+                tokenGained = smallerToken;
             }
+        }
+
+        if (tokenGained) {
+            await ActionLogService.log({
+                type: LogType.GAIN_TROLL_TOKEN,
+                gameId: player.gameId,
+                playerId: player.id,
+                value: tokenGained,
+            });
         }
     }
 
@@ -229,6 +258,7 @@ export default class TribeHandler {
             playerId: player.id,
             gameId: player.gameId,
             payload: action,
+            value: action.tokens.length,
         });
     }
 }
