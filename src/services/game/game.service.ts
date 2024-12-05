@@ -13,6 +13,7 @@ import { TribeName } from '@interfaces/tribe.interface';
 import { CardState } from '@interfaces/card.interface';
 import {
     Color,
+    COLORS,
     GameState,
     IGameSettings,
     IGameState,
@@ -248,15 +249,6 @@ export default class GameService {
         const cards = [];
         let card;
 
-        const colors = [
-            Color.BLUE,
-            Color.GRAY,
-            Color.GREEN,
-            Color.ORANGE,
-            Color.PURPLE,
-            Color.RED
-        ];
-
         for (const tribe of tribes) {
             if (tribe.name === TribeName.DRAGON) {
                 for (let i = 0; i < 3; i++) {
@@ -273,9 +265,9 @@ export default class GameService {
                 const quantityInEachColor = tribe.name === TribeName.HALFLINGS ? 4 : 2;
 
                 for (let i = 0; i < quantityInEachColor; i++) {
-                    for (let j = 0; j < colors.length; j++) {
+                    for (let j = 0; j < COLORS.length; j++) {
                         card = await Card.create({
-                            color: tribe.name === TribeName.SKELETONS ? null : colors[j],
+                            color: tribe.name === TribeName.SKELETONS ? null : COLORS[j],
                             gameId,
                             tribeId: tribe.id,
                             state: CardState.IN_DECK,
@@ -291,15 +283,6 @@ export default class GameService {
     }
 
     static async generateRegions(gameId: number, playersCount: number) {
-        const colors = [
-            Color.BLUE,
-            Color.GRAY,
-            Color.GREEN,
-            Color.ORANGE,
-            Color.PURPLE,
-            Color.RED
-        ];
-
         let values = playersCount >= 4 ? [
             0, 0,
             2, 2,
@@ -335,10 +318,10 @@ export default class GameService {
             }
         }
 
-        for (let i = 0; i < colors.length; i++) {
+        for (let i = 0; i < COLORS.length; i++) {
             await Region.create({
                 gameId,
-                color: colors[i],
+                color: COLORS[i],
                 values: valueSets[i],
             });
         }

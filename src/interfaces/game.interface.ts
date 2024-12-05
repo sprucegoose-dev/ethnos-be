@@ -28,6 +28,15 @@ export enum Color {
     RED = 'red',
 }
 
+export const COLORS = [
+    Color.BLUE,
+    Color.GRAY,
+    Color.GREEN,
+    Color.ORANGE,
+    Color.PURPLE,
+    Color.RED
+];
+
 export enum GameState {
     CANCELLED = 'cancelled',
     CREATED = 'created',

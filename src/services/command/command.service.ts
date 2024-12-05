@@ -5,7 +5,7 @@ import {
 } from '@interfaces/action.interface';
 import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
-import { GameState } from '@interfaces/game.interface';
+import { COLORS, GameState } from '@interfaces/game.interface';
 // import { UndoRequestState } from '@interfaces/undo-request.interface';
 
 import sequelize from '@database/connection';
@@ -32,6 +32,7 @@ import DrawCardHandler from './draw-card.handler';
 import PickUpCardHandler from './pick-up-card.handler';
 import TokenHandler from './token.handler';
 import TribeHandler from './tribe.handler';
+import ActionLog from '../../models/action-log.model';
 
 export default class CommandService {
 
@@ -80,6 +81,20 @@ export default class CommandService {
             if (nextAction && nextAction.type !== payload.type) {
                 throw new CustomException(ERROR_BAD_REQUEST, `This action is not valid ${JSON.stringify(payload)}`);
             }
+
+            const regionColor = (payload as IPlayBandPayload).regionColor;
+
+            if (regionColor && !COLORS.includes(regionColor)) {
+                throw new CustomException(ERROR_BAD_REQUEST, 'Invalid region color');
+            }
+
+            const actionLog = await ActionLogService.log({
+                payload,
+                gameId,
+                playerId: activePlayer.id,
+                regionId: regionColor ? game.regions.find(region => region.color === regionColor)?.id : null,
+                emit: true,
+            });
 
             let nextActions = [];
 
@@ -154,19 +169,14 @@ export default class CommandService {
                 payload: updatedGameState
             });
 
-            const regionColor = activePlayer.cards.find(card => card.id ===
-                (payload as IPlayBandPayload).leaderId)?.color ||
-                (payload as IPlayBandPayload).regionColor;
-
             const snapshot = await SnapshotService.create(game, !nextAction);
 
-            await ActionLogService.log({
-                payload,
-                gameId,
-                playerId: activePlayer.id,
-                regionId: game.regions.find(region => region.color === regionColor)?.id,
-                snapshotId: snapshot.id,
-                emit: true,
+            await ActionLog.update({
+               snapshotId: snapshot.id,
+            }, {
+                where: {
+                    id: actionLog.id,
+                }
             });
 
             if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {

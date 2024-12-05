@@ -24,14 +24,14 @@ export default class ActionLogService {
        regionId,
        snapshotId,
        emit = false
-    }: IActionLogParams): Promise<void> {
+    }: IActionLogParams): Promise<ActionLog> {
         const actionLogType = await ActionLogType.findOne({
             where: {
                 type: type || payload?.type
             }
         });
 
-        await ActionLog.create({
+        const actionLog = await ActionLog.create({
             actionLogTypeId: actionLogType.id,
             gameId,
             playerId,
@@ -52,6 +52,8 @@ export default class ActionLogService {
                 payload: actionLogs
             });
         }
+
+        return actionLog;
     }
 
     static formatLog(actionLog: ActionLog): IActionLogPayload {

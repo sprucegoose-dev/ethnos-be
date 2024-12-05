@@ -51,6 +51,7 @@ import sequelize from '@database/connection';
 import { CustomException, ERROR_NOT_FOUND } from '@helpers/exception-handler';
 import { Op } from 'sequelize';
 import PlayerRegion from '../../models/player-region.model';
+import ActionLog from '../../models/action-log.model';
 
 export default class SnapshotService {
 
@@ -302,6 +303,23 @@ export default class SnapshotService {
                     state: NextActionState.PENDING
                 }
             });
+
+            const actionLog = await ActionLog.findOne({
+                where: {
+                    id: snapshotId,
+                }
+            });
+
+            if (actionLog) {
+                await ActionLog.destroy({
+                    where: {
+                        gameId: snapshot.gameId,
+                        id: {
+                            [Op.gte]: actionLog.id,
+                        }
+                    }
+                });
+            }
 
             await Snapshot.destroy({
                 where: {
