@@ -1,6 +1,5 @@
 import { ActionType } from '@interfaces/action.interface';
 import { IActionLogParams, IActionLogPayload, LogType } from '@interfaces/action-log.interface';
-import { EVENT_ACTIONS_LOG_UPDATE } from '@interfaces/event.interface';
 
 import ActionLogType from '@models/action-log-type.model';
 import ActionLog from '@models/action-log.model';
@@ -12,8 +11,6 @@ import Tribe from '@models/tribe.model';
 
 import { CustomException, ERROR_SERVER } from '@helpers/exception-handler';
 
-import EventService from '@services/event/event.service';
-
 export default class ActionLogService {
 
     static async log({
@@ -23,7 +20,6 @@ export default class ActionLogService {
        gameId,
        regionId,
        snapshotId,
-       emit = false
     }: IActionLogParams): Promise<ActionLog> {
         const actionLogType = await ActionLogType.findOne({
             where: {
@@ -42,16 +38,6 @@ export default class ActionLogService {
             snapshotId,
             value: payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens.length : null,
         });
-
-        if (emit) {
-            const actionLogs = await this.getActionLogs(gameId);
-
-            EventService.emitEvent({
-                type: EVENT_ACTIONS_LOG_UPDATE,
-                gameId,
-                payload: actionLogs
-            });
-        }
 
         return actionLog;
     }

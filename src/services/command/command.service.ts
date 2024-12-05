@@ -3,7 +3,7 @@ import {
     IActionPayload,
     IPlayBandPayload,
 } from '@interfaces/action.interface';
-import { EVENT_GAME_UPDATE } from '@interfaces/event.interface';
+import { EVENT_ACTIONS_LOG_UPDATE, EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 import { COLORS, GameState } from '@interfaces/game.interface';
 // import { UndoRequestState } from '@interfaces/undo-request.interface';
@@ -177,6 +177,14 @@ export default class CommandService {
                 where: {
                     id: actionLog.id,
                 }
+            });
+
+            const actionLogs = await ActionLogService.getActionLogs(gameId);
+
+            EventService.emitEvent({
+                type: EVENT_ACTIONS_LOG_UPDATE,
+                gameId,
+                payload: actionLogs
             });
 
             if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {
