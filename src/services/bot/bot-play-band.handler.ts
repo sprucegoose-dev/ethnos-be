@@ -88,9 +88,12 @@ export default class BotPlayBandHandler {
             pointsThreshold = 6;
         }
 
+        const skeletonCardIds = cardsInHand.filter(card => card.tribe.name === TribeName.SKELETONS).map(card => card.id);
+
         for (const action of actions) {
             const leader = cardsInHand.find(card => card.id === action.leaderId);
-            const bandDetails = PlayBandHandler.getBandDetails(leader, action.cardIds);
+            const nonSkeletonCardIds = action.cardIds.filter(cardId => !skeletonCardIds.includes(cardId));
+            const bandDetails = PlayBandHandler.getBandDetails(leader, nonSkeletonCardIds);
 
             if (bandDetails.points >= pointsThreshold && bandDetails.points > highestPointValue) {
                 highValueAction = action
