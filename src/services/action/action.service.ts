@@ -65,30 +65,37 @@ export default class ActionService {
             actions = [...actions, ...playBandActions];
         }
 
-        if (nextAction?.type === ActionType.PLAY_BAND) {
-            actions = actions.filter(action =>
-                action.type === ActionType.PLAY_BAND
-            ).map(action => ({
-                ...action,
-                nextActionId: nextAction.id,
-            }));
-        }
-
-        if (nextAction?.type === ActionType.ADD_FREE_TOKEN) {
-            actions = [{
-                type: ActionType.ADD_FREE_TOKEN,
-                nextActionId: nextAction.id,
-                regionColor: null,
-            }];
-        }
-
-        if (nextAction?.type === ActionType.KEEP_CARDS) {
-            actions = [{
-                type: ActionType.KEEP_CARDS,
-                nextActionId: nextAction.id,
-                cardIds: cardsInHand.map(card => card.id),
-                value: nextAction.value
-            }];
+        switch(nextAction?.type) {
+            case ActionType.PLAY_BAND:
+                actions = actions.filter(action =>
+                    action.type === ActionType.PLAY_BAND
+                ).map(action => ({
+                    ...action,
+                    nextActionId: nextAction.id,
+                }));
+                break;
+            case ActionType.ADD_FREE_TOKEN:
+                actions =[{
+                    type: ActionType.ADD_FREE_TOKEN,
+                    nextActionId: nextAction.id,
+                    regionColor: null,
+                }];
+                break;
+            case ActionType.KEEP_CARDS:
+                actions = [{
+                    type: ActionType.KEEP_CARDS,
+                    nextActionId: nextAction.id,
+                    cardIds: cardsInHand.map(card => card.id),
+                    value: nextAction.value
+                }];
+                break;
+            case ActionType.REMOVE_ORC_TOKENS:
+                actions = [{
+                    type: ActionType.REMOVE_ORC_TOKENS,
+                    nextActionId: nextAction.id,
+                    tokens: [],
+                }];
+                break;
         }
 
         await Player.update({

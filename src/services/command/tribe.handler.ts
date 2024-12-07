@@ -24,6 +24,7 @@ import ActionLogService from '@services/actionLog/action-log.service';
 import { CustomException, ERROR_BAD_REQUEST } from '@helpers/exception-handler';
 
 import DrawCardHandler from './draw-card.handler';
+import GameService from '../game/game.service';
 
 const {
     GIANTS,
@@ -231,35 +232,94 @@ export default class TribeHandler {
         });
     }
 
-    static async removeAndScoreOrcTokens(player: Player, action: IRemoveOrcTokensPayload) {
-        if (!player.canRemoveOrcTokens) {
-            throw new CustomException(ERROR_BAD_REQUEST, 'Invalid action');
-        }
-
-        for (const token of action.tokens) {
-            if (!player.orcTokens.includes(token)) {
-                throw new CustomException(ERROR_BAD_REQUEST, 'Invalid token color');
+    static async removeAndScoreOrcTokens(player: Player, action: IRemoveOrcTokensPayload, game: Game) {
+        if (action.tokens.length) {
+            for (const token of action.tokens) {
+                if (!player.orcTokens.includes(token)) {
+                    throw new CustomException(ERROR_BAD_REQUEST, 'Invalid token color');
+                }
             }
+
+            const orcBoardPoints = ScoringService.scoreOrcBoard(action.tokens);
+
+            const pointsBreakdown = {
+                [`${game.age}`]: {
+                    orcs: orcBoardPoints,
+                }
+            };
+
+            await Player.update({
+                orcTokens: player.orcTokens.filter(token => !action.tokens.includes(token)),
+                points: player.points + orcBoardPoints,
+                pointsBreakdown,
+            }, {
+                where: {
+                    id: player.id
+                }
+            });
         }
 
-        const orcBoardPoints = ScoringService.scoreOrcBoard(action.tokens);
-
-        await Player.update({
-            orcTokens: player.orcTokens.filter(token => !action.tokens.includes(token)),
-            points: player.points + orcBoardPoints,
-            canRemoveOrcTokens: false,
+        await NextAction.update({
+            state: NextActionState.RESOLVED
         }, {
             where: {
-                id: player.id
+                id: action.nextActionId
             }
         });
 
-        await ActionLogService.log({
-            playerId: player.id,
-            gameId: player.gameId,
-            payload: action,
-            value: action.tokens.length,
+        const remainingRemoveOrcTokenActions = await NextAction.findAll({
+            where: {
+                gameId: player.gameId,
+                type: ActionType.REMOVE_ORC_TOKENS,
+                state: NextActionState.PENDING,
+            }
         });
+
+        if (!remainingRemoveOrcTokenActions.length) {
+            const updatedGameState = await GameService.getState(game.id);
+            await GameService.startNewAge(updatedGameState);
+        }
+    }
+
+    static async shouldScoreOrcBoards(game: Game) {
+        return game.settings.tribes.includes(TribeName.ORCS) &&
+            game.players.some(player => player.orcTokens.length);
+    }
+
+    static async createRemoveOrcTokenActions(players: Player[]) {
+        for (const player of players) {
+            await NextAction.create({
+                gameId: player.gameId,
+                playerId: player.id,
+                type: ActionType.REMOVE_ORC_TOKENS,
+                state: NextActionState.PENDING
+            });
+        }
+    }
+
+    static async skipNextPlayerWithoutOrcTokens(nextPlayer: Player): Promise<IRemoveOrcTokensPayload> {
+        if (nextPlayer.orcTokens.length) {
+            return null;
+        }
+
+        const removeOrcTokensNextAction = await NextAction.findOne({
+            where: {
+                gameId: nextPlayer.gameId,
+                playerId: nextPlayer.id,
+                type: ActionType.REMOVE_ORC_TOKENS,
+                state: NextActionState.PENDING
+            }
+        });
+
+        if (removeOrcTokensNextAction && !nextPlayer.orcTokens.length) {
+            return {
+                type: ActionType.REMOVE_ORC_TOKENS,
+                tokens: [],
+                nextActionId: removeOrcTokensNextAction.id,
+            }
+        }
+
+        return null;
     }
 }
 

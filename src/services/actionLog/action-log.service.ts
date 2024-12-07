@@ -20,7 +20,6 @@ export default class ActionLogService {
        gameId,
        regionId,
        snapshotId,
-       value,
     }: IActionLogParams): Promise<ActionLog> {
         const actionLogType = await ActionLogType.findOne({
             where: {
@@ -37,7 +36,7 @@ export default class ActionLogService {
             cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
             cardIds: payload?.type === ActionType.PLAY_BAND ? payload.cardIds : null,
             snapshotId,
-            value,
+            value: payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens?.length : 0,
         });
 
         return actionLog;
@@ -80,7 +79,9 @@ export default class ActionLogService {
                 actionLabel += `plays a band`;
                 break;
             case LogType.REMOVE_ORC_TOKENS:
-                actionLabel += `removes ${actionLog.value} tokens from the Orc Board`;
+                actionLabel += actionLog.value === 0 ?
+                `keeps all tokens on the Orc Board` :
+                `removes ${actionLog.value} tokens from the Orc Board`
                 break;
             default:
                 throw new CustomException(ERROR_SERVER, `Invalid action type: ${actionType}`);

@@ -1,4 +1,9 @@
-import { ActionType, IActionPayload, IAddFreeTokenPayload, IRemoveOrcTokensPayload } from '@interfaces/action.interface';
+import {
+    ActionType,
+    IActionPayload,
+    IAddFreeTokenPayload,
+    IRemoveOrcTokensPayload
+} from '@interfaces/action.interface';
 import { Color } from '@interfaces/game.interface';
 import Player from '@models/player.model';
 import Region from '@models/region.model';
@@ -70,14 +75,25 @@ export default class BotTokenHandler {
         return false;
     }
 
-    static async removeOrcTokens(player: Player) {
-        if (player.canRemoveOrcTokens && player.orcTokens.length >= 4) {
+    static async removeOrcTokens(player: Player, actions: IActionPayload[]): Promise<boolean> {
+        const removeOrcTokensAction = actions.find(action => action.type === ActionType.REMOVE_ORC_TOKENS);
+
+        if (removeOrcTokensAction) {
             const action: IRemoveOrcTokensPayload = {
                 type: ActionType.REMOVE_ORC_TOKENS,
-                tokens: player.orcTokens
+                nextActionId: removeOrcTokensAction.nextActionId,
+                tokens: []
             };
 
+            if (player.orcTokens.length >= 4) {
+                action.tokens = player.orcTokens;
+            }
+
             await CommandService.handleAction(player.userId, player.gameId, action);
+
+            return true;
         }
+
+        return false;
     }
 }

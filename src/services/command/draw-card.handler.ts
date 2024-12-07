@@ -1,18 +1,21 @@
+import { Op } from 'sequelize';
+
 import {
     CustomException,
     ERROR_BAD_REQUEST,
 } from '@helpers/exception-handler';
 
-import Game from '@models/game.model';
-import Player from '@models/player.model';
-
 import { CardState } from '@interfaces/card.interface';
 import { TribeName } from '@interfaces/tribe.interface';
-import GameService from '../game/game.service';
-import Card from '../../models/card.model';
-import ActionLogService from '../actionLog/action-log.service';
-import { Op } from 'sequelize';
-import { LogType } from '../../interfaces/action-log.interface';
+import { LogType } from '@interfaces/action-log.interface';
+
+import Game from '@models/game.model';
+import Player from '@models/player.model';
+import Card from '@models/card.model';
+
+import GameService from '@services/game/game.service';
+import ActionLogService from '@services/actionLog/action-log.service';
+import TribeHandler from './tribe.handler';
 
 const {
     DRAGON,
@@ -50,7 +53,6 @@ export default class DrawCardHandler {
         let drawnCards = 0;
 
         do {
-
             if (nextCard.tribe.name === DRAGON) {
                 revealedDragons.push(nextCard);
                 dragonsRemaining--;
@@ -85,6 +87,8 @@ export default class DrawCardHandler {
 
             if (game.age === finalAge) {
                 await GameService.endFinalAge(game);
+            } else if (TribeHandler.shouldScoreOrcBoards(game)) {
+                await TribeHandler.createRemoveOrcTokenActions(game.players);
             } else {
                 await GameService.startNewAge(game);
             }

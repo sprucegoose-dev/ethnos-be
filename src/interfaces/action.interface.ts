@@ -42,6 +42,7 @@ export interface IPlayBandPayload {
 }
 
 export interface IRemoveOrcTokensPayload {
+    nextActionId: number;
     tokens: Color[];
     type: ActionType.REMOVE_ORC_TOKENS;
 }

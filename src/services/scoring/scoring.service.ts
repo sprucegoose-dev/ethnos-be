@@ -195,7 +195,7 @@ export default class ScoringService {
                 ...player.pointsBreakdown,
                 [`${game.age}`]: {
                     regions: regionPoints[Number(player.id)] || 0,
-                    orcs: orcPoints[Number(player.id)] || 0,
+                    orcs: player.pointsBreakdown[game.age]?.orcs || orcPoints[Number(player.id)] || 0,
                     giants: giantPoints?.playerId === Number(player.id) ? giantPoints.points : 0,
                     merfolk: merfolkPoints?.[Number(player.id)] || 0,
                     bands: bandPoints[Number(player.id)] || 0,

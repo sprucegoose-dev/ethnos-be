@@ -37,6 +37,7 @@ module.exports = {
                     'play_band',
                     'keep_cards',
                     'add_free_token',
+                    'remove_orc_tokens'
                 ],
             },
             state: {

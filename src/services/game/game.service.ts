@@ -43,6 +43,8 @@ import ScoringService from '@services/scoring/scoring.service';
 import ActionLogService from '@services/actionLog/action-log.service';
 import BotService from '@services/bot/bot.service';
 import SnapshotService from '@services/snapshot/snapshot.service';
+import NextAction from '../../models/next-action.model';
+import { NextActionState } from '../../interfaces/next-action.interface';
 
 export default class GameService {
 
@@ -1042,24 +1044,6 @@ export default class GameService {
             }
         });
 
-        if (game.settings.tribes.includes(TribeName.ORCS)) {
-            const orcTokenRemovalPlayerIds = game.players.filter(player =>
-                player.orcTokens.length
-            ).map(player => player.id);
-
-            if (orcTokenRemovalPlayerIds.length) {
-                await Player.update({
-                    canRemoveOrcTokens: true,
-                }, {
-                    where: {
-                        id: {
-                            [Op.in]: orcTokenRemovalPlayerIds,
-                        }
-                    }
-                });
-            }
-        }
-
         const nextPlayerId = this.getNewAgeFirstPlayerId(scoringResults, game.activePlayerId, game.turnOrder);
         const nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
@@ -1069,6 +1053,15 @@ export default class GameService {
         }, {
             where: {
                 id: game.id,
+            }
+        });
+
+        await NextAction.update({
+            state: NextActionState.RESOLVED,
+        }, {
+            where: {
+                state: NextActionState.PENDING,
+                gameId: game.id
             }
         });
 

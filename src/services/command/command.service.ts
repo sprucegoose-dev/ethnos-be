@@ -6,7 +6,6 @@ import {
 import { EVENT_ACTIONS_LOG_UPDATE, EVENT_GAME_UPDATE } from '@interfaces/event.interface';
 import { NextActionState } from '@interfaces/next-action.interface';
 import { COLORS, GameState } from '@interfaces/game.interface';
-// import { UndoRequestState } from '@interfaces/undo-request.interface';
 
 import sequelize from '@database/connection';
 
@@ -25,7 +24,6 @@ import SnapshotService from '@services/snapshot/snapshot.service';
 import NextAction from '@models/next-action.model';
 import Game from '@models/game.model';
 import Player from '@models/player.model';
-// import UndoRequest from '@models/undo-request.model';
 
 import PlayBandHandler from './play-band.handler';
 import DrawCardHandler from './draw-card.handler';
@@ -58,18 +56,6 @@ export default class CommandService {
                 throw new CustomException(ERROR_BAD_REQUEST, 'You are not the active player');
             }
 
-            // const undoState = await UndoRequest.findOne({
-            //     where: {
-            //         gameId: game.id,
-            //         state: UndoRequestState.PENDING
-            //     },
-            //     order: [['id', 'DESC']]
-            // });
-
-            // if (undoState) {
-            //     throw new CustomException(ERROR_BAD_REQUEST, 'There is currently a pending undo request');
-            // }
-
             const nextAction = await NextAction.findOne({
                 where: {
                     gameId: game.id,
@@ -95,7 +81,7 @@ export default class CommandService {
                 regionId: regionColor ? game.regions.find(region => region.color === regionColor)?.id : null,
             });
 
-            let nextActions = [];
+            let nextActions: NextAction[] = [];
 
             switch (payload.type) {
                 case ActionType.DRAW_CARD:
@@ -114,14 +100,21 @@ export default class CommandService {
                     await TribeHandler.handleElfKeepCards(activePlayer, payload, nextAction);
                     break;
                 case ActionType.REMOVE_ORC_TOKENS:
-                    await TribeHandler.removeAndScoreOrcTokens(activePlayer, payload);
+                    await TribeHandler.removeAndScoreOrcTokens(activePlayer, payload, game);
                     break;
             }
 
-            if ([ActionType.PLAY_BAND, ActionType.ADD_FREE_TOKEN].includes(payload.type)) {
+
+            if ([
+                ActionType.PLAY_BAND,
+                ActionType.ADD_FREE_TOKEN,
+                ActionType.DRAW_CARD,
+                ActionType.REMOVE_ORC_TOKENS,
+            ].includes(payload.type)) {
                 nextActions = await NextAction.findAll({
                     where: {
                         gameId: game.id,
+                        playerId: activePlayer.id,
                         state: NextActionState.PENDING,
                     }
                 });
@@ -130,7 +123,7 @@ export default class CommandService {
             let nextPlayerId: number = activePlayer.id;
             let nextPlayer: Player = activePlayer;
 
-            if (!nextActions.length && payload.type !== ActionType.REMOVE_ORC_TOKENS) {
+            if (!nextActions.length) {
                 nextPlayerId = GameService.getNextPlayerId(activePlayer.id, game.turnOrder);
                 nextPlayer = game.players.find(player => player.id === nextPlayerId);
 
@@ -140,16 +133,6 @@ export default class CommandService {
                     where: {
                         id: game.id,
                         age: game.age // if the age has already advanced, this query will intenationally fail
-                    }
-                });
-            }
-
-            if (activePlayer.canRemoveOrcTokens) {
-                await Player.update({
-                    canRemoveOrcTokens: false,
-                }, {
-                    where: {
-                        id: activePlayer.id
                     }
                 });
             }
@@ -186,10 +169,24 @@ export default class CommandService {
                 payload: actionLogs
             });
 
-            if (updatedGameState.state === GameState.STARTED && nextPlayer.user.isBot) {
-                await BotService.takeTurn(game.id, nextPlayer.id);
+            if (updatedGameState.state === GameState.STARTED) {
+                if (nextPlayer.user.isBot) {
+                    await BotService.takeTurn(game.id, nextPlayer.id);
+                } else if (
+                    payload.type === ActionType.REMOVE_ORC_TOKENS ||
+                    nextActions.find(action =>
+                        action.type === ActionType.REMOVE_ORC_TOKENS &&
+                        action.playerId === nextPlayerId
+                    )) {
+                    const action = await TribeHandler.skipNextPlayerWithoutOrcTokens(nextPlayer);
+
+                    if (action) {
+                        await this.handleAction(nextPlayer.userId, nextPlayer.gameId, action);
+                    }
+                }
             }
         } catch (error: any) {
+            console.log(error);
             await transaction.rollback();
             throw new CustomException(error.type, error.message);
         }
