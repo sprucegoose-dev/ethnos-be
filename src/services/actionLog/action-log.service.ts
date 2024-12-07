@@ -94,6 +94,7 @@ export default class ActionLogService {
             cardIds: actionLog.cardIds || [],
             leaderId: actionLog.leaderId,
             playerColor: actionLog.player.color,
+            value: actionLog.value,
         };
     }
 

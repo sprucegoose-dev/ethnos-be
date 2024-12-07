@@ -6,10 +6,11 @@ import Card from '@models/card.model';
 export interface IActionLogPayload {
     card: Card;
     cardIds: number[];
-    id: number,
-    label: string,
-    leaderId: number,
-    playerColor: PlayerColor,
+    id: number;
+    label: string;
+    leaderId: number;
+    playerColor: PlayerColor;
+    value: number;
 }
 
 export interface IActionLogParams {
