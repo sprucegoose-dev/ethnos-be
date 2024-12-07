@@ -20,6 +20,7 @@ export default class ActionLogService {
        gameId,
        regionId,
        snapshotId,
+       value,
     }: IActionLogParams): Promise<ActionLog> {
         const actionLogType = await ActionLogType.findOne({
             where: {
@@ -36,7 +37,7 @@ export default class ActionLogService {
             cardId: payload?.type === ActionType.PICK_UP_CARD ? payload.cardId : null,
             cardIds: payload?.type === ActionType.PLAY_BAND ? payload.cardIds : null,
             snapshotId,
-            value: payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens?.length : 0,
+            value: value || (payload?.type === ActionType.REMOVE_ORC_TOKENS ? payload.tokens?.length : 0),
         });
 
         return actionLog;
