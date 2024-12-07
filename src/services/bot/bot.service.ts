@@ -22,6 +22,7 @@ import BotTokenHandler from './bot-token.handler';
 import BotPlayBandHandler from './bot-play-band.handler';
 import BotPickUpCardHandler from './bot-pick-up-card.handler';
 import BotKeepCardsHandler from './bot-keep-cards.handler';
+import { Op } from 'sequelize';
 
 export default class BotService {
 
@@ -105,6 +106,9 @@ export default class BotService {
             const activeGames = await Game.findAll({
                 where: {
                     state: GameState.STARTED,
+                    updatedAt: {
+                        [Op.gte]: moment().subtract(2, 'days').format()
+                    }
                 },
                 include: [
                     {

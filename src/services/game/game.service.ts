@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import shuffle from 'lodash.shuffle';
 import bcrypt from 'bcrypt';
+import moment from 'moment';
 
 import {
     CustomException,
@@ -335,6 +336,9 @@ export default class GameService {
                 state: {
                     [Op.not]: [GameState.ENDED, GameState.CANCELLED]
                 },
+                updatedAt: {
+                    [Op.gte]: moment().subtract(2, 'days').format()
+                }
             },
             include: [
                 {
@@ -708,6 +712,9 @@ export default class GameService {
                 state: {
                     [Op.notIn]: [GameState.ENDED, GameState.CANCELLED]
                 },
+                updatedAt: {
+                    [Op.gte]: moment().subtract(2, 'days').format()
+                }
             }
         });
 
@@ -724,7 +731,6 @@ export default class GameService {
     }
 
     static async join(userId: number, gameId: number, password: string = null): Promise<void> {
-
         if (await this.hasActiveGames(userId)) {
             throw new CustomException(ERROR_BAD_REQUEST, 'Please leave your other active game(s) before joining a new one.')
         }
