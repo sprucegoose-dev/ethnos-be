@@ -281,7 +281,7 @@ export default class TribeHandler {
         }
     }
 
-    static async shouldScoreOrcBoards(game: Game) {
+    static shouldScoreOrcBoards(game: Game) {
         return game.settings.tribes.includes(TribeName.ORCS) &&
             game.players.some(player => player.orcTokens.length);
     }
