@@ -28,6 +28,8 @@ import {
 import { IScoringResults } from '@interfaces/command.interface';
 import { PLAYER_COLORS, PlayerColor } from '@interfaces/player.interface';
 import { IActionLogPayload } from '@interfaces/action-log.interface';
+import { NextActionState } from '@interfaces/next-action.interface';
+import { IMatch } from '@interfaces/user.interface';
 
 import Card from '@models/card.model';
 import Tribe from '@models/tribe.model';
@@ -37,6 +39,7 @@ import Region from '@models/region.model';
 import User from '@models/user.model';
 import PlayerRegion from '@models/player-region.model';
 import Snapshot from '@models/snapshot.model';
+import NextAction from '@models/next-action.model';
 
 import PlayerService from '@services/player/player.service';
 import EventService from '@services/event/event.service';
@@ -44,8 +47,6 @@ import ScoringService from '@services/scoring/scoring.service';
 import ActionLogService from '@services/actionLog/action-log.service';
 import BotService from '@services/bot/bot.service';
 import SnapshotService from '@services/snapshot/snapshot.service';
-import NextAction from '../../models/next-action.model';
-import { NextActionState } from '../../interfaces/next-action.interface';
 
 export default class GameService {
 
@@ -483,27 +484,76 @@ export default class GameService {
         });
     }
 
-    static async getPlayerHands(gameId: number): Promise<{[playerId: number]: Card[]}> {
-        const players = await Player.findAll({
-            where: {
-                gameId,
-            },
-            include: [
-                {
-                    model: Card,
-                    required: false,
-                    where: {
-                        state: CardState.IN_HAND
-                    },
-                    attributes: ['id'],
-                }
-            ],
+    static async getMatches(page: number = 1, username: string = '') {
+        let gameIds: number[] = [];
+
+        if (username) {
+            gameIds = await this.getUserGameIds(username);
+        }
+
+        const gamesQuery: any = {
+            state: GameState.ENDED,
+        };
+
+        if (gameIds.length) {
+            gamesQuery.id = {
+                [Op.in]: gameIds,
+            };
+        }
+
+        const limit = 10;
+        page = isNaN(page) || page <= 0 ? 1 : page;
+        let offset = (page - 1) * limit;
+
+        if (gameIds.length && offset > gameIds.length) {
+            offset = gameIds.length - limit;
+        }
+
+        const totalGames = await Game.count({
+            where: gamesQuery,
         });
 
-        return players.reduce<{ [playerId: number]: Card[] }>((acc, player) => {
-            acc[player.id] = player.cards;
-            return acc;
-        }, {});
+        const games = await Game.findAll({
+            where: gamesQuery,
+            include: [
+                {
+                    model: Player,
+                    as: 'players',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: [
+                                'id',
+                                'deleted',
+                                'isBot',
+                                'username',
+                            ],
+                        },
+                    ],
+                    attributes: [
+                        'id',
+                        'color',
+                        'gameId',
+                    ]
+                },
+            ],
+            order: [ [ 'id', 'DESC' ] ],
+            attributes: [
+                'id',
+                'createdAt',
+                'creatorId',
+                'settings',
+                'winnerId',
+            ],
+            limit,
+            offset,
+        });
+
+        return {
+            data: games as unknown as IMatch[],
+            pages: Math.ceil(totalGames / limit),
+        };
     }
 
     static getNextPlayerId(activePlayerId: number, turnOrder: number[]): number {
@@ -542,6 +592,29 @@ export default class GameService {
         }
 
         return firstPlayerId;
+    }
+
+    static async getPlayerHands(gameId: number): Promise<{[playerId: number]: Card[]}> {
+        const players = await Player.findAll({
+            where: {
+                gameId,
+            },
+            include: [
+                {
+                    model: Card,
+                    required: false,
+                    where: {
+                        state: CardState.IN_HAND
+                    },
+                    attributes: ['id'],
+                }
+            ],
+        });
+
+        return players.reduce<{ [playerId: number]: Card[] }>((acc, player) => {
+            acc[player.id] = player.cards;
+            return acc;
+        }, {});
     }
 
     static async getState(gameId: number, inclAttributes: { [key: string]: string[] } = {}): Promise<IGameState> {
@@ -704,6 +777,29 @@ export default class GameService {
             ...gameState,
             cardsInDeckCount,
         }
+    }
+
+    static async getUserGameIds(username: string): Promise<number[]> {
+        const user = await User.findOne({
+            where: {
+                username,
+            }
+        });
+
+        if (!user) {
+            throw new CustomException(ERROR_NOT_FOUND, 'User not found');
+        }
+
+        const players = await Player.findAll({
+            where: {
+                userId: user.id
+            },
+            attributes: [
+                'gameId',
+            ],
+        });
+
+        return players.map(playerInGame => playerInGame.gameId);
     }
 
     static async hasActiveGames(userId: number) {

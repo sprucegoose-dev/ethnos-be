@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { exceptionHandler } from '@helpers/exception-handler.decorator';
 import { AuthRequest } from '@interfaces/index.interface';
 import UserService from '@services/user/user.service';
+import GameService from '../services/game/game.service';
 
 @exceptionHandler()
 class UsersController {
@@ -35,7 +36,7 @@ class UsersController {
     async getMatches(req: AuthRequest, res: Response): Promise<void> {
         const username = req.params.username;
         const { page } = req.query as any;
-        const matches = await UserService.getMatches(username, parseInt(page, 10));
+        const matches = await GameService.getMatches(parseInt(page, 10), username);
         res.send(matches);
     }
 }

@@ -44,6 +44,7 @@ app.post('/game/:id/addBot', GamesController.addBotPlayer);
 app.delete('/game/:id/removeBot/:botPlayerId', GamesController.removeBotPlayer);
 app.post('/game/:id/assignColor', GamesController.assignPlayerColor);
 app.get('/game/all', GamesController.getActiveGames);
+app.get('/game/recent', GamesController.getRecentMatches);
 app.get('/game/:id/actions', GamesController.getActions);
 app.post('/game/:id/start', GamesController.start);
 app.get('/game/:id/cards', GamesController.getGameCards);

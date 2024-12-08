@@ -45,14 +45,6 @@ class GamesController {
         res.send(ageState);
     }
 
-    async handleAction(req: IActionRequest, res: Response): Promise<void> {
-        const userId = req.userId;
-        const gameId = req.params.id;
-        const payload = req.body;
-        await CommandService.handleAction(userId, parseInt(gameId, 10), payload);
-        res.send();
-    }
-
     async getActions(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.userId;
         const gameId = req.params.id;
@@ -78,6 +70,12 @@ class GamesController {
         res.send(cards);
     }
 
+    async getRecentMatches(req: AuthRequest, res: Response): Promise<void> {
+        const { page } = req.query as any;
+        const games = await GameService.getMatches(parseInt(page, 10));
+        res.send(games);
+    }
+
     async getPlayerHands(req: AuthRequest, res: Response): Promise<void> {
         const gameId = req.params.id;
         const playerHands = await GameService.getPlayerHands(parseInt(gameId, 10));
@@ -88,6 +86,14 @@ class GamesController {
         const gameId = req.params.id;
         const gameState = await GameService.getStateResponse(parseInt(gameId, 10));
         res.send(gameState);
+    }
+
+    async handleAction(req: IActionRequest, res: Response): Promise<void> {
+        const userId = req.userId;
+        const gameId = req.params.id;
+        const payload = req.body;
+        await CommandService.handleAction(userId, parseInt(gameId, 10), payload);
+        res.send();
     }
 
     async join(req: AuthRequest, res: Response): Promise<void> {
